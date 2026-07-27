@@ -1,0 +1,339 @@
+/* Fieldwork design tokens.
+   Light only and high contrast on purpose: this is read on a phone, in one
+   hand, outdoors, in daylight. */
+
+:root {
+  --ink: #14140f;
+  --panel: #ffffff;
+  --cream: #f5f2e9;
+  --line: #ddd8c9;
+  --muted: #6b6659;
+  /* One accent. It is allowed exactly three jobs: the primary action, the
+     live/verified state, and the mark. Nothing else. */
+  --accent: #0b7a3b;
+  --accent-ink: #ffffff;
+  --danger: #9b2c1c;
+
+  --s-12: 12px;
+  --s-14: 14px;
+  --s-15: 15px;
+  --s-18: 18px;
+  --s-22: 22px;
+  --s-30: 30px;
+  --s-44: 44px;
+
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  --radius: 10px;
+  --wrap: 1080px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--s-15);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* No italics anywhere in this product. */
+i,
+em {
+  font-style: normal;
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+}
+
+h1 {
+  font-size: var(--s-44);
+}
+h2 {
+  font-size: var(--s-30);
+}
+h3 {
+  font-size: var(--s-22);
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+/* ---------- layout ---------- */
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.stack > * + * {
+  margin-top: 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ---------- utility type ---------- */
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--s-12);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: var(--s-14);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.lede {
+  font-size: var(--s-18);
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+/* ---------- surfaces ---------- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 28px 0;
+}
+
+/* ---------- controls ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  background: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ---------- table ---------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--s-14);
+}
+
+.table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: var(--s-12);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 400;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* ---------- status ---------- */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--s-12);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tag-paid {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tag-rejected {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- forms ---------- */
+
+input,
+textarea,
+select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  min-height: 44px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+label {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--s-12);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* ---------- header / footer ---------- */
+
+.site-head {
+  border-bottom: 1px solid var(--line);
+  background: var(--cream);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.site-head .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  gap: 16px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: var(--s-14);
+}
+
+.nav a:hover {
+  color: var(--accent);
+}
+
+.site-foot {
+  border-top: 1px solid var(--line);
+  margin-top: 56px;
+  padding: 24px 0 40px;
+  color: var(--muted);
+  font-size: var(--s-14);
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: var(--s-30);
+  }
+  h2 {
+    font-size: var(--s-22);
+  }
+  .nav .hide-sm {
+    display: none;
+  }
+}
