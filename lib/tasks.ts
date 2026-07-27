@@ -38,6 +38,7 @@ export const TASKS: Task[] = [
     afterUrl: "/samples/bins-after.svg",
     contentHash:
       "b31a9c0e5f74d2688a1c47f0e9d3b6521c8ae4f7920d5b3ce16a8f4d27b90cc3",
+    phash: "3c1e0f0f87c3e1f0",
     agreement: { agreed: 4, of: 5 },
     paidAt: T0,
     verdict: { codeVisible: true, samePlace: true, testPassed: true },

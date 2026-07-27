@@ -41,18 +41,36 @@ export default function LimitsPage() {
         </p>
       </Limit>
 
-      <Limit title="It cannot detect a re-encoded photograph on chain">
+      <Limit title="It does not match photographs by how they look">
         <p>
           The contract stores a cryptographic hash of every accepted photograph
           and refuses an exact match. It also refuses a content id it has already
-          paid for.
+          paid for. Both are exact: they catch a file that has been submitted
+          before, not one that has been cropped or re-saved.
+        </p>
+        <p>
+          We built perceptual matching and then measured it, and it does not work
+          for this product. Every task here is a photograph of the same place, so
+          the same corner on a different day scored <strong>closer</strong> than
+          the same photograph re-encoded. No threshold separates honest repeat
+          work from reuse, and the failure mode is accusing a worker who did the
+          job. So it is not used to decide anything.
         </p>
         <p style={{ marginBottom: 0 }}>
-          It cannot do perceptual matching. Decoding pixels inside the GenVM is
-          not possible, so a photograph that has been cropped or re-saved will
-          produce a different hash and will not be caught by arithmetic. Catching
-          that case is the job of the repeat verification sample and of human
-          review, and we would rather say so than imply a defence we do not have.
+          What catches a recycled photograph is the challenge code. It is issued
+          at claim time, it is different every time, and an old photograph
+          carries the wrong one. The hash is still recorded on every receipt for
+          human reviewers, it just does not vote.
+        </p>
+      </Limit>
+
+      <Limit title="It checks the pixels before it pays for a grader">
+        <p style={{ marginBottom: 0 }}>
+          A photograph that cannot be opened, is too small for a six character
+          code to be legible, or was shot straight into the sun is refused before
+          the vision model ever runs. That is not a judgement about your work, it
+          is the contract saying nobody could grade this image, and it costs you a
+          retake rather than the claim.
         </p>
       </Limit>
 

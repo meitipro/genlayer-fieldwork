@@ -125,7 +125,24 @@ export function ProofReceipt({ task }: { task: Task }) {
           </p>
           <p className="muted" style={{ margin: "8px 0 0", fontSize: "var(--s-14)" }}>
             Stored on chain and matched against every later submission, so the
-            same photograph cannot be paid for twice.
+            same file cannot be paid for twice.
+          </p>
+        </section>
+      ) : null}
+
+      {task.phash ? (
+        <section className="panel">
+          <div className="eyebrow">Perceptual hash — recorded, not decisive</div>
+          <p className="mono muted" style={{ margin: "6px 0 0" }}>
+            {task.phash}
+          </p>
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: "var(--s-14)" }}>
+            Kept so a human reviewer can compare this photograph with others. It
+            does not accept or reject anything:{" "}
+            <a href="/limits" style={{ color: "var(--accent)", fontWeight: 600 }}>
+              here is why
+            </a>
+            .
           </p>
         </section>
       ) : null}

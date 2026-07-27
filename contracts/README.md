@@ -49,11 +49,22 @@ and it is the SDK's default, so the brief's "value only moves on finality" rule
 is enforced for free. It also raises a bare `ValueError` when value is zero,
 which would crash the VM with an empty error, so `_pay()` guards zero itself.
 
-**`io` is a forbidden import.** So is `os`, `random`, `pathlib`, `http`,
-`requests`. This is what kills perceptual hashing: you cannot do
-`PIL.Image.open(io.BytesIO(body))`, so pixels cannot be decoded on chain. See
-"Reuse detection" below. `hashlib`, `datetime`, `urllib.parse` and `dataclasses`
-are all allowed.
+**`io` is a forbidden import, but Pillow is available.** `os`, `random`,
+`pathlib`, `http`, `requests` are forbidden too — the list is
+`FORBIDDEN_MODULES` in the linter's `lint/safety.py`. `hashlib`, `datetime`,
+`urllib.parse` and `dataclasses` are allowed.
+
+`io` being banned looks like it rules out image processing, because the usual
+way in is `PIL.Image.open(io.BytesIO(body))`. It does not. **Pillow is present
+in the GenVM runtime** — the SDK's own `gl.nondet.web.render(mode="screenshot")`
+does `import PIL.Image` and `PIL.Image.open(io.BytesIO(raw))` at
+`gl/nondet/web.py:146`. The ban is a linter rule on contract code, not a runtime
+limit.
+
+So `import PIL.Image` is fine, and the only thing needed is a stand-in for
+`io.BytesIO`. `_BytesFile` at the bottom of `fieldwork.py` is that: the three
+methods (`read`, `seek`, `tell`) Pillow actually asks for. Both lint and
+validate pass with it.
 
 **`genvm-lint validate` cannot see a class named `Contract`.** This is a bug in
 the linter, not in your contract: `validate/sdk_loader.py:223` does
@@ -72,6 +83,27 @@ PYTHONIOENCODING=utf-8 genvm-lint check /tmp/v.py
 a pass from a failure.
 
 ---
+
+## What the contract uses beyond the brief
+
+- **Events** — `TaskPosted`, `TaskClaimed`, `SubmissionGraded`,
+  `SubmissionRefused`. The brief's chapter 05 wants an indexer that renders proof
+  pages and drives the repeat-verification sample; events are how it follows
+  along without polling every task. Event `__init__` takes indexed fields
+  positionally before `/` and everything else as `**blob` — any named parameter
+  after the `/` fails with `specify / after indexed fields`.
+- **An LLM gate on the acceptance test at posting time.** `post_task` runs
+  `gl.eq_principle.prompt_non_comparative` and refuses a test that is too vague
+  to grade from a photograph. The brief's risk register names vague tests as a
+  top risk and only requires that the three fields are non-empty. A bad test
+  poisons every submission made against it and the worker carries the cost, so
+  this is the highest-leverage place in the contract to spend one LLM call.
+- **Pillow** for the pre-flight checks described below.
+
+`min_gas(leader=…, validator=…)` is deliberately **not** set. It is real and
+keyword-only, but the right numbers are unknown until the first real submissions
+land, and a wrong minimum makes every `submit` fail. Add it once
+`genlayer trace <txId>` has shown actual gas for a vision call with two images.
 
 ## Two things the brief got wrong
 
@@ -98,22 +130,58 @@ one fails consensus.
 
 ---
 
-## Reuse detection, and what it honestly catches
+## Image processing
 
-Two layers, both deterministic:
+Three things happen to the pixels, in this order.
 
-1. **Content id, before any model runs.** Photograph urls must be content
-   addressed (the contract refuses any other host). The CID is parsed straight
-   out of the url in the deterministic half, so a repeat submission is rejected
-   *without paying for a vision call*.
-2. **`sha256` of the fetched bytes**, computed in the consensus block and
-   compared by every validator.
+**1. Pre-flight, before the model runs.** `_preflight()` opens each photograph
+and refuses it if it cannot be decoded, if the long edge is under `MIN_EDGE`
+(480px, below which a six character code is not legible), or if mean luminance
+is outside `[DARK_MEAN, BRIGHT_MEAN]` = `[12, 243]`. Those bounds are extreme on
+purpose: they catch a lens cap or the sun straight into the lens, not a dim
+afternoon. A refused photograph never reaches `exec_prompt`, so the most
+expensive call in the contract is skipped and the worker gets a specific reason
+while they are still standing there.
 
-Neither is perceptual. A cropped or re-saved photograph produces a different
-hash and will not be caught by arithmetic — `io` and PIL are unavailable, so
-there is no way to decode pixels on chain. That gap is real, it is stated on
-`/limits`, and the defence against it is the random repeat-verification sample
-plus human review. Better to say so than to claim a defence that is not there.
+Covered by `contracts/test_images.py` — 14 cases including the negatives that
+matter (a dusk photo and a bright-day photo must still be accepted).
+
+**2. Exact reuse, deterministic.** The CID is parsed out of the url before
+anything is fetched, and `sha256` of the after image is computed in the
+consensus block. Both are exact matches against everything already paid for.
+
+**3. A perceptual hash that decides nothing.** `_dhash()` is recorded on the
+task and shown on the receipt for human reviewers, and that is all it does.
+
+### Why there is no perceptual reuse check
+
+It was built — dHash plus LSH banding over four 16-bit bands — and then measured,
+and the measurement killed it. Distances at 64 bits:
+
+| | distance |
+| --- | --- |
+| same photograph, re-encoded at q55 | 8 |
+| same photograph, resized | 4–6 |
+| **same place, photographed another day** | **2** |
+| a different scene entirely | 16–20 |
+
+The populations overlap, and they overlap the wrong way round: honest repeat
+work at the same corner scores *closer* than actual reuse. Going to 256 bits made
+it worse (39 vs 28). There is no threshold. This is not a tuning problem, it is
+the domain — every task in this product is a photograph of the same place, so
+"looks almost identical" is the normal case rather than the suspicious one.
+
+The failure mode also is not symmetric: a false positive tells a worker who did
+the job that they are a fraud. So it does not vote.
+
+**What actually catches a recycled photograph is the challenge code.** It is
+issued at claim time, it is different for every claim, and an old photograph
+carries the wrong one — which the vision model is already checking for, in the
+call we are already paying for. The brief's own design had the answer; the
+perceptual hash was never load-bearing.
+
+`test_images.py` keeps the measurement as a test, so if the numbers ever
+separate, the decision can be revisited on evidence.
 
 ---
 

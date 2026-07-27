@@ -146,8 +146,17 @@ export default function ConsolePage() {
         <div className="panel stack">
           <div className="eyebrow">Reuse detection</div>
           <p style={{ margin: 0 }}>
-            Every accepted photograph's content hash is stored on chain and
-            matched against later submissions.
+            Every accepted photograph&apos;s content hash is stored on chain and
+            matched against later submissions. A recycled photograph also carries
+            the wrong challenge code, which is what actually catches it.
+          </p>
+        </div>
+        <div className="panel stack">
+          <div className="eyebrow">Pre-flight checks</div>
+          <p style={{ margin: 0 }}>
+            The contract opens both photographs before it pays for a grader. Ones
+            that are unopenable, too small to show a code, or shot into the sun
+            are refused for the price of a decode.
           </p>
         </div>
         <div className="panel stack">
