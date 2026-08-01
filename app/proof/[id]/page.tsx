@@ -2,30 +2,26 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProofReceipt } from "@/components/ProofReceipt";
-import { getTask, listTasks } from "@/lib/tasks";
+import { fetchTask } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 /* Be the public receipt for the work. */
 
-export function generateStaticParams() {
-  return listTasks()
-    .filter((t) => t.status === "paid")
-    .map((t) => ({ id: String(t.id) }));
-}
-
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
   params: { id: string };
-}): Metadata {
-  const task = getTask(Number(params.id));
+}): Promise<Metadata> {
+  const task = await fetchTask(Number(params.id));
   return {
     title: task ? `Proof — ${task.title}` : "Proof",
     description: task?.acceptanceTest,
   };
 }
 
-export default function ProofPage({ params }: { params: { id: string } }) {
-  const task = getTask(Number(params.id));
+export default async function ProofPage({ params }: { params: { id: string } }) {
+  const task = await fetchTask(Number(params.id));
   if (!task) notFound();
   if (task.status !== "paid" && task.status !== "rejected") notFound();
 

@@ -150,6 +150,9 @@ export function getTask(id: number): Task | undefined {
 /* ---------- display helpers ---------- */
 
 export function formatDistance(metres: number): string {
+  // Distance is viewer relative, so it is not on chain. An unknown distance
+  // says so rather than claiming the task is at your feet.
+  if (!metres || metres <= 0) return "—";
   if (metres < 1000) return `${metres} m`;
   return `${(metres / 1000).toFixed(1)} km`;
 }

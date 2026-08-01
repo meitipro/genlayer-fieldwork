@@ -1,14 +1,9 @@
 import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
-import {
-  STATS,
-  SEED_NOW,
-  formatDistance,
-  formatRemaining,
-  listTasks,
-  openTasks,
-  paidTasks,
-} from "@/lib/tasks";
+import { STATS, formatDistance, formatRemaining } from "@/lib/tasks";
+import { fetchTasks } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 /* Show real completed tasks with the photographs that passed. */
 
@@ -25,9 +20,11 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-export default function HomePage() {
-  const open = openTasks();
-  const proofs = paidTasks().slice(0, 3);
+export default async function HomePage() {
+  const all = await fetchTasks();
+  const open = all.filter((t) => t.status === "open");
+  const proofs = all.filter((t) => t.status === "paid").slice(0, 3);
+  const now = Date.now();
 
   return (
     <div className="wrap" style={{ paddingTop: 40, paddingBottom: 20 }}>
@@ -69,7 +66,7 @@ export default function HomePage() {
         />
       </div>
 
-      <TaskMap tasks={listTasks()} />
+      <TaskMap tasks={all} />
 
       <h2 style={{ marginTop: 44 }}>Live tasks</h2>
       <p className="muted" style={{ marginTop: 6 }}>
@@ -101,7 +98,7 @@ export default function HomePage() {
                   {t.reward}
                 </td>
                 <td className="mono muted">
-                  {formatRemaining(t.expiresAt, SEED_NOW)}
+                  {formatRemaining(t.expiresAt, now)}
                 </td>
                 <td className="mono muted">rep {t.minReputation}</td>
               </tr>

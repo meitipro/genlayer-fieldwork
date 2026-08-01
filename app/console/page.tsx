@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
 import { PostTaskForm } from "@/components/PostTaskForm";
-import { STATS, listTasks } from "@/lib/tasks";
+import { STATS } from "@/lib/tasks";
+import { fetchTasks } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 export const metadata: Metadata = { title: "Poster console" };
 
 /* Let a poster run a campaign of many tasks. */
 
-export default function ConsolePage() {
-  const tasks = listTasks();
+export default async function ConsolePage() {
+  const tasks = await fetchTasks();
   const funded = tasks.reduce((sum, t) => sum + t.reward, 0);
   const paid = tasks.filter((t) => t.status === "paid");
   const rejected = tasks.filter((t) => t.status === "rejected");

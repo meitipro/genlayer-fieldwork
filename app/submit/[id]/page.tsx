@@ -2,30 +2,32 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaptureFlow } from "@/components/CaptureFlow";
-import { SEED_NOW, getTask, listTasks } from "@/lib/tasks";
+import { SEED_NOW } from "@/lib/tasks";
+import { fetchTask } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 /* Guide a phone camera to a passing photograph. */
 
-export function generateStaticParams() {
-  return listTasks().map((t) => ({ id: String(t.id) }));
-}
-
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
   params: { id: string };
-}): Metadata {
-  const task = getTask(Number(params.id));
+}): Promise<Metadata> {
+  const task = await fetchTask(Number(params.id));
   return { title: task ? `Submit — ${task.title}` : "Submit" };
 }
 
-export default function SubmitPage({ params }: { params: { id: string } }) {
-  const task = getTask(Number(params.id));
+export default async function SubmitPage({ params }: { params: { id: string } }) {
+  const task = await fetchTask(Number(params.id));
   if (!task) notFound();
 
-  // A claim issues the code. Seed records that are already claimed carry one;
-  // an open one is shown with the code it would be issued on claiming.
-  const withCode = task.challengeCode
+  // A real claim carries its own code and expiry, so it is counted against the
+  // clock. A task nobody has claimed is shown with a stand-in code so the
+  // screen can be read, and that one is counted against the seed epoch.
+  const claimed = !!task.challengeCode;
+  const now = claimed ? Date.now() : SEED_NOW;
+  const withCode = claimed
     ? task
     : { ...task, challengeCode: "K73QXB", expiresAt: SEED_NOW + 42 * 60000 };
 
@@ -52,7 +54,7 @@ export default function SubmitPage({ params }: { params: { id: string } }) {
       </p>
 
       <div style={{ marginTop: 18 }}>
-        <CaptureFlow task={withCode} now={SEED_NOW} />
+        <CaptureFlow task={withCode} now={now} />
       </div>
     </div>
   );

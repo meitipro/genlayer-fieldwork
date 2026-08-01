@@ -3,26 +3,19 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AcceptanceTest } from "@/components/AcceptanceTest";
 import { ReputationTag } from "@/components/ReputationTag";
-import {
-  SEED_NOW,
-  formatDistance,
-  formatRemaining,
-  getTask,
-  listTasks,
-} from "@/lib/tasks";
+import { formatDistance, formatRemaining } from "@/lib/tasks";
+import { fetchTask } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 /* Make the acceptance test impossible to misread. */
 
-export function generateStaticParams() {
-  return listTasks().map((t) => ({ id: String(t.id) }));
-}
-
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
   params: { id: string };
-}): Metadata {
-  const task = getTask(Number(params.id));
+}): Promise<Metadata> {
+  const task = await fetchTask(Number(params.id));
   return { title: task ? task.title : "Task" };
 }
 
@@ -37,11 +30,12 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function TaskPage({ params }: { params: { id: string } }) {
-  const task = getTask(Number(params.id));
+export default async function TaskPage({ params }: { params: { id: string } }) {
+  const task = await fetchTask(Number(params.id));
   if (!task) notFound();
 
   const claimable = task.status === "open";
+  const now = Date.now();
 
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 760 }}>
@@ -58,7 +52,8 @@ export default function TaskPage({ params }: { params: { id: string } }) {
 
       <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>{task.title}</h1>
       <p className="muted" style={{ marginTop: 8 }}>
-        {task.place} · {formatDistance(task.distanceM)} away
+        {task.place}
+        {task.distanceM > 0 ? ` · ${formatDistance(task.distanceM)} away` : ""}
       </p>
 
       <div
@@ -72,7 +67,7 @@ export default function TaskPage({ params }: { params: { id: string } }) {
         <Fact label="Reward" value={`${task.reward} GEN`} />
         <Fact
           label="Claim window"
-          value={formatRemaining(task.expiresAt, SEED_NOW)}
+          value={formatRemaining(task.expiresAt, now)}
         />
         <Fact label="Reputation" value={`rep ${task.minReputation}`} />
       </div>

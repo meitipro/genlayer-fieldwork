@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import hashlib
 import datetime
+import json
 import urllib.parse
 
 # Gateways whose urls are content addressed. A url from anywhere else is
@@ -505,6 +506,42 @@ class Contract(gl.Contract):
     @gl.public.view
     def total_tasks(self) -> u256:
         return u256(len(self.tasks))
+
+    @gl.public.view
+    def task_json(self, task_id: u256) -> str:
+        """A whole task in one call.
+
+        The per field views below are convenient for a CLI, but a list of
+        twenty tasks through them is twenty times a dozen round trips. The site
+        reads this instead.
+        """
+        t = self._require_task(task_id)
+        return json.dumps(
+            {
+                "id": int(task_id),
+                "poster": t.poster.as_hex,
+                "title": t.title,
+                "place": t.place,
+                "acceptance_test": t.acceptance_test,
+                "example_pass": t.example_pass,
+                "example_fail": t.example_fail,
+                "lat_e6": int(t.lat_e6),
+                "lng_e6": int(t.lng_e6),
+                "reward": str(t.reward),
+                "fee": str(t.fee),
+                "min_reputation": int(t.min_reputation),
+                "claimed_by": t.claimed_by.as_hex,
+                "challenge_code": t.challenge_code,
+                "claim_expires": t.claim_expires,
+                "status": t.status,
+                "reason": t.reason,
+                "before_url": t.before_url,
+                "after_url": t.after_url,
+                "content_hash": t.content_hash,
+                "phash": t.phash,
+            },
+            sort_keys=True,
+        )
 
     @gl.public.view
     def status_of(self, task_id: u256) -> str:

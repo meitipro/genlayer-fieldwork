@@ -1,19 +1,18 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TaskMap } from "@/components/TaskMap";
-import {
-  SEED_NOW,
-  formatDistance,
-  formatRemaining,
-  listTasks,
-} from "@/lib/tasks";
+import { formatDistance, formatRemaining } from "@/lib/tasks";
+import { fetchTasks } from "@/lib/onchain";
+
+export const revalidate = 5;
 
 export const metadata: Metadata = { title: "Find work" };
 
 /* Get a worker to a task they can reach today. */
 
-export default function MapPage() {
-  const tasks = listTasks().filter((t) => t.status === "open");
+export default async function MapPage() {
+  const tasks = (await fetchTasks()).filter((t) => t.status === "open");
+  const now = Date.now();
 
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20 }}>
@@ -55,7 +54,7 @@ export default function MapPage() {
                   {t.reward} GEN
                 </td>
                 <td className="mono muted">
-                  {formatRemaining(t.expiresAt, SEED_NOW)}
+                  {formatRemaining(t.expiresAt, now)}
                 </td>
                 <td className="mono muted">rep {t.minReputation}</td>
                 <td>
