@@ -185,32 +185,78 @@ separate, the decision can be revisited on evidence.
 
 ---
 
+## Vision is proven on Studio — and what it took
+
+`gl.nondet.exec_prompt(images=[...])` **works**. Probe
+`0xcB4ad1cdb1DF6C9069592c8eaCb357507F04D65f` on Studio, asked to describe a
+photograph of a golden retriever holding a flower, answered
+`golden retriever with a flower`.
+
+Reproduce it, with no account and no faucet, because Studio is gasless:
+
+```bash
+node scripts/prove-vision.mjs
+```
+
+It generates a throwaway in-memory account, deploys `vision_probe.py`, then runs
+three steps so a failure names the part that broke: `fetch_only` (are these
+really image bytes), `describe_text`, `describe_json`.
+
+Three things cost real time getting there, all worth knowing.
+
+**1. `INVALID_IMAGE` usually means you fetched something that is not an image.**
+The first attempt used a Wikimedia URL. Wikimedia answers **403** to a client
+with no User-Agent, and the 126-byte `text/plain` error page was handed to the
+model as a photograph. The failure surfaced only as
+`NondetException {'causes': ['INVALID_IMAGE'], 'ctx': {}}` with no hint. Both
+contracts now check `res.status != 200` before trusting the body, which turns
+that into a sentence a human can read.
+
+**2. A JPEG without a JFIF header is rejected.** After the fetch was fixed, a
+valid 119KB JPEG whose magic bytes were `ffd8ffdb` (SOI followed straight by
+DQT, no APP0) still failed `INVALID_IMAGE`. The same subject as a standard
+baseline JFIF (`ffd8ffe0`) graded fine at **43KB and at 520KB**, so it is the
+container and not the size. `lib/image.ts` therefore re-encodes every upload
+through a canvas, which always emits baseline JFIF, and strips EXIF (including
+GPS the worker did not mean to publish) on the way.
+
+**3. The router can hand the call to a model that cannot see.** Studio's
+validators run `llm-router` with policy `prd-gpt-5-4`, whose allowed families
+include the text-only `gpt-oss-120b`. Asked about the same photograph, separate
+runs returned `A white toilet bowl` and `No image provided` — the second is
+honest, the first is a confident hallucination about an image the model never
+received.
+
+That is dangerous for a product that pays people on a model's say-so. The prompt
+now requires a `saw_images` boolean and the contract refuses to grade when it is
+false, so a blind grader produces a clean "please submit again" instead of a
+verdict. Consensus is the backstop — a hallucinating validator disagrees with a
+seeing one and the transaction fails rather than paying — but it is better to
+catch it as a stated refusal than as an unexplained disagreement.
+
 ## Deploy
 
-Requires a funded Bradbury account. The CLI keeps the key in its own encrypted
-keystore.
+**Studio is the target network.** Bradbury has a confirmed network bug where a
+deploy reports `FINALIZED` with storage changes and yet `gen_getContractCode`
+answers "contract code not found" — reproduced with the official CLI, so it is
+not a tooling problem. Studio does not have it: the probe deployed and its code
+read back straight away.
+
+Studio is also **gasless** (`eth_gasPrice` is `0x0`), and its faucet is not a
+URL — it is the water-drop button in the account selector inside
+studio.genlayer.com, which funds Studio's own accounts rather than an external
+wallet. Because the flow is gasless, nobody needs it.
 
 ```bash
-genlayer network set testnet-bradbury
+genlayer network set studionet
 genlayer account create --name fieldwork
-genlayer account show
 ```
 
-Fund the printed address at <https://testnet-faucet.genlayer.foundation/>, then:
+The deployer becomes the contract `owner`, which is why this one wants a real
+named account rather than the throwaway the probe uses.
 
 ```bash
-# 1. Prove vision works at all. Point it at any public raster image.
-genlayer deploy --contract contracts/vision_probe.py
-genlayer write <PROBE_ADDRESS> describe --args "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gull_portrait_ca_usa.jpg/640px-Gull_portrait_ca_usa.jpg"
-genlayer call <PROBE_ADDRESS> answer
-```
-
-If `answer` comes back describing a bird, image input works on this network and
-Fieldwork is buildable. If it errors, stop — nothing else in the product matters.
-Check `genlayer trace <txId>` for the real reason.
-
-```bash
-# 2. The product. Constructor arg is the take rate in basis points (600 = 6%).
+# The product. Constructor arg is the take rate in basis points (600 = 6%).
 genlayer deploy --contract contracts/fieldwork.py --args 600
 ```
 
@@ -222,12 +268,20 @@ NEXT_PUBLIC_FIELDWORK_CONTRACT=0x…
 
 ### Verify the deploy actually landed
 
-`ACCEPTED` is not enough; the code is only readable once finalized.
+`ACCEPTED` is not enough; the code is only readable once finalized. This is the
+exact check that exposes the Bradbury bug.
 
 ```bash
-genlayer code <CONTRACT_ADDRESS>
 genlayer schema <CONTRACT_ADDRESS>
 ```
+
+Reading a Studio contract over raw JSON-RPC takes a **bare address string**
+(`params: ["0x..."]`). Passing Bradbury's `[{"address": "0x..."}]` shape returns
+a psycopg2 "can't adapt type 'dict'" SQL error, which reads like a broken
+contract but is just the wrong call shape. `gen_getTransactionByHash` does not
+exist on Studio either — use `eth_getTransactionByHash`, and read the real
+failure from `consensus_data.leader_receipt.genvm_result.stderr`, because the
+`error` field comes back empty.
 
 ---
 

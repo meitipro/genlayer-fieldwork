@@ -39,16 +39,35 @@ file change.
 ## The contracts
 
 See [`contracts/README.md`](contracts/README.md). It documents the verified SDK
-API names, two bugs in the original brief, and why perceptual hashing is not
-possible on chain.
+API names, the bugs found in the original brief, and the three traps that stood
+between "the SDK has an `images` parameter" and a model actually describing a
+photograph.
 
-Deploy `contracts/vision_probe.py` **first**. It answers the only question that
-can sink this product: does image input actually execute on this network.
+**Vision is proven working** on GenLayer Studio. Reproduce it in one command —
+no account, no faucet, because Studio is gasless:
+
+```bash
+node scripts/prove-vision.mjs
+```
+
+## Network
+
+Studio is the default. Bradbury has a confirmed bug where a deploy reports
+`FINALIZED` and then has no readable code.
+
+[`lib/chain.ts`](lib/chain.ts) is the single switch: chain id, RPC, currency and
+gas policy all derive from genlayer-js's own chain objects, with one documented
+exception (the SDK's Studio explorer URL answers 503, so the working one is
+pinned there instead).
+
+Contract addresses are **per network**. Changing the network without redeploying
+and updating the address points the app at something that does not exist.
 
 ## Environment
 
 | Variable | Needed for |
 | --- | --- |
+| `NEXT_PUBLIC_GENLAYER_NETWORK` | `studionet` (default) or `bradbury` |
 | `NEXT_PUBLIC_FIELDWORK_CONTRACT` | Live reads and writes. Unset means seed mode. |
 | `PINATA_JWT` | Uploading photographs to content addressed storage |
 | `CAS_GATEWAY` | Gateway used to build the url handed to the contract |

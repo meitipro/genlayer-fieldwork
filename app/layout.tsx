@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Wordmark } from "@/components/Logo";
+import { ThemeToggle, THEME_BOOT } from "@/components/Theme";
+import { CHAIN_NAME, NETWORK } from "@/lib/chain";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +22,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f2e9",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f2e9" },
+    { media: "(prefers-color-scheme: dark)", color: "#121310" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -31,7 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Applies the stored theme before first paint, so there is no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body>
         <header className="site-head">
           <div className="wrap">
@@ -46,6 +55,7 @@ export default function RootLayout({
               <Link href="/#how" className="hide-sm">
                 How it works
               </Link>
+              <ThemeToggle />
             </nav>
           </div>
         </header>
@@ -58,6 +68,9 @@ export default function RootLayout({
               <Wordmark size={16} />
               <p className="mono muted" style={{ marginTop: 10 }}>
                 Physical work, verified by photo.
+              </p>
+              <p className="mono muted" style={{ marginTop: 6 }}>
+                {CHAIN_NAME} · {NETWORK}
               </p>
             </div>
             <nav className="nav" style={{ gap: 14 }}>

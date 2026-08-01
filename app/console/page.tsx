@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
+import { PostTaskForm } from "@/components/PostTaskForm";
 import { STATS, listTasks } from "@/lib/tasks";
 
 export const metadata: Metadata = { title: "Poster console" };
@@ -61,71 +62,9 @@ export default function ConsolePage() {
         biggest cause of rejected work.
       </p>
 
-      <form className="panel stack" style={{ marginTop: 14 }}>
-        <div>
-          <label htmlFor="title">Title</label>
-          <input id="title" name="title" placeholder="Clear the bin area behind 14 Mill St" />
-        </div>
-
-        <div>
-          <label htmlFor="place">Where</label>
-          <input id="place" name="place" placeholder="Mill St, behind the parade" />
-        </div>
-
-        <div>
-          <label htmlFor="test">Acceptance test</label>
-          <textarea
-            id="test"
-            name="test"
-            rows={4}
-            placeholder="The bin area is empty. No bags remain against the wall, the ground is clear of loose litter, and both bins are upright with their lids closed."
-          />
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-          }}
-        >
-          <div>
-            <label htmlFor="pass">Pass example</label>
-            <textarea id="pass" name="pass" rows={3} placeholder="What a passing photograph shows." />
-          </div>
-          <div>
-            <label htmlFor="fail">Fail example</label>
-            <textarea id="fail" name="fail" rows={3} placeholder="The near miss that must not pass." />
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: 12,
-          }}
-        >
-          <div>
-            <label htmlFor="reward">Reward (GEN)</label>
-            <input id="reward" name="reward" type="number" min={10} defaultValue={18} />
-          </div>
-          <div>
-            <label htmlFor="rep">Minimum reputation</label>
-            <input id="rep" name="rep" type="number" min={0} defaultValue={1} />
-          </div>
-        </div>
-
-        <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
-          A vision call with two images runs once per validator, so rewards below
-          roughly ten GEN do not cover their own settlement. Batch smaller jobs
-          into routes.
-        </p>
-
-        <button className="btn btn-primary" type="button" disabled>
-          Fund and post — connect a wallet first
-        </button>
-      </form>
+      <div style={{ marginTop: 14 }}>
+        <PostTaskForm />
+      </div>
 
       <h2 style={{ marginTop: 44 }}>Assurance</h2>
       <div

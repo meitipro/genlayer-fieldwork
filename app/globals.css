@@ -1,9 +1,15 @@
 /* Fieldwork design tokens.
-   Light only and high contrast on purpose: this is read on a phone, in one
-   hand, outdoors, in daylight. */
+   Light is the default: this is read on a phone, in one hand, outdoors, in
+   daylight. Dark exists because the same worker is out after dark in winter.
 
-:root {
+   `data-theme` is always written explicitly on <html> by the boot script in
+   components/Theme.tsx, so the CSS never needs a prefers-color-scheme branch
+   and the two can never disagree. */
+
+:root,
+:root[data-theme="light"] {
   --ink: #14140f;
+  --ink-rgb: 20, 20, 15;
   --panel: #ffffff;
   --cream: #f5f2e9;
   --line: #ddd8c9;
@@ -11,9 +17,29 @@
   /* One accent. It is allowed exactly three jobs: the primary action, the
      live/verified state, and the mark. Nothing else. */
   --accent: #0b7a3b;
+  --accent-rgb: 11, 122, 59;
   --accent-ink: #ffffff;
   --danger: #9b2c1c;
+  --shadow: rgba(20, 20, 15, 0.06);
+}
 
+:root[data-theme="dark"] {
+  --ink: #eceadf;
+  --ink-rgb: 236, 234, 223;
+  --panel: #1b1d17;
+  --cream: #121310;
+  --line: #2f322a;
+  --muted: #9b988a;
+  /* The light green fails on a dark ground, so dark gets its own value.
+     Same job, same single accent, measured for this background. */
+  --accent: #46c877;
+  --accent-rgb: 70, 200, 119;
+  --accent-ink: #08160d;
+  --danger: #f08a72;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+:root {
   --s-12: 12px;
   --s-14: 14px;
   --s-15: 15px;
@@ -29,6 +55,12 @@
 
   --radius: 10px;
   --wrap: 1080px;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 *,
@@ -85,6 +117,11 @@ h3 {
 
 p {
   margin: 0 0 12px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- layout ---------- */
@@ -172,7 +209,7 @@ p {
 }
 
 .btn:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(var(--ink-rgb), 0.06);
 }
 
 .btn-primary {
@@ -193,6 +230,17 @@ p {
 
 .btn-block {
   width: 100%;
+}
+
+.btn-icon {
+  min-height: 36px;
+  padding: 0 10px;
+  border-color: var(--line);
+  color: var(--muted);
+  font-size: var(--s-12);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* ---------- table ---------- */
@@ -272,11 +320,21 @@ select {
   min-height: 44px;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 
 label {
@@ -326,6 +384,16 @@ label {
   font-size: var(--s-14);
 }
 
+/* ---------- network notice ---------- */
+
+.notice {
+  border: 1px solid var(--line);
+  background: rgba(var(--accent-rgb), 0.08);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: var(--s-14);
+}
+
 @media (max-width: 640px) {
   h1 {
     font-size: var(--s-30);
@@ -335,5 +403,8 @@ label {
   }
   .nav .hide-sm {
     display: none;
+  }
+  .nav {
+    gap: 12px;
   }
 }
