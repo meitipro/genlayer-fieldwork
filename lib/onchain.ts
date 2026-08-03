@@ -59,9 +59,10 @@ function short(addr: string): string {
 }
 
 function toTask(raw: RawTask): Task {
-  const expires = raw.claim_expires
-    ? Date.parse(raw.claim_expires + "Z")
-    : Date.now() + 90 * 60_000;
+  // Only a claimed task has a deadline. An unclaimed one is 0, which the UI
+  // reads as "no clock running yet" rather than inventing one.
+  const parsed = raw.claim_expires ? Date.parse(raw.claim_expires + "Z") : 0;
+  const expires = Number.isFinite(parsed) ? parsed : 0;
 
   return {
     id: raw.id,
@@ -77,7 +78,7 @@ function toTask(raw: RawTask): Task {
     status: (raw.status as TaskStatus) || "open",
     // Distance is a viewer-relative idea, so it is not on chain.
     distanceM: 0,
-    expiresAt: Number.isFinite(expires) ? expires : Date.now() + 90 * 60_000,
+    expiresAt: expires,
     poster: short(raw.poster),
     claimedBy: short(raw.claimed_by) || undefined,
     challengeCode: raw.challenge_code || undefined,
@@ -97,6 +98,26 @@ function client() {
   return createClient({ chain });
 }
 
+/**
+ * Studio answers -32006 "Server busy: all N execution slots occupied" when its
+ * execution slots are full. Without a retry a busy moment silently drops tasks
+ * from the list, which reads as tasks disappearing rather than as load.
+ */
+async function busyRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let wait = 700;
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = String((e as { details?: string; message?: string })?.details ?? (e as Error)?.message ?? e);
+      const busy = msg.includes("-32006") || /slots occupied|Server busy/i.test(msg);
+      if (!busy || i >= attempts) throw e;
+      await new Promise((r) => setTimeout(r, wait));
+      wait *= 2;
+    }
+  }
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function fetchTasks(limit = 40): Promise<Task[]> {
@@ -105,11 +126,13 @@ export async function fetchTasks(limit = 40): Promise<Task[]> {
   try {
     const c = client();
     const total = Number(
-      await (c as any).readContract({
-        address: CONTRACT,
-        functionName: "total_tasks",
-        args: [],
-      })
+      await busyRetry(() =>
+        (c as any).readContract({
+          address: CONTRACT,
+          functionName: "total_tasks",
+          args: [],
+        })
+      )
     );
     if (!Number.isFinite(total) || total <= 0) return [];
 
@@ -120,11 +143,13 @@ export async function fetchTasks(limit = 40): Promise<Task[]> {
     const rows = await Promise.all(
       ids.map(async (id) => {
         try {
-          const raw = await (c as any).readContract({
-            address: CONTRACT,
-            functionName: "task_json",
-            args: [id],
-          });
+          const raw = await busyRetry(() =>
+            (c as any).readContract({
+              address: CONTRACT,
+              functionName: "task_json",
+              args: [id],
+            })
+          );
           return toTask(JSON.parse(String(raw)) as RawTask);
         } catch {
           return null;
@@ -143,11 +168,13 @@ export async function fetchTask(id: number): Promise<Task | undefined> {
   if (!IS_LIVE) return SEED.find((t) => t.id === id);
 
   try {
-    const raw = await (client() as any).readContract({
-      address: CONTRACT,
-      functionName: "task_json",
-      args: [id],
-    });
+    const raw = await busyRetry(() =>
+      (client() as any).readContract({
+        address: CONTRACT,
+        functionName: "task_json",
+        args: [id],
+      })
+    );
     return toTask(JSON.parse(String(raw)) as RawTask);
   } catch {
     return SEED.find((t) => t.id === id);

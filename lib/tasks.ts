@@ -157,6 +157,21 @@ export function formatDistance(metres: number): string {
   return `${(metres / 1000).toFixed(1)} km`;
 }
 
+/**
+ * What to put in the clock column.
+ *
+ * Only a claimed task is counting down. An open one has no deadline at all —
+ * the ninety minutes start when you claim it — so it says what you would get
+ * rather than a countdown that is not running.
+ */
+export function formatWindow(
+  task: Pick<Task, "status" | "expiresAt">,
+  now: number
+): string {
+  if (task.status !== "claimed" || !task.expiresAt) return "90m on claim";
+  return formatRemaining(task.expiresAt, now);
+}
+
 /** Workers care about minutes, not timestamps. */
 export function formatRemaining(expiresAt: number, now: number): string {
   const ms = expiresAt - now;

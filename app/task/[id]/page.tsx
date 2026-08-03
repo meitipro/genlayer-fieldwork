@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AcceptanceTest } from "@/components/AcceptanceTest";
 import { ReputationTag } from "@/components/ReputationTag";
-import { formatDistance, formatRemaining } from "@/lib/tasks";
+import { formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTask } from "@/lib/onchain";
 
 export const revalidate = 5;
@@ -67,7 +67,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         <Fact label="Reward" value={`${task.reward} GEN`} />
         <Fact
           label="Claim window"
-          value={formatRemaining(task.expiresAt, now)}
+          value={formatWindow(task, now)}
         />
         <Fact label="Reputation" value={`rep ${task.minReputation}`} />
       </div>

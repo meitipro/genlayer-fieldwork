@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TaskMap } from "@/components/TaskMap";
-import { formatDistance, formatRemaining } from "@/lib/tasks";
+import { formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
 
 export const revalidate = 5;
@@ -35,7 +35,7 @@ export default async function MapPage() {
               <th>Where</th>
               <th>Distance</th>
               <th>Reward</th>
-              <th>Expires</th>
+              <th>Claim window</th>
               <th>Needs</th>
               <th />
             </tr>
@@ -54,7 +54,7 @@ export default async function MapPage() {
                   {t.reward} GEN
                 </td>
                 <td className="mono muted">
-                  {formatRemaining(t.expiresAt, now)}
+                  {formatWindow(t, now)}
                 </td>
                 <td className="mono muted">rep {t.minReputation}</td>
                 <td>

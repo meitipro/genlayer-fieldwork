@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
-import { STATS, formatDistance, formatRemaining } from "@/lib/tasks";
+import { STATS, formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
 
 export const revalidate = 5;
@@ -70,8 +70,8 @@ export default async function HomePage() {
 
       <h2 style={{ marginTop: 44 }}>Live tasks</h2>
       <p className="muted" style={{ marginTop: 6 }}>
-        Distance, reward and expiry are the only three things a worker cares
-        about, so they are the only three columns.
+        Distance, reward and the claim window are the only three things a worker
+        cares about, so they are the only three columns.
       </p>
 
       <div className="panel table-scroll" style={{ padding: 0, marginTop: 14 }}>
@@ -81,7 +81,7 @@ export default async function HomePage() {
               <th>Task</th>
               <th>Where</th>
               <th>Reward</th>
-              <th>Expires</th>
+              <th>Claim window</th>
               <th>Needs</th>
             </tr>
           </thead>
@@ -98,7 +98,7 @@ export default async function HomePage() {
                   {t.reward}
                 </td>
                 <td className="mono muted">
-                  {formatRemaining(t.expiresAt, now)}
+                  {formatWindow(t, now)}
                 </td>
                 <td className="mono muted">rep {t.minReputation}</td>
               </tr>
