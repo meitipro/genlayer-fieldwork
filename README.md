@@ -77,6 +77,39 @@ content addressed gateways. A mutable url would let the leader and the
 validators grade two different photographs, which would make the whole
 verification theatre.
 
+## Why this needs GenLayer
+
+The contract does not use a model as a backend; it uses one where a **judgment
+has to be settled between parties who do not trust each other**.
+
+A poster and a worker disagree about whether a job was done. Today the poster
+decides, days later, with a model they own — which is exactly the arrangement
+workers distrust. Here the standard is written down and made public *before*
+anyone spends time, several validators grade the same two photographs against
+that same text independently, and they must agree on three coarse judgements
+before a single coin moves. Payment and verdict are one transaction.
+
+Nothing about that reduces to a deterministic API call, and nothing about it is
+safe to let one party compute. That is the boundary:
+
+- **Frontend owns** the camera, the checklist, uploads, and the map.
+- **The contract owns** the acceptance test, the challenge code, the grading,
+  the reuse checks, and the payout.
+- **Storage owns** the photographs, content addressed so every validator
+  provably grades identical bytes.
+
+## Tests
+
+```bash
+python contracts/test_contract_logic.py   # url rules, codes, datetimes, LLM parsing
+python contracts/test_images.py           # pre-flight checks and the phash measurement
+pytest tests/direct -q                    # full contract with mocked web + LLM
+node scripts/e2e.mjs                      # against a real deployed contract
+```
+
+See [`contracts/README.md`](contracts/README.md) for why `tests/direct` currently
+skips.
+
 ## Design rules worth keeping
 
 - **One accent colour**, three jobs only: primary action, verified state, the mark.

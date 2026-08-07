@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AcceptanceTest } from "@/components/AcceptanceTest";
 import { ReputationTag } from "@/components/ReputationTag";
+import { ClaimButton } from "@/components/ClaimButton";
 import { formatDistance, formatWindow } from "@/lib/tasks";
-import { fetchTask } from "@/lib/onchain";
+import { fetchTask, lookupTask } from "@/lib/onchain";
+import { Unavailable } from "@/components/Unavailable";
 
 export const revalidate = 5;
 
@@ -31,8 +33,10 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 export default async function TaskPage({ params }: { params: { id: string } }) {
-  const task = await fetchTask(Number(params.id));
-  if (!task) notFound();
+  const found = await lookupTask(Number(params.id));
+  if (found.status === "unavailable") return <Unavailable what="this task" />;
+  if (found.status === "missing") notFound();
+  const task = found.task;
 
   const claimable = task.status === "open";
   const now = Date.now();
@@ -90,9 +94,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
 
       <div style={{ marginTop: 20 }}>
         {claimable ? (
-          <Link className="btn btn-primary btn-block" href={`/submit/${task.id}`}>
-            Claim this task
-          </Link>
+          <ClaimButton taskId={task.id} />
         ) : (
           <button className="btn btn-block" disabled>
             {task.status === "paid"

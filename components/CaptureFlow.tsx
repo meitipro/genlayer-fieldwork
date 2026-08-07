@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/types";
 import { ChallengeCode } from "./ChallengeCode";
-import { IS_LIVE, connectWallet, submitPhotographs, type Stage } from "@/lib/genlayer";
+import {
+  IS_LIVE,
+  connectWallet,
+  humanError,
+  submitPhotographs,
+  type Stage,
+} from "@/lib/genlayer";
 
 /* Mobile first, one hand, outdoors.
    The checklist catches the rejection before it happens, which is worth more
@@ -148,8 +154,9 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
       if (res.status === "rejected") setStage("idle");
     } catch (e: unknown) {
       setStage("failed");
-      // Contract error strings are written for humans, so they are shown verbatim.
-      setError(e instanceof Error ? e.message : "something went wrong");
+      // Contract error strings are written for humans; humanError only drops
+      // the consensus class prefix in front of them.
+      setError(humanError(e) || "something went wrong");
     }
   }
 

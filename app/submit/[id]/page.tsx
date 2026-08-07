@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaptureFlow } from "@/components/CaptureFlow";
 import { SEED_NOW } from "@/lib/tasks";
-import { fetchTask } from "@/lib/onchain";
+import { fetchTask, lookupTask } from "@/lib/onchain";
+import { Unavailable } from "@/components/Unavailable";
 
 export const revalidate = 5;
 
@@ -19,8 +20,10 @@ export async function generateMetadata({
 }
 
 export default async function SubmitPage({ params }: { params: { id: string } }) {
-  const task = await fetchTask(Number(params.id));
-  if (!task) notFound();
+  const found = await lookupTask(Number(params.id));
+  if (found.status === "unavailable") return <Unavailable what="this task" />;
+  if (found.status === "missing") notFound();
+  const task = found.task;
 
   // A real claim carries its own code and expiry, so it is counted against the
   // clock. A task nobody has claimed is shown with a stand-in code so the

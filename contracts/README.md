@@ -84,6 +84,67 @@ a pass from a failure.
 
 ---
 
+## Consensus design
+
+Both non-deterministic blocks use `gl.vm.run_nondet_unsafe` with a validator
+that **independently reaches its own verdict and compares decisions**. Neither
+validator inspects only the leader's output shape, because a format check proves
+the leader formatted an answer, not that the answer is right.
+
+| Block | Leader produces | Validator does | Compared |
+| --- | --- | --- | --- |
+| `post_task` | is this acceptance test gradeable from a photograph | judges the same test itself | the `gradeable` decision |
+| `submit` | three judgements about two photographs | fetches the same bytes and grades again | `code_visible`, `same_place`, `test_passed`, plus `content_hash`, `phash`, `refused` |
+
+The reason strings are deliberately **not** compared. Two graders describe the
+same photograph differently, and requiring identical prose would fail consensus
+on agreeing verdicts. The hashes are compared precisely because they are pure
+functions of bytes every node fetched identically — that is what stops a leader
+forging the reuse check.
+
+`prompt_non_comparative` was used for the acceptance-test gate at first and
+replaced: deciding gradeable/vague is a classification, and a validator that only
+blesses the leader's label lets one node decide alone. Verified on Studio after
+the change — the comparative gate still reaches consensus and still refuses
+"Make sure the area is nice and clean and looks good when you finish".
+
+### Error classes
+
+Failures carry a class so validators can compare them instead of guessing:
+
+| Prefix | Meaning | Validator rule |
+| --- | --- | --- |
+| `[EXPECTED]` | business logic | must match exactly |
+| `[EXTERNAL]` | gateway 4xx | must match exactly |
+| `[TRANSIENT]` | gateway 5xx or unexpected status | agree if both are transient |
+| `[LLM_ERROR]` | model returned nothing usable | always disagree, forcing rotation |
+
+`_handle_leader_error` implements that. A validator that simply returned `False`
+for every failed leader would punish an honest node for a flaky gateway; one that
+agreed with any failure would lock a broken run into state.
+
+The prefix is for consensus, not for the worker. `humanError()` in
+`lib/genlayer.ts` strips it before anything is shown.
+
+## Tests
+
+```bash
+python contracts/test_contract_logic.py   # url rules, codes, datetimes, LLM parsing
+python contracts/test_images.py           # pre-flight, determinism, the phash measurement
+pytest tests/direct -q                    # full contract, mocked web + LLM
+node scripts/e2e.mjs                      # the real thing, on a real chain
+```
+
+The first two parse the helpers straight out of `fieldwork.py` with `ast`, so
+they test the code that ships rather than a copy that can drift.
+
+`tests/direct` is written and currently **skips everywhere**: gltest's direct
+mode downloads `genvm-universal.tar.xz`, and no genvm release publishes that
+asset — they ship `genvm-linux-amd64` / `genvm-linux-arm64` only. The tests are
+kept because they are correct and will run the moment it appears. Until then the
+deterministic half is covered by the two scripts above and the whole flow by
+`scripts/e2e.mjs` against a deployed contract.
+
 ## What the contract uses beyond the brief
 
 - **Events** — `TaskPosted`, `TaskClaimed`, `SubmissionGraded`,

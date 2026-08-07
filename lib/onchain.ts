@@ -99,23 +99,60 @@ function client() {
 }
 
 /**
- * Studio answers -32006 "Server busy: all N execution slots occupied" when its
- * execution slots are full. Without a retry a busy moment silently drops tasks
- * from the list, which reads as tasks disappearing rather than as load.
+ * Studio pushes back in two ways, and both look like a broken site if ignored:
+ * `-32006 Server busy: all N execution slots occupied`, and
+ * `Rate limit exceeded: 30 requests per minute`.
  */
-async function busyRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
-  let wait = 700;
+function isBackpressure(e: unknown): boolean {
+  const msg = String(
+    (e as { details?: string; message?: string })?.details ??
+      (e as Error)?.message ??
+      e
+  );
+  return (
+    msg.includes("-32006") ||
+    /slots occupied|Server busy|Rate limit exceeded|too many requests/i.test(msg)
+  );
+}
+
+async function backoff<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  let wait = 900;
   for (let i = 1; ; i++) {
     try {
       return await fn();
     } catch (e) {
-      const msg = String((e as { details?: string; message?: string })?.details ?? (e as Error)?.message ?? e);
-      const busy = msg.includes("-32006") || /slots occupied|Server busy/i.test(msg);
-      if (!busy || i >= attempts) throw e;
+      if (!isBackpressure(e) || i >= attempts) throw e;
       await new Promise((r) => setTimeout(r, wait));
       wait *= 2;
     }
   }
+}
+
+/**
+ * Read the chain at most once every few seconds, however many pages ask.
+ *
+ * Home, /map and /console all want the same list, and each task costs a call.
+ * Rendering them together against a 30-requests-per-minute limit is enough to
+ * start losing tasks, so concurrent callers share one in-flight read and the
+ * result is held briefly. Nothing depends on the cache for correctness — a
+ * stale read is a cosmetic bug, never a money bug.
+ */
+const TTL_MS = 5000;
+let cached: { at: number; tasks: Task[] } | null = null;
+let inflight: Promise<Task[]> | null = null;
+
+/** Small concurrency, so a long list never bursts through the rate limit. */
+async function inBatches<In, Out>(
+  items: In[],
+  size: number,
+  fn: (item: In) => Promise<Out>
+): Promise<Out[]> {
+  const out: Out[] = [];
+  for (let i = 0; i < items.length; i += size) {
+    const batch = items.slice(i, i + size);
+    out.push(...(await Promise.all(batch.map(fn))));
+  }
+  return out;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -123,27 +160,30 @@ async function busyRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
 export async function fetchTasks(limit = 40): Promise<Task[]> {
   if (!IS_LIVE) return SEED;
 
-  try {
-    const c = client();
-    const total = Number(
-      await busyRetry(() =>
-        (c as any).readContract({
-          address: CONTRACT,
-          functionName: "total_tasks",
-          args: [],
-        })
-      )
-    );
-    if (!Number.isFinite(total) || total <= 0) return [];
+  if (cached && Date.now() - cached.at < TTL_MS) return cached.tasks;
+  if (inflight) return inflight;
 
-    // Newest first, bounded.
-    const ids: number[] = [];
-    for (let i = total - 1; i >= 0 && ids.length < limit; i--) ids.push(i);
+  inflight = (async () => {
+    try {
+      const c = client();
+      const total = Number(
+        await backoff(() =>
+          (c as any).readContract({
+            address: CONTRACT,
+            functionName: "total_tasks",
+            args: [],
+          })
+        )
+      );
+      if (!Number.isFinite(total) || total <= 0) return [];
 
-    const rows = await Promise.all(
-      ids.map(async (id) => {
+      // Newest first, bounded.
+      const ids: number[] = [];
+      for (let i = total - 1; i >= 0 && ids.length < limit; i--) ids.push(i);
+
+      const rows = await inBatches(ids, 4, async (id) => {
         try {
-          const raw = await busyRetry(() =>
+          const raw = await backoff(() =>
             (c as any).readContract({
               address: CONTRACT,
               functionName: "task_json",
@@ -154,29 +194,71 @@ export async function fetchTasks(limit = 40): Promise<Task[]> {
         } catch {
           return null;
         }
-      })
-    );
+      });
 
-    return rows.filter((t): t is Task => t !== null);
-  } catch {
-    // A chain that cannot be reached should not take the site down.
-    return SEED;
+      const tasks = rows.filter((t): t is Task => t !== null);
+      cached = { at: Date.now(), tasks };
+      return tasks;
+    } catch {
+      // A chain that cannot be reached should not take the site down.
+      return cached?.tasks ?? SEED;
+    } finally {
+      inflight = null;
+    }
+  })();
+
+  return inflight;
+}
+
+/**
+ * "I could not reach the chain" and "there is no such task" are different
+ * answers and must not be collapsed.
+ *
+ * The seed records cannot stand in for a single live task: their ids are in a
+ * different space entirely, so falling back to them turns a busy RPC into a
+ * confident "this task does not exist" for a task that plainly does.
+ */
+export type TaskLookup =
+  | { status: "found"; task: Task }
+  | { status: "missing" }
+  | { status: "unavailable" };
+
+export async function lookupTask(id: number): Promise<TaskLookup> {
+  if (!IS_LIVE) {
+    const seeded = SEED.find((t) => t.id === id);
+    return seeded ? { status: "found", task: seeded } : { status: "missing" };
+  }
+
+  // generateMetadata and the page body both ask for the same task, so a warm
+  // list answers both without touching the chain again.
+  if (cached && Date.now() - cached.at < TTL_MS) {
+    const hit = cached.tasks.find((t) => t.id === id);
+    if (hit) return { status: "found", task: hit };
+  }
+
+  try {
+    const raw = await backoff(
+      () =>
+        (client() as any).readContract({
+          address: CONTRACT,
+          functionName: "task_json",
+          args: [id],
+        }),
+      5
+    );
+    return { status: "found", task: toTask(JSON.parse(String(raw)) as RawTask) };
+  } catch (e) {
+    const warm = cached?.tasks.find((t) => t.id === id);
+    if (warm) return { status: "found", task: warm };
+    // The contract says so itself when an id is out of range.
+    if (/no task with that id/i.test(String((e as Error)?.message ?? e))) {
+      return { status: "missing" };
+    }
+    return { status: "unavailable" };
   }
 }
 
 export async function fetchTask(id: number): Promise<Task | undefined> {
-  if (!IS_LIVE) return SEED.find((t) => t.id === id);
-
-  try {
-    const raw = await busyRetry(() =>
-      (client() as any).readContract({
-        address: CONTRACT,
-        functionName: "task_json",
-        args: [id],
-      })
-    );
-    return toTask(JSON.parse(String(raw)) as RawTask);
-  } catch {
-    return SEED.find((t) => t.id === id);
-  }
+  const found = await lookupTask(id);
+  return found.status === "found" ? found.task : undefined;
 }

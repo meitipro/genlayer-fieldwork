@@ -8,6 +8,7 @@ import {
   isOutOfGas,
   postTask,
   txUrl,
+  humanError,
   type Stage,
 } from "@/lib/genlayer";
 
@@ -100,9 +101,9 @@ export function PostTaskForm() {
       setStage("finalized");
     } catch (e: unknown) {
       setStage("failed");
-      const raw = e instanceof Error ? e.message : String(e);
-      // Contract error strings are written for humans, so they are shown as is.
-      setError(raw.replace(/^Error:\s*/, ""));
+      // Contract error strings are written for humans; humanError only drops
+      // the consensus class prefix in front of them.
+      setError(humanError(e));
     }
   }
 

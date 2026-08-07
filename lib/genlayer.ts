@@ -76,6 +76,50 @@ export async function isOutOfGas(address: `0x${string}`): Promise<boolean> {
   }
 }
 
+/**
+ * Contract errors carry a class prefix so validators can compare failures —
+ * "[EXPECTED] this task is not open". The class is for consensus, not for the
+ * person holding the phone, so it is stripped before display. The sentence
+ * behind it is written for humans and is shown as-is.
+ */
+export function humanError(raw: unknown): string {
+  const code = (raw as { code?: number | string })?.code;
+  // MetaMask: the user closed the confirmation. Not a failure worth alarming
+  // anyone about.
+  if (code === 4001 || code === "ACTION_REJECTED") {
+    return "You cancelled that in your wallet, nothing was sent.";
+  }
+
+  const text =
+    raw instanceof Error ? raw.message : typeof raw === "string" ? raw : String(raw);
+
+  const cleaned = text
+    .replace(/^Error:\s*/i, "")
+    .replace(/\[(EXPECTED|EXTERNAL|TRANSIENT|LLM_ERROR)\]\s*/g, "")
+    .trim();
+
+  // Internal codes are for us, not for someone standing in the street.
+  const known: Record<string, string> = {
+    no_wallet:
+      "No wallet found. Install MetaMask, then reload this page to claim work.",
+    upload_failed:
+      "Your photographs could not be uploaded. Check your signal and try again.",
+    storage_not_configured:
+      "Photo upload is not configured on this deployment yet.",
+    too_large: "That photograph is too large. Try again with a smaller image.",
+  };
+  if (known[cleaned]) return known[cleaned];
+
+  if (/user rejected|denied transaction/i.test(cleaned)) {
+    return "You cancelled that in your wallet, nothing was sent.";
+  }
+  if (/insufficient funds/i.test(cleaned)) {
+    return "This wallet does not have enough GEN for that transaction.";
+  }
+
+  return cleaned;
+}
+
 /** The stages the interface has to show, because a write is not a spinner. */
 export type Stage =
   | "idle"
@@ -225,13 +269,28 @@ export async function postTask(
       ? null
       : Number(accepted.result);
 
+  // The task exists on acceptance, but the funds it holds are only committed on
+  // finality, so the poster is not told it is live until then.
+  await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.FINALIZED,
+  });
+  onStage?.("finalized");
+
   return { hash, taskId };
 }
 
-/** Claim a task and get back the six character challenge code. */
+/**
+ * Claim a task and get back the six character challenge code.
+ *
+ * The code is readable on acceptance, which is what the worker needs, but the
+ * claim is only really theirs once finalized — so both stages are awaited and
+ * reported rather than returning early on the first one.
+ */
 export async function claimTask(
   address: `0x${string}`,
-  taskId: number
+  taskId: number,
+  onAccepted?: () => void
 ): Promise<{ hash: string; code: string }> {
   const client = writeClient(address, getProvider());
   const hash = await client.writeContract({
@@ -240,11 +299,21 @@ export async function claimTask(
     args: [taskId],
     value: BigInt(0),
   });
+
   const accepted: any = await client.waitForTransactionReceipt({
     hash,
     status: TransactionStatus.ACCEPTED,
   });
-  return { hash, code: String(accepted?.result ?? "") };
+  onAccepted?.();
+
+  const code = String(accepted?.result ?? "");
+
+  await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.FINALIZED,
+  });
+
+  return { hash, code };
 }
 
 /**
