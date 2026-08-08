@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/types";
 import { ChallengeCode } from "./ChallengeCode";
+import { SettlementNotice } from "./SettlementNotice";
 import {
   IS_LIVE,
   connectWallet,
@@ -168,6 +169,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
         </div>
         <h2 style={{ color: "var(--accent)" }}>{task.reward} GEN</h2>
         <p className="muted">{result.reason}</p>
+        <SettlementNotice />
         <a className="btn btn-primary btn-block" href={`/proof/${task.id}`}>
           See the public receipt
         </a>

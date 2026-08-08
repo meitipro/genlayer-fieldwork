@@ -1,5 +1,6 @@
 import type { Task } from "@/lib/types";
 import { formatStamp } from "@/lib/tasks";
+import { SettlementNotice } from "./SettlementNotice";
 
 /* Both photographs, the test, the verdict, the agreement, and the payment.
    Public receipts are what convince the next poster that the network works, so
@@ -37,6 +38,8 @@ export function ProofReceipt({ task }: { task: Task }) {
             : `task ${task.id}`}
         </span>
       </div>
+
+      {paid ? <SettlementNotice /> : null}
 
       <div
         style={{

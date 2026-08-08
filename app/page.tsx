@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
 import { STATS, formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
+import { SettlementNotice } from "@/components/SettlementNotice";
 
 export const revalidate = 5;
 
@@ -162,6 +163,10 @@ export default async function HomePage() {
           seconds later.
         </li>
       </ol>
+
+      <div style={{ marginTop: 18, maxWidth: "68ch" }}>
+        <SettlementNotice />
+      </div>
 
       <p className="muted" style={{ marginTop: 20, maxWidth: "68ch" }}>
         No system can prove where a photograph was taken.{" "}

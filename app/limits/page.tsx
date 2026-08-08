@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { IS_STUDIO } from "@/lib/chain";
 
 export const metadata: Metadata = {
   title: "What this cannot do",
@@ -40,6 +41,24 @@ export default function LimitsPage() {
           tasks.
         </p>
       </Limit>
+
+      {IS_STUDIO ? (
+      <Limit title="On the Studio network, the money does not actually move">
+        <p>
+          This deployment runs on GenLayer&apos;s Studio development network. The
+          grading is real, the verdict is real, and the receipt is real. The
+          transfer is not.
+        </p>
+        <p style={{ marginBottom: 0 }}>
+          Measured against this contract: funding a task moves GEN in correctly,
+          and paying out debits the contract by exactly the right amount while
+          the payee&apos;s balance does not change. The contract is doing its
+          part — Studio&apos;s ledger does not apply the transfer. So a task here
+          can read <strong>paid</strong> without anyone being richer. On a live
+          network the same transaction pays.
+        </p>
+      </Limit>
+      ) : null}
 
       <Limit title="It does not match photographs by how they look">
         <p>

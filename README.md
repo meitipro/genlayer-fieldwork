@@ -7,8 +7,8 @@ contract issues a six character code. The worker photographs the place before
 and after with that code in frame, and several validators grade both images
 against the test. Payment and verdict are one transaction.
 
-Built on GenLayer, Testnet Bradbury. Project 09 of 10 in the InferNode build
-brief series.
+Built on GenLayer, running on the Studio network. Project 09 of 10 in the
+InferNode build brief series.
 
 ---
 
@@ -20,9 +20,12 @@ npm run dev
 ```
 
 Without `NEXT_PUBLIC_FIELDWORK_CONTRACT` set, the site runs on seed records and
-the submit button explains that nothing was sent. That is deliberate: every
-screen reads through `lib/tasks.ts`, so pointing it at a live contract is a one
-file change.
+every write explains that nothing was sent. That is deliberate: every screen
+reads through `lib/onchain.ts`, so pointing it at a live contract is one
+environment variable, and an unreachable chain degrades to the seed records
+rather than a 500.
+
+To deploy your own, see [`DEPLOY.md`](DEPLOY.md).
 
 ## Routes
 
@@ -77,6 +80,13 @@ content addressed gateways. A mutable url would let the leader and the
 validators grade two different photographs, which would make the whole
 verification theatre.
 
+## Deploying
+
+[`DEPLOY.md`](DEPLOY.md) is the runbook: contract checks, proving vision on the
+network, deploy, end-to-end exercise, seeding, and pointing the site at it —
+with what "worked" looks like at each step, because on this stack a failure
+often reports success.
+
 ## Why this needs GenLayer
 
 The contract does not use a model as a backend; it uses one where a **judgment
@@ -115,5 +125,7 @@ skips.
 - **One accent colour**, three jobs only: primary action, verified state, the mark.
 - **No italics**, type scale is 12/14/15/18/22/30/44 and nothing between.
 - **Monospace for labels, hashes, times and every eyebrow.**
-- Light only and high contrast, because this is read on a phone outdoors.
+- Light is the default and high contrast, because this is read on a phone
+  outdoors. Dark follows the system unless the visitor picks one, and both were
+  measured for contrast rather than eyeballed.
 - Rejections say exactly what to change and never imply dishonesty.
