@@ -42,6 +42,13 @@ def load():
         "urllib": urllib,
         "gl": types.SimpleNamespace(vm=types.SimpleNamespace(UserError=UserError)),
         "UserError": UserError,
+        # The extracted methods keep their annotations, which name GenLayer
+        # types this harness never loads. They only have to resolve.
+        "Task": object,
+        "Address": str,
+        "u256": int,
+        "i64": int,
+        "str_": str,
     }
 
     wanted_consts = {
@@ -53,7 +60,7 @@ def load():
         "ERROR_LLM",
     }
     wanted_funcs = {"_flag"}
-    wanted_methods = {"_cid_of", "_code_from", "_normalise"}
+    wanted_methods = {"_cid_of", "_code_from", "_normalise", "_abandoned"}
 
     found_consts, found_funcs, found_methods = set(), set(), set()
 
@@ -91,6 +98,7 @@ _cid_of = ENV["_cid_of"]
 _code_from = ENV["_code_from"]
 _normalise = ENV["_normalise"]
 _flag = ENV["_flag"]
+_abandoned = ENV["_abandoned"]
 CODE_ALPHABET = ENV["CODE_ALPHABET"]
 
 CID = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
@@ -179,6 +187,47 @@ def test_datetimes():
     refuses(lambda: _normalise("2026-07-27"), "unreadable datetime", "too short refused")
 
 
+class FakeTask:
+    def __init__(self, status, claim_expires):
+        self.status = status
+        self.claim_expires = claim_expires
+
+
+def test_abandoned():
+    """A claim that has run out must free the task, whatever state it is in.
+
+    The bug this guards: only `claimed` used to count, so a task that was
+    rejected and then abandoned could never return to the pool — nobody could
+    claim it and the reward stayed locked.
+    """
+    print("\nabandoned claims")
+    now = "2026-08-08T12:00:00"
+    past = "2026-08-08T11:00:00"
+    future = "2026-08-08T13:00:00"
+
+    check(_abandoned(FakeTask("claimed", past), now) is True, "claimed and expired")
+    check(
+        _abandoned(FakeTask("rejected", past), now) is True,
+        "REJECTED and expired frees the task",
+    )
+    check(_abandoned(FakeTask("claimed", future), now) is False, "claimed, still running")
+    check(
+        _abandoned(FakeTask("rejected", future), now) is False,
+        "rejected but still inside the window stays with the worker",
+    )
+    check(_abandoned(FakeTask("open", ""), now) is False, "an open task is not abandoned")
+    check(_abandoned(FakeTask("paid", past), now) is False, "a paid task is never reopened")
+    check(
+        _abandoned(FakeTask("cancelled", past), now) is False,
+        "a cancelled task is never reopened",
+    )
+    # An empty expiry must never read as "long ago" through string comparison.
+    check(
+        _abandoned(FakeTask("claimed", ""), now) is False,
+        "a blank expiry is not an expired one",
+    )
+
+
 def test_flag():
     print("\nreading a boolean out of a model")
     check(_flag({"a": True}, "a") is True, "real bool")
@@ -198,6 +247,7 @@ def main():
     test_urls()
     test_codes()
     test_datetimes()
+    test_abandoned()
     test_flag()
     print("\n" + ("all contract logic checks passed" if failures == 0 else f"{failures} FAILURES"))
     return 1 if failures else 0

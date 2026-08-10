@@ -166,6 +166,32 @@ keyword-only, but the right numbers are unknown until the first real submissions
 land, and a wrong minimum makes every `submit` fail. Add it once
 `genlayer trace <txId>` has shown actual gas for a vision call with two images.
 
+## Two bugs a re-read caught
+
+Neither showed up in lint, typecheck, or any test — both lived in paths nothing
+exercised.
+
+**A rejected task could be locked out of the pool for ever.** A rejection
+deliberately leaves the claim with its owner so they can retake inside the
+window. But `claim` only reopened a task whose status was `claimed`, and
+`release_expired` only accepted `claimed` too. So a worker who was rejected and
+then walked away left the task sitting in `rejected` with a dead clock: nobody
+could claim it, `release_expired` refused it, and the reward stayed locked until
+the poster noticed and cancelled. `_abandoned()` now treats `claimed` and
+`rejected` alike, and both entry points go through it. It also refuses to read a
+blank expiry as "long ago", which string comparison would otherwise do.
+
+**Overpaying a task burned the excess.** `post_task` accepted
+`value >= reward + fee` and then did nothing with the difference. A cancel
+refunds only the reward and the fee, and `withdraw_fees` pays out only
+`fees_accrued`, so anything extra was stranded in the contract with no path out.
+The excess is now banked into `fees_accrued`, which makes it withdrawable rather
+than lost.
+
+Both are covered: `_abandoned` by eight cases in
+`contracts/test_contract_logic.py`, and both by direct-mode tests that will run
+when gltest can.
+
 ## Two things the brief got wrong
 
 **There is no two image limit.** The brief builds the whole product shape around

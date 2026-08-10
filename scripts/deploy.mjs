@@ -38,6 +38,30 @@ async function rpc(method, params) {
   return res.json();
 }
 
+/**
+ * Studio drops TLS connections, fills its execution slots and rate limits at 30
+ * requests a minute. None of those mean the deploy failed, so anything that
+ * talks to the chain goes through here.
+ */
+async function retry(fn, label, attempts = 6) {
+  let wait = 2500;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = String(e?.details || e?.message || e);
+      const soft =
+        /fetch failed|ECONNRESET|Rate limit|slots occupied|Server busy|socket hang up|timeout/i.test(
+          msg
+        );
+      if (!soft || i === attempts) throw e;
+      log(`     (${label} hiccup, retrying in ${wait / 1000}s)`);
+      await new Promise((r) => setTimeout(r, wait));
+      wait = Math.min(wait * 2, 20000);
+    }
+  }
+}
+
 function explain(receipt) {
   const lr =
     receipt?.consensus_data?.leader_receipt ??
@@ -64,15 +88,22 @@ async function main() {
   const code = readFileSync(join(ROOT, "contracts", "fieldwork.py"), "utf8");
 
   log("deploying contracts/fieldwork.py ...");
-  const hash = await client.deployContract({ code, args: [FEE_BPS] });
+  const hash = await retry(
+    () => client.deployContract({ code, args: [FEE_BPS] }),
+    "deploy"
+  );
   log(`     tx ${hash}`);
 
-  const receipt = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-    retries: 250,
-    interval: 3000,
-  });
+  const receipt = await retry(
+    () =>
+      client.waitForTransactionReceipt({
+        hash,
+        status: TransactionStatus.FINALIZED,
+        retries: 250,
+        interval: 3000,
+      }),
+    "receipt"
+  );
 
   const address =
     receipt?.data?.contract_address ??
@@ -89,7 +120,7 @@ async function main() {
   // ACCEPTED is not enough. This is the check that exposes the Bradbury bug
   // where a deploy finalizes and the code is nevertheless gone.
   const shape = NETWORK === "bradbury" ? [{ address }] : [address];
-  const codeCheck = await rpc("gen_getContractCode", shape);
+  const codeCheck = await retry(() => rpc("gen_getContractCode", shape), "code check");
   if (!codeCheck?.result) {
     console.error(JSON.stringify(codeCheck, null, 2));
     console.error("\n✗ deploy finalized but the code is not readable");
@@ -97,21 +128,18 @@ async function main() {
   }
   log(`[ok] code readable (${String(codeCheck.result).length} chars)`);
 
-  const total = await client.readContract({
-    address,
-    functionName: "total_tasks",
-    args: [],
-  });
-  const fee = await client.readContract({
-    address,
-    functionName: "fee_bps_value",
-    args: [],
-  });
-  const owner = await client.readContract({
-    address,
-    functionName: "owner_address",
-    args: [],
-  });
+  const total = await retry(
+    () => client.readContract({ address, functionName: "total_tasks", args: [] }),
+    "total_tasks"
+  );
+  const fee = await retry(
+    () => client.readContract({ address, functionName: "fee_bps_value", args: [] }),
+    "fee_bps_value"
+  );
+  const owner = await retry(
+    () => client.readContract({ address, functionName: "owner_address", args: [] }),
+    "owner_address"
+  );
   log(`[ok] total_tasks=${total}  fee_bps=${fee}  owner=${owner}`);
 
   log("\n" + "=".repeat(58));

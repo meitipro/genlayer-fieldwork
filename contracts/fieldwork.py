@@ -172,6 +172,24 @@ class Contract(gl.Contract):
             raise gl.vm.UserError(ERROR_EXPECTED + " no task with that id")
         return self.tasks[task_id]
 
+    def _abandoned(self, t: Task, now: str) -> bool:
+        """Has the claim on this task run out?
+
+        Both `claimed` and `rejected` count. A rejection leaves the claim with
+        its owner so they can retake inside the window, which means a worker who
+        is rejected and then walks away leaves the task sitting in `rejected`
+        with a dead clock. Without this that task never returns to the pool: no
+        one can claim it and the reward stays locked until the poster notices.
+        """
+        return t.status in ("claimed", "rejected") and t.claim_expires != "" and now > t.claim_expires
+
+    def _return_to_pool(self, t: Task) -> None:
+        t.status = "open"
+        t.claimed_by = ZERO_ADDRESS
+        t.challenge_code = ""
+        t.claim_expires = ""
+        t.reason = ""
+
     def _pay(self, to: Address, amount: u256) -> None:
         # emit_transfer raises a bare ValueError on zero, which would crash the
         # vm with no message, so the guard lives here instead.
@@ -206,8 +224,13 @@ class Contract(gl.Contract):
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a reward")
 
         fee = u256(int(reward) * int(self.fee_bps) // BPS)
-        if gl.message.value < u256(int(reward) + int(fee)):
+        owed = int(reward) + int(fee)
+        if gl.message.value < u256(owed):
             raise gl.vm.UserError(ERROR_EXPECTED + " send the reward plus the fee to fund this task")
+
+        # Banked below, once the acceptance test has passed its review. See the
+        # note there.
+        overpaid = int(gl.message.value) - owed
 
         # A vague test poisons every submission made against it, and the worker
         # carries the cost. This is the cheapest possible place to catch one.
@@ -258,6 +281,15 @@ class Contract(gl.Contract):
                 + str(verdict["reason"])
             )
 
+        # ---- deterministic half ----
+        # Anything sent beyond the reward and the fee would otherwise sit in the
+        # contract with nothing accounting for it: a cancel refunds only the
+        # reward and the fee, and withdraw_fees only pays out fees_accrued, so
+        # the excess could never come out again. Bank it as a fee instead, so it
+        # is at worst withdrawable rather than lost.
+        if overpaid > 0:
+            self.fees_accrued = u256(int(self.fees_accrued) + overpaid)
+
         self.tasks.append(
             Task(
                 poster=gl.message.sender_address,
@@ -297,9 +329,8 @@ class Contract(gl.Contract):
         t = self._require_task(task_id)
         now = self._now()
 
-        if t.status == "claimed" and now > t.claim_expires:
-            t.status = "open"
-            t.claimed_by = ZERO_ADDRESS
+        if self._abandoned(t, now):
+            self._return_to_pool(t)
         if t.status != "open":
             raise gl.vm.UserError(ERROR_EXPECTED + " this task is not open")
 
@@ -480,16 +511,14 @@ class Contract(gl.Contract):
 
     @gl.public.write
     def release_expired(self, task_id: u256) -> str:
+        """Put an abandoned task back in the pool. Anyone may call this."""
         t = self._require_task(task_id)
-        if t.status != "claimed":
+        if t.status not in ("claimed", "rejected"):
             raise gl.vm.UserError(ERROR_EXPECTED + " this task is not claimed")
-        if self._now() <= t.claim_expires:
+        if not self._abandoned(t, self._now()):
             raise gl.vm.UserError(ERROR_EXPECTED + " this claim has not expired yet")
         # A missed claim is not fraud, so the worker loses nothing.
-        t.status = "open"
-        t.claimed_by = ZERO_ADDRESS
-        t.challenge_code = ""
-        t.claim_expires = ""
+        self._return_to_pool(t)
         return t.status
 
     @gl.public.write

@@ -368,6 +368,92 @@ def test_http_urls_are_refused(contract, direct_vm, direct_alice, direct_bob):
     assert "https" in str(err.value)
 
 
+# ---------------------------------------------------------------- abandonment
+
+
+def test_a_rejected_task_returns_to_the_pool_when_the_claim_runs_out(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    """The bug this guards: a rejection leaves the claim with its owner so they
+    can retake. A worker who is rejected and then walks away used to leave the
+    task stuck in `rejected` for ever — unclaimable by anyone, reward locked."""
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm, passed=False, reason="bags still against the wall")
+
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.submit(task_id, URL_A, URL_B) == "rejected"
+
+    # ... and the worker never comes back. The claim window runs out.
+    direct_vm.datetime = "2099-01-01T00:00:00"
+
+    direct_vm.sender = direct_charlie
+    code = contract.claim(task_id)
+
+    assert len(code) == 6
+    assert contract.status_of(task_id) == "claimed"
+    assert contract.claimed_by(task_id) == direct_charlie
+
+
+def test_release_expired_frees_a_rejected_task_too(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm, passed=False)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    contract.submit(task_id, URL_A, URL_B)
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+
+    # Anyone may do this, not just the poster or the worker.
+    direct_vm.sender = direct_charlie
+    assert contract.release_expired(task_id) == "open"
+    assert contract.challenge_code_of(task_id) == ""
+    assert contract.reason_of(task_id) == ""
+
+
+def test_a_live_claim_cannot_be_taken_from_the_worker(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+
+    direct_vm.sender = direct_charlie
+    with pytest.raises(Exception) as err:
+        contract.release_expired(task_id)
+    assert "not expired" in str(err.value)
+
+
+# ---------------------------------------------------------------- money
+
+
+def test_overpaying_is_banked_rather_than_lost(contract, direct_vm, direct_alice):
+    """The bug this guards: post_task accepted `value >= reward + fee` and did
+    nothing with the excess. Nothing refunded it and nothing could withdraw it,
+    so it was locked in the contract for ever."""
+    gradeable(direct_vm, True)
+    reward = 18
+    owed = reward * GEN + reward * GEN * FEE_BPS // 10000
+    extra = 5 * GEN
+
+    direct_vm.sender = direct_alice
+    direct_vm.value = owed + extra
+    contract.post_task(
+        GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
+        51505100, -122600, reward * GEN, 0,
+    )
+
+    # The fee for this task, plus every wei of the overpayment.
+    expected = reward * GEN * FEE_BPS // 10000 + extra
+    assert int(contract.fees_accrued_value()) == expected
+
+
 # ---------------------------------------------------------------- lifecycle
 
 
