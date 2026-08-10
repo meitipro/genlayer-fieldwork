@@ -6,7 +6,16 @@ import { TransactionStatus } from "genlayer-js/types";
 import { chain, walletChainParams, REQUIRES_GAS } from "./chain";
 import { normalisePhoto } from "./image";
 
-export { FAUCET_URL, EXPLORER, txUrl, addressUrl, NETWORK, IS_STUDIO, REQUIRES_GAS } from "./chain";
+export {
+  FAUCET_URL,
+  EXPLORER,
+  txUrl,
+  addressUrl,
+  NETWORK,
+  CHAIN_NAME,
+  IS_STUDIO,
+  REQUIRES_GAS,
+} from "./chain";
 
 export const FIELDWORK_CONTRACT = (process.env
   .NEXT_PUBLIC_FIELDWORK_CONTRACT || "") as `0x${string}`;
@@ -196,6 +205,45 @@ export async function submitPhotographs(opts: {
   }
 
   return { status, reason, hash };
+}
+
+/**
+ * Deploy the contract from the browser, signed by the visitor's own wallet.
+ *
+ * The deployer becomes the contract `owner`, and the owner is the only account
+ * that can withdraw fees or hand ownership on. Deploying from a CLI keystore or
+ * from Studio's own account selector makes one of those the owner instead —
+ * which is fine for a throwaway and wrong for a deployment you intend to keep.
+ * This is the only path that ends with your wallet holding it.
+ */
+export async function deployFieldwork(
+  address: `0x${string}`,
+  feeBps: number,
+  onStage?: (s: Stage) => void
+): Promise<{ hash: string; contract: `0x${string}` }> {
+  const res = await fetch("/api/contract-source");
+  if (!res.ok) throw new Error("could not read the contract source");
+  const code = await res.text();
+
+  const client = writeClient(address, getProvider());
+  const hash = await client.deployContract({ code, args: [feeBps] });
+  onStage?.("sent");
+
+  // A deploy is only real once the code is readable, which is a finality-time
+  // fact — some networks report a finalized deploy whose code is not there.
+  const receipt: any = await client.waitForTransactionReceipt({
+    hash: hash as `0x${string}` & { length: 66 },
+    status: TransactionStatus.FINALIZED,
+  });
+  onStage?.("finalized");
+
+  const contract =
+    receipt?.data?.contract_address ??
+    receipt?.contract_address ??
+    receipt?.contractAddress;
+
+  if (!contract) throw new Error("the deploy finished but returned no address");
+  return { hash, contract: contract as `0x${string}` };
 }
 
 export type PostTaskInput = {

@@ -38,6 +38,7 @@ To deploy your own, see [`DEPLOY.md`](DEPLOY.md).
 | `/proof/[id]` | Be the public receipt for the work |
 | `/console` | Let a poster run a campaign of many tasks |
 | `/limits` | Say plainly what this cannot do |
+| `/deploy` | One-off setup: deploy the contract with your own wallet so you own it |
 
 ## The contracts
 
@@ -79,6 +80,19 @@ The contract refuses any photograph url that is not on its allow list of
 content addressed gateways. A mutable url would let the leader and the
 validators grade two different photographs, which would make the whole
 verification theatre.
+
+## Deployed
+
+| | |
+| --- | --- |
+| Network | GenLayer Studio (`studionet`, chain id 61999) |
+| Contract | `0x7132E013d9b3e118319E92B8DAfFFB8De41c35bB` |
+| Explorer | <https://explorer-studio.genlayer.com> |
+| Source | [`contracts/fieldwork.py`](contracts/fieldwork.py), also served live at `/api/contract-source` |
+
+There is no build step between that file and the chain — what you read is what
+runs. To deploy your own copy with your own wallet, open `/deploy` on the
+running site, or follow the CLI route below.
 
 ## Deploying
 

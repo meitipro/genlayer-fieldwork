@@ -75,6 +75,7 @@ export default function RootLayout({
             </div>
             <nav className="nav" style={{ gap: 14 }}>
               <Link href="/limits">What this cannot do</Link>
+              <Link href="/deploy">Deploy</Link>
               <Link href="/map">Find work</Link>
             </nav>
           </div>

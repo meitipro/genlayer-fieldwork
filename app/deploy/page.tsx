@@ -1,0 +1,94 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { DeployPanel } from "@/components/DeployPanel";
+import { CHAIN_NAME, EXPLORER, IS_STUDIO, NETWORK } from "@/lib/chain";
+
+export const metadata: Metadata = {
+  title: "Deploy the contract",
+  description:
+    "Deploy the Fieldwork Intelligent Contract with your own wallet, so your address owns it.",
+};
+
+/* Deploying is a one-off, so this is a plain page rather than a product screen.
+   It exists because the deployer becomes the owner, and the owner is the only
+   account that can ever withdraw fees or transfer ownership. */
+
+export default function DeployPage() {
+  return (
+    <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 760 }}>
+      <div className="eyebrow">// Setup</div>
+      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>
+        Deploy the contract
+      </h1>
+      <p className="lede" style={{ marginTop: 12 }}>
+        One transaction, signed by your wallet on {CHAIN_NAME}. You end up owning
+        the contract, and the site points at it with two environment variables.
+      </p>
+
+      <div style={{ marginTop: 22 }}>
+        <DeployPanel />
+      </div>
+
+      <h2 style={{ marginTop: 36, fontSize: "var(--s-22)" }}>
+        Before you press it
+      </h2>
+
+      <section className="panel stack" style={{ marginTop: 12 }}>
+        <div>
+          <div className="eyebrow">Your wallet must be on the right network</div>
+          <p className="muted" style={{ margin: "4px 0 0" }}>
+            {CHAIN_NAME} (<span className="mono">{NETWORK}</span>). Connecting
+            will offer to add or switch to it.
+            {IS_STUDIO
+              ? " Studio is gasless, so you do not need a balance to deploy."
+              : " You need enough GEN to pay for the transaction."}
+          </p>
+        </div>
+
+        <div>
+          <div className="eyebrow">What gets deployed</div>
+          <p className="muted" style={{ margin: "4px 0 0" }}>
+            <Link
+              href="/api/contract-source"
+              style={{ color: "var(--accent)", fontWeight: 600 }}
+            >
+              contracts/fieldwork.py
+            </Link>{" "}
+            exactly as it is in the repository — there is no build step between
+            the file and the chain, so what you read is what runs.
+          </p>
+        </div>
+
+        <div>
+          <div className="eyebrow">Afterwards</div>
+          <p className="muted" style={{ margin: "4px 0 0" }}>
+            The contract starts empty. Post the first task from the console; the
+            contract reads your acceptance test and refuses it if it cannot be
+            graded from a photograph, so expect that to take a few seconds.
+          </p>
+        </div>
+      </section>
+
+      {IS_STUDIO ? (
+        <div className="notice" style={{ marginTop: 16 }}>
+          <strong>On Studio the money does not move.</strong> Grading, verdicts
+          and receipts are all real, but Studio&apos;s ledger debits the contract
+          on a payout without ever crediting the payee. Measured — see{" "}
+          <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 600 }}>
+            what this cannot do
+          </Link>
+          .
+        </div>
+      ) : null}
+
+      <p className="muted" style={{ marginTop: 20, fontSize: "var(--s-14)" }}>
+        Prefer a terminal? <span className="mono">DEPLOY.md</span> covers the CLI
+        route, and the explorer for this network is{" "}
+        <a href={EXPLORER} target="_blank" rel="noreferrer" className="mono">
+          {EXPLORER.replace("https://", "")}
+        </a>
+        .
+      </p>
+    </div>
+  );
+}
