@@ -10,6 +10,12 @@ against the test. Payment and verdict are one transaction.
 Built on GenLayer, running on the Studio network. Project 09 of 10 in the
 InferNode build brief series.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmeitipro%2Fgenlayer-fieldwork&env=NEXT_PUBLIC_GENLAYER_NETWORK%2CPINATA_JWT%2CCAS_GATEWAY&envDescription=Network+is+studionet.+PINATA_JWT+is+optional+at+first+-+without+it+every+page+works+and+only+photo+upload+is+disabled.+Add+NEXT_PUBLIC_FIELDWORK_CONTRACT+afterwards%2C+once+you+have+deployed+the+contract+from+%2Fdeploy.&envLink=https%3A%2F%2Fgithub.com%2Fmeitipro%2Fgenlayer-fieldwork%2Fblob%2Fmaster%2FDEPLOY.md&project-name=genlayer-fieldwork&repository-name=genlayer-fieldwork)
+
+Deploying asks for three variables. Leave `NEXT_PUBLIC_FIELDWORK_CONTRACT` out
+for now — the site runs on seed records without it, and you add it after
+deploying the contract from `/deploy` on the live URL.
+
 ---
 
 ## Run it
