@@ -372,7 +372,7 @@ def build():
             "A poster and a worker disagree about whether a job was done. Doing that with "
             "one model owned by the payer is exactly the arrangement workers already "
             "distrust. Here the standard is written down and made public before anyone "
-            "spends time, several validators grade the same two photographs against that "
+            "spends time, several validators grade the same pair of photographs against that "
             "same text independently, and they must agree before a single coin moves."
         )
     ]
@@ -446,22 +446,59 @@ def build():
 
     F += [PageBreak()]
 
+    # -------------------------------------------------- who owns the before frame
+    F += [P("// CHAPTER 03", "eyebrow"), P("Who owns the before frame", "h2")]
+    F += [
+        P(
+            "The poster, not the worker. This is the one design decision that changes "
+            "what the product is."
+        ),
+        P(
+            "If the worker supplies both frames they control the comparison entirely. "
+            "They can photograph a mess, clear it, and be paid for work nobody needed; "
+            "every check downstream &mdash; the acceptance test, the same-place "
+            "judgement, the pre-flight &mdash; is then measured against a starting "
+            "state the person being paid chose. That is the difference between grading "
+            "work and grading a story about work."
+        ),
+        P(
+            "The cost is real and is published on the site&rsquo;s limits page rather "
+            "than buried. The challenge code is issued at claim time, so it does not "
+            "exist yet when the poster shoots. The code can only be checked in the "
+            "worker&rsquo;s frame. That is the weaker of the two properties, and "
+            "staging is the more expensive fraud to be wrong about."
+        ),
+        P(
+            "Two consequences follow in the contract. The before photograph is fetched "
+            "and pre-flighted while the task is being posted, so nobody walks to a job "
+            "that could never be graded. And the before frame&rsquo;s content id is "
+            "written into the reuse set at posting time, so handing the poster&rsquo;s "
+            "own file back as an after frame is caught by the same check as any other "
+            "recycled photograph."
+        ),
+    ]
+
+    F += [PageBreak()]
+
     # ---------------------------------------------------------------- the flow
-    F += [P("// CHAPTER 03", "eyebrow"), P("How it works, end to end", "h2")]
+    F += [P("// CHAPTER 04", "eyebrow"), P("How it works, end to end", "h2")]
 
     steps = [
         (
-            "1 — Post, and fund",
+            "1 — Post, photograph, and fund",
             "The poster writes an acceptance test that names observable things: "
             "<i>the bin area is empty, no bags remain against the wall, the ground is "
             "clear of loose litter, and both bins are upright with their lids closed.</i> "
-            "They send the reward plus the fee in the same transaction. The money is "
-            "locked before any worker sees the task.",
+            "They photograph how the place looks now, and send the reward plus the fee "
+            "in the same transaction. The money is locked before any worker sees the "
+            "task &mdash; and so is the starting state.",
         ),
         (
             "2 — The gate nobody expects",
             "Before the task is created at all, the contract reads the acceptance test "
-            "and decides whether it can be judged from two photographs. "
+            "and decides whether it can be judged from two photographs. In the same "
+            "round trip it opens the poster&rsquo;s photograph, so a task can never be "
+            "funded with a before frame nobody could grade. "
             "<i>“Make sure the area is nice and clean and looks good when you finish”</i> "
             "is refused. A vague test poisons every submission made against it and the "
             "worker carries the cost, so this is the cheapest possible place to catch one.",
@@ -474,22 +511,23 @@ def build():
         ),
         (
             "4 — Photograph",
-            "They write the code on paper, and shoot before and after with it in frame. "
-            "The app re-encodes both to a standard baseline JPEG, strips EXIF including "
-            "any GPS they did not mean to publish, and puts them in content addressed "
-            "storage.",
+            "They write the code on paper and photograph the finished work with it in "
+            "frame. One frame, not two: the before frame is already on the task. The "
+            "app re-encodes to a standard baseline JPEG, strips EXIF including any GPS "
+            "they did not mean to publish, and puts it in content addressed storage.",
         ),
         (
             "5 — Pre-flight",
-            "The contract opens both images before paying for a grader. Unopenable, "
+            "The contract opens the worker&rsquo;s image before paying for a grader, "
+            "the same way it opened the poster&rsquo;s at step 2. Unopenable, "
             "under 480px on the long edge, or shot into the sun — refused for the price "
             "of a decode, with a specific instruction rather than a verdict.",
         ),
         (
             "6 — Judge",
             "Validators fetch the same bytes and grade them against the same text. They "
-            "must agree on three things: the code is legible in both frames, it is the "
-            "same place in both, and the acceptance test passed. Reasons are never "
+            "must agree on three things: the code is legible in the worker&rsquo;s "
+            "frame, both frames show the same place, and the acceptance test passed. Reasons are never "
             "compared — two graders describe one photograph differently, and demanding "
             "identical prose would fail consensus on agreeing verdicts.",
         ),
@@ -522,7 +560,7 @@ def build():
     F += [PageBreak()]
 
     # ---------------------------------------------------------------- what was measured
-    F += [P("// CHAPTER 04", "eyebrow"), P("What was measured", "h2")]
+    F += [P("// CHAPTER 05", "eyebrow"), P("What was measured", "h2")]
     F += [
         P(
             "Four things in this product were decided by measurement rather than "
@@ -639,7 +677,7 @@ def build():
     F += [
         KeepTogether(
             [
-                P("// CHAPTER 05", "eyebrow"),
+                P("// CHAPTER 06", "eyebrow"),
                 P("What this cannot do", "h2"),
                 P(
                     "The product ships a page saying this, at "
@@ -702,7 +740,7 @@ def build():
     F += [
         KeepTogether(
             [
-                P("// CHAPTER 06", "eyebrow"),
+                P("// CHAPTER 07", "eyebrow"),
                 P("Economics, and where it stands", "h2"),
                 P("How it makes money", "h3"),
             ]

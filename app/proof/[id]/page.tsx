@@ -30,8 +30,8 @@ export default async function ProofPage({ params }: { params: { id: string } }) 
 
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 820 }}>
-      <div className="eyebrow">// Public receipt</div>
-      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>{task.title}</h1>
+      <span className="pill pill-accent">Public receipt</span>
+      <h1 style={{ marginTop: 12, fontSize: 30 }}>{task.title}</h1>
       <p className="muted" style={{ marginTop: 8 }}>
         {task.place}
       </p>

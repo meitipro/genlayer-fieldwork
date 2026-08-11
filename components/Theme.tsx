@@ -8,14 +8,14 @@ export const THEME_KEY = "fw-theme";
  * Runs in <head> before first paint.
  *
  * Without it, a dark-theme visitor gets a white flash on every navigation.
- * It always writes an explicit data-theme, so the stylesheet only ever needs
- * [data-theme] selectors and can never disagree with the media query.
+ * It always writes an explicit data-fw, so the stylesheet only ever needs
+ * [data-fw] selectors and can never disagree with the media query.
  */
 export const THEME_BOOT = `(function(){try{
 var s=localStorage.getItem(${JSON.stringify(THEME_KEY)});
-if(s!=="light"&&s!=="dark"){s=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}
-document.documentElement.setAttribute("data-theme",s);
-}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`;
+if(s!=="light"&&s!=="dark"){s=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}
+document.documentElement.setAttribute("data-fw",s);
+}catch(e){document.documentElement.setAttribute("data-fw","dark");}})();`;
 
 type Theme = "light" | "dark";
 
@@ -24,22 +24,22 @@ export function ThemeToggle() {
 
   // Read what the boot script already decided, rather than guessing again.
   useEffect(() => {
-    const current = document.documentElement.getAttribute("data-theme");
-    setTheme(current === "dark" ? "dark" : "light");
+    const current = document.documentElement.getAttribute("data-fw");
+    setTheme(current === "light" ? "light" : "dark");
   }, []);
 
   // Follow the system only while the visitor has not chosen for themselves.
   useEffect(() => {
     if (!window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
     const onChange = (e: MediaQueryListEvent) => {
       try {
         if (localStorage.getItem(THEME_KEY)) return;
       } catch {
         return;
       }
-      const next: Theme = e.matches ? "dark" : "light";
-      document.documentElement.setAttribute("data-theme", next);
+      const next: Theme = e.matches ? "light" : "dark";
+      document.documentElement.setAttribute("data-fw", next);
       setTheme(next);
     };
     mq.addEventListener("change", onChange);
@@ -48,7 +48,7 @@ export function ThemeToggle() {
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.setAttribute("data-fw", next);
     setTheme(next);
     try {
       localStorage.setItem(THEME_KEY, next);
@@ -60,13 +60,13 @@ export function ThemeToggle() {
   // Render nothing until the client has read the real theme, so the button
   // never claims the wrong one for a frame.
   if (theme === null) {
-    return <span style={{ width: 44, height: 36, display: "inline-block" }} aria-hidden />;
+    return <span style={{ width: 42, height: 36, display: "inline-block" }} aria-hidden />;
   }
 
   return (
     <button
       type="button"
-      className="btn btn-icon"
+      className="btn btn-sm"
       onClick={toggle}
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
       title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 function Limit({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="panel stack" style={{ marginTop: 14 }}>
-      <h3 style={{ fontSize: "var(--s-18)" }}>{title}</h3>
+      <h3 style={{ fontSize: 17 }}>{title}</h3>
       <div className="muted">{children}</div>
     </section>
   );
@@ -20,8 +20,8 @@ function Limit({ title, children }: { title: string; children: React.ReactNode }
 export default function LimitsPage() {
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 760 }}>
-      <div className="eyebrow">// The honest limits</div>
-      <h1 style={{ marginTop: 12 }}>What this cannot do</h1>
+      <span className="pill pill-accent">The honest limits</span>
+      <h1 style={{ marginTop: 18, fontSize: 42 }}>What this cannot do</h1>
       <p className="lede" style={{ marginTop: 12 }}>
         Every claim below is a limit we designed around rather than one we hide.
         If a page anywhere else on this site seems to promise more than this,
@@ -35,10 +35,11 @@ export default function LimitsPage() {
           claim location proof, and it never marks a task as location verified.
         </p>
         <p style={{ marginBottom: 0 }}>
-          What it does instead: a challenge code issued at claim time that must
-          be legible in both frames, a same place check between the before and
-          after images, and a second worker sent to a random sample of paid
-          tasks.
+          What it does instead: the before photograph is supplied by the poster
+          rather than the worker, a challenge code issued at claim time that must
+          be legible in the worker&apos;s frame, a same place check against the
+          poster&apos;s frame, and a second worker sent to a random sample of
+          paid tasks.
         </p>
       </Limit>
 
@@ -95,14 +96,24 @@ export default function LimitsPage() {
 
       <Limit title="The model can be wrong">
         <p>
-          Several validators grade the same two images against the same written
-          test, and all of them must agree on three judgements before anything is
+          Several validators grade the same pair of images against the same
+          written test, and all of them must agree on three judgements before anything is
           paid. Agreement is not the same as being right.
         </p>
         <p style={{ marginBottom: 0 }}>
           Every rejection can be escalated to a person, the grading criteria are
           published, and a weekly sample audit compares verdicts against human
           review.
+        </p>
+      </Limit>
+
+      <Limit title="The challenge code cannot appear in the before frame">
+        <p style={{ marginBottom: 0 }}>
+          Because the poster shoots the before photograph before anyone has
+          claimed the task, the code does not exist yet when that frame is taken.
+          So the code is checked in the worker&apos;s photograph only. The trade
+          is deliberate: a worker who supplies both frames can stage the first
+          one, and staging is the more expensive fraud to be wrong about.
         </p>
       </Limit>
 
@@ -116,8 +127,8 @@ export default function LimitsPage() {
 
       <Limit title="Small tasks do not pay for themselves">
         <p style={{ marginBottom: 0 }}>
-          A vision call with two images runs once per validator, which is the
-          most expensive thing this contract does. Below roughly ten GEN a task
+          A vision call carrying both frames runs once per validator, which is
+          the most expensive thing this contract does. Below roughly ten GEN a task
           costs more to settle than it is worth, so small jobs are batched into
           routes rather than posted one by one.
         </p>

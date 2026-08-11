@@ -40,7 +40,7 @@ function CaptureTile({
           width: "100%",
           aspectRatio: "3 / 4",
           border: shot ? "1px solid var(--line)" : "2px dashed var(--line)",
-          borderRadius: "var(--radius)",
+          borderRadius: 10,
           background: shot ? `center/cover no-repeat url(${shot.url})` : "var(--panel)",
           color: "var(--muted)",
           font: "inherit",
@@ -71,13 +71,12 @@ function CaptureTile({
 }
 
 const CHECKS = [
-  { key: "code", label: "code visible in both" },
-  { key: "spot", label: "same spot in both" },
+  { key: "code", label: "code visible in my photograph" },
+  { key: "spot", label: "same spot as the poster's" },
   { key: "area", label: "whole task area in frame" },
 ] as const;
 
 export function CaptureFlow({ task, now }: { task: Task; now: number }) {
-  const [before, setBefore] = useState<Shot>(null);
   const [after, setAfter] = useState<Shot>(null);
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [stage, setStage] = useState<Stage>("idle");
@@ -103,25 +102,24 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
 
   useEffect(() => {
     return () => {
-      if (before) URL.revokeObjectURL(before.url);
       if (after) URL.revokeObjectURL(after.url);
     };
-  }, [before, after]);
+  }, [after]);
 
   const minutesLeft = Math.max(0, Math.round(remaining / 60000));
   const expired = remaining <= 0;
 
   const allTicked = CHECKS.every((c) => ticked[c.key]);
-  const ready = !!before && !!after && allTicked && !expired;
+  const ready = !!after && allTicked && !expired;
 
   const busy = stage === "uploading" || stage === "sent" || stage === "accepted";
 
   const stageCopy = useMemo(() => {
     switch (stage) {
       case "uploading":
-        return "uploading your photographs";
+        return "uploading your photograph";
       case "sent":
-        return "validators are looking at your photos";
+        return "graders are reading the evidence";
       case "accepted":
         return "verdict in, releasing payment";
       case "finalized":
@@ -133,7 +131,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
 
   async function onSubmit() {
     setError("");
-    if (!before || !after) return;
+    if (!after) return;
 
     if (!IS_LIVE) {
       setError(
@@ -147,7 +145,6 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
       const res = await submitPhotographs({
         address,
         taskId: task.id,
-        before: before.blob,
         after: after.blob,
         onStage: setStage,
       });
@@ -182,18 +179,42 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
       <ChallengeCode code={task.challengeCode || "------"} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <CaptureTile
-          label="Before"
-          shot={before}
-          onPick={(f) =>
-            setBefore({ blob: f, url: URL.createObjectURL(f) })
-          }
-        />
-        <CaptureTile
-          label="After"
-          shot={after}
-          onPick={(f) => setAfter({ blob: f, url: URL.createObjectURL(f) })}
-        />
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 6 }}>
+            Before — from the poster
+          </div>
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "3 / 4",
+              border: "1px solid var(--line)",
+              borderRadius: 8,
+              background: task.beforeUrl
+                ? `center/cover no-repeat url(${task.beforeUrl})`
+                : "var(--panel)",
+              display: "grid",
+              placeItems: "center",
+              color: "var(--muted)",
+              fontSize: 13,
+              overflow: "hidden",
+            }}
+          >
+            {task.beforeUrl ? "" : "no photograph on this task"}
+          </div>
+          <p className="muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+            This is the state you are measured against. Match the angle.
+          </p>
+        </div>
+        <div>
+          <CaptureTile
+            label="After — your work"
+            shot={after}
+            onPick={(f) => setAfter({ blob: f, url: URL.createObjectURL(f) })}
+          />
+          <p className="muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+            Keep the code in frame. Only this one is yours to take.
+          </p>
+        </div>
       </div>
 
       <section className="panel">
@@ -210,7 +231,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
               textTransform: "none",
               letterSpacing: 0,
               fontFamily: "var(--sans)",
-              fontSize: "var(--s-15)",
+              fontSize: 15,
               color: "var(--ink)",
               marginBottom: 8,
               cursor: "pointer",
@@ -227,7 +248,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
             {c.label}
           </label>
         ))}
-        <p className="muted" style={{ margin: "10px 0 0", fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: "10px 0 0", fontSize: 13.5 }}>
           {task.acceptanceTest}
         </p>
       </section>
@@ -259,7 +280,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
             Rejected
           </div>
           <p style={{ margin: "6px 0 0" }}>{result.reason}</p>
-          <p className="muted" style={{ margin: "8px 0 0", fontSize: "var(--s-14)" }}>
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: 13.5 }}>
             Retake and submit again, the claim is still yours for {minutesLeft}{" "}
             minutes.
           </p>

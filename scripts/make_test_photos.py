@@ -3,7 +3,9 @@
     python scripts/make_test_photos.py 4KWJX2
 
 The code must be the one the contract issued when you claimed the task — it is
-different for every claim, and the grader checks it is legible in BOTH frames.
+different for every claim, and the grader checks it is legible in the AFTER
+frame. Only the after frame carries it: the poster shoots the before frame when
+the task is posted, which is before any code exists.
 
 The acceptance test these are drawn for:
 
@@ -188,13 +190,15 @@ def build(code: str):
     OUT.mkdir(parents=True, exist_ok=True)
 
     # ---- BEFORE: bags against the wall, litter on the ground, one lid open ----
+    # No code card. The poster shoots this when the task is posted, and the
+    # challenge code is not issued until somebody claims it — so a code in this
+    # frame would be a code the contract never asked for.
     rng = random.Random(11)
     before, d = wall_and_ground(rng)
     bin_(d, 900, 470, 190, 250, lid_open=True)
     bin_(d, 1130, 470, 190, 250, lid_open=False)
     bags(d, rng)
     litter(d, rng)
-    before = code_card(before, code, rng)
     before = finish(before, rng)
 
     # ---- AFTER: wall clear, ground clear, both lids closed. Same framing. ----

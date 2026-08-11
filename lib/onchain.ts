@@ -140,6 +140,7 @@ async function backoff<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
 const TTL_MS = 5000;
 let cached: { at: number; tasks: Task[] } | null = null;
 let inflight: Promise<Task[]> | null = null;
+let cachedTotal: { at: number; total: number } | null = null;
 
 /** Small concurrency, so a long list never bursts through the rate limit. */
 async function inBatches<In, Out>(
@@ -156,6 +157,33 @@ async function inBatches<In, Out>(
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * How many tasks the contract has, or null if the chain would not say.
+ *
+ * Needed because the SDK does not surface a contract's own error text: asking
+ * for an id that does not exist comes back as a bare "execution failed", which
+ * is indistinguishable from a busy node. One extra read settles it.
+ */
+async function totalTasks(): Promise<number | null> {
+  if (cachedTotal && Date.now() - cachedTotal.at < TTL_MS) return cachedTotal.total;
+  try {
+    const total = Number(
+      await backoff(() =>
+        (client() as any).readContract({
+          address: CONTRACT,
+          functionName: "total_tasks",
+          args: [],
+        })
+      )
+    );
+    if (!Number.isFinite(total)) return null;
+    cachedTotal = { at: Date.now(), total };
+    return total;
+  } catch {
+    return null;
+  }
+}
 
 export async function fetchTasks(limit = 40): Promise<Task[]> {
   if (!IS_LIVE) return SEED;
@@ -176,6 +204,7 @@ export async function fetchTasks(limit = 40): Promise<Task[]> {
         )
       );
       if (!Number.isFinite(total) || total <= 0) return [];
+      cachedTotal = { at: Date.now(), total };
 
       // Newest first, bounded.
       const ids: number[] = [];
@@ -250,10 +279,16 @@ export async function lookupTask(id: number): Promise<TaskLookup> {
   } catch (e) {
     const warm = cached?.tasks.find((t) => t.id === id);
     if (warm) return { status: "found", task: warm };
-    // The contract says so itself when an id is out of range.
+
+    // The contract says "no task with that id", but the SDK reports every
+    // failed gen_call as "execution failed" and drops the message, so the read
+    // that failed cannot tell us why on its own. Ask how many tasks exist: an
+    // id past the end is genuinely missing, and anything else is the network.
     if (/no task with that id/i.test(String((e as Error)?.message ?? e))) {
       return { status: "missing" };
     }
+    const total = await totalTasks();
+    if (total !== null && (id < 0 || id >= total)) return { status: "missing" };
     return { status: "unavailable" };
   }
 }

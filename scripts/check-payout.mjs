@@ -27,6 +27,12 @@ if (!ADDRESS) {
   process.exit(1);
 }
 
+// A real photograph on IPFS: content addressed, served as image/jpeg with no
+// redirect and no User-Agent requirement, and large and bright enough to clear
+// the contract's pre-flight. Same file scripts/prove-vision.mjs grades with.
+const BEFORE =
+  "https://ipfs.io/ipfs/bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
+
 const GEN = (n) => BigInt(n) * BigInt(10) ** BigInt(18);
 const log = (...a) => console.log(...a);
 const fmt = (wei) => `${(Number(wei) / 1e18).toFixed(4)} GEN`;
@@ -126,7 +132,7 @@ async function main() {
   const postHash = await retry(() => client.writeContract({
     address: ADDRESS,
     functionName: "post_task",
-    args: [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, 0, 0, GEN(reward), 0],
+    args: [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 0, 0, GEN(reward), 0],
     value,
   }), "post");
   await retry(() => client.waitForTransactionReceipt({

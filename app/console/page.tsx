@@ -21,11 +21,12 @@ export default async function ConsolePage() {
 
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20 }}>
-      <div className="eyebrow">// Poster console</div>
-      <h1 style={{ marginTop: 12 }}>Run a campaign</h1>
+      <span className="pill pill-accent">Poster console</span>
+      <h1 style={{ marginTop: 18, fontSize: 42 }}>Run a campaign</h1>
       <p className="lede" style={{ marginTop: 12 }}>
-        A task cannot be funded without an acceptance test, a pass example and a
-        fail example. That rule is enforced by the contract, not by this form.
+        A task cannot be funded without an acceptance test, a pass example, a
+        fail example, and a photograph of how the place looks now. Those rules
+        are enforced by the contract, not by this form.
       </p>
 
       <div
@@ -39,13 +40,11 @@ export default async function ConsolePage() {
         {[
           { label: "Tasks posted", value: String(tasks.length) },
           { label: "Budget committed", value: `${funded} GEN` },
-          { label: "Pass rate", value: `${passRate}%` },
-          { label: "Median to payment", value: `${STATS.medianMinutesToPayment}m` },
+          { label: "First attempt pass", value: `${passRate}%` },
+          { label: "Median to settlement", value: `${STATS.medianMinutesToPayment}m` },
         ].map((s) => (
           <div key={s.label}>
-            <div style={{ fontSize: "var(--s-30)", fontWeight: 700, lineHeight: 1.1 }}>
-              {s.value}
-            </div>
+            <div className="stat">{s.value}</div>
             <div className="eyebrow" style={{ marginTop: 4 }}>
               {s.label}
             </div>
@@ -61,7 +60,8 @@ export default async function ConsolePage() {
 
       <h2 style={{ marginTop: 44 }}>Post a task</h2>
       <p className="muted" style={{ marginTop: 6 }}>
-        Write the test as the worker will read it. Vague tests are the single
+        Write the test as the worker will read it, and shoot the before frame
+        from where you would stand to judge it. Vague tests are the single
         biggest cause of rejected work.
       </p>
 
@@ -79,10 +79,11 @@ export default async function ConsolePage() {
         }}
       >
         <div className="panel stack">
-          <div className="eyebrow">Repeat verification</div>
+          <div className="eyebrow">You own the before frame</div>
           <p style={{ margin: 0 }}>
-            A random sample of paid tasks is sent to a second worker. That sample
-            is the real fraud defence, not the model.
+            The starting state comes from you, not from the person being paid,
+            so nobody can stage a mess and then clear it. A random sample of
+            paid tasks still goes to a second worker.
           </p>
         </div>
         <div className="panel stack">
@@ -96,9 +97,11 @@ export default async function ConsolePage() {
         <div className="panel stack">
           <div className="eyebrow">Pre-flight checks</div>
           <p style={{ margin: 0 }}>
-            The contract opens both photographs before it pays for a grader. Ones
-            that are unopenable, too small to show a code, or shot into the sun
-            are refused for the price of a decode.
+            The contract opens your before photograph while you post, and the
+            worker&apos;s before it pays for a grader. Ones that are unopenable,
+            too small to show a code, or shot into the sun are refused for the
+            price of a decode — so a task can never be funded with a frame
+            nobody could grade.
           </p>
         </div>
         <div className="panel stack">

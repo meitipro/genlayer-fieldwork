@@ -22,6 +22,12 @@ if (!ADDRESS) {
   process.exit(1);
 }
 
+// A real photograph on IPFS: content addressed, served as image/jpeg with no
+// redirect and no User-Agent requirement, and large and bright enough to clear
+// the contract's pre-flight. Same file scripts/prove-vision.mjs grades with.
+const BEFORE =
+  "https://ipfs.io/ipfs/bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
+
 const GEN = (n) => BigInt(n) * BigInt(10) ** BigInt(18);
 const log = (...a) => console.log(...a);
 
@@ -181,7 +187,7 @@ async function main() {
           client.writeContract({
             address: ADDRESS,
             functionName: "post_task",
-            args: [t.title, t.place, t.test, t.pass, t.fail, t.lat, t.lng, rewardWei, t.rep],
+            args: [t.title, t.place, t.test, t.pass, t.fail, BEFORE, t.lat, t.lng, rewardWei, t.rep],
             value,
           }),
         "post_task"

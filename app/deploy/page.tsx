@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 export default function DeployPage() {
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 760 }}>
-      <div className="eyebrow">// Setup</div>
-      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>
+      <span className="pill pill-accent">Setup</span>
+      <h1 style={{ marginTop: 18, fontSize: 38 }}>
         Deploy the contract
       </h1>
       <p className="lede" style={{ marginTop: 12 }}>
@@ -29,7 +29,7 @@ export default function DeployPage() {
         <DeployPanel />
       </div>
 
-      <h2 style={{ marginTop: 36, fontSize: "var(--s-22)" }}>
+      <h2 style={{ marginTop: 36, fontSize: 22 }}>
         Before you press it
       </h2>
 
@@ -81,7 +81,7 @@ export default function DeployPage() {
         </div>
       ) : null}
 
-      <p className="muted" style={{ marginTop: 20, fontSize: "var(--s-14)" }}>
+      <p className="muted" style={{ marginTop: 20, fontSize: 13.5 }}>
         Prefer a terminal? <span className="mono">DEPLOY.md</span> covers the CLI
         route, and the explorer for this network is{" "}
         <a href={EXPLORER} target="_blank" rel="noreferrer" className="mono">

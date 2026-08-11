@@ -65,7 +65,7 @@ export function DeployPanel() {
             padding: 12,
             background: "var(--cream)",
             border: "1px solid var(--line)",
-            borderRadius: "var(--radius)",
+            borderRadius: 10,
             overflowX: "auto",
             whiteSpace: "pre",
           }}
@@ -109,7 +109,7 @@ export function DeployPanel() {
           {result.hash}
         </a>
 
-        <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           Nothing is seeded yet, so the task list will be empty until someone
           posts one. Post the first from{" "}
           <a href="/console" style={{ color: "var(--accent)", fontWeight: 600 }}>
@@ -143,7 +143,7 @@ export function DeployPanel() {
           value={feeBps}
           onChange={(e) => setFeeBps(Number(e.target.value))}
         />
-        <p className="muted" style={{ margin: "6px 0 0", fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13.5 }}>
           {feeBps} bps = {(feeBps / 100).toFixed(2)}% of each paid bounty,
           charged to the poster. The contract refuses anything above 20%.
         </p>
@@ -163,7 +163,7 @@ export function DeployPanel() {
       </button>
 
       {busy ? (
-        <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           Waiting for finality. A deploy is only real once the code is readable
           back off the chain, so this waits for that rather than reporting
           success early.

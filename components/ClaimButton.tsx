@@ -81,7 +81,7 @@ export function ClaimButton({ taskId }: { taskId: number }) {
           <div
             className="mono"
             style={{
-              fontSize: "var(--s-30)",
+              fontSize: 30,
               fontWeight: 700,
               letterSpacing: "0.16em",
               color: "var(--accent)",
@@ -123,7 +123,7 @@ export function ClaimButton({ taskId }: { taskId: number }) {
       </button>
 
       {busy ? (
-        <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           The contract is issuing a code that belongs to this claim alone.
         </p>
       ) : null}

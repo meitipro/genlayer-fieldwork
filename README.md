@@ -2,10 +2,14 @@
 
 Bounties for physical tasks, verified by photo against a written acceptance test.
 
-A poster writes an acceptance test and funds a task. A worker claims it and the
-contract issues a six character code. The worker photographs the place before
-and after with that code in frame, and several validators grade both images
-against the test. Payment and verdict are one transaction.
+A poster writes an acceptance test, photographs how the place looks now, and
+funds a task. A worker claims it and the contract issues a six character code.
+The worker photographs the finished work with that code in frame, and several
+validators grade the pair against the test. Payment and verdict are one
+transaction.
+
+The before frame belongs to whoever is paying, not to whoever is being paid: a
+worker who supplies both can stage the first one.
 
 Built on GenLayer, running on the Studio network. Project 09 of 10 in the
 InferNode build brief series.
@@ -115,8 +119,8 @@ has to be settled between parties who do not trust each other**.
 A poster and a worker disagree about whether a job was done. Today the poster
 decides, days later, with a model they own — which is exactly the arrangement
 workers distrust. Here the standard is written down and made public *before*
-anyone spends time, several validators grade the same two photographs against
-that same text independently, and they must agree on three coarse judgements
+anyone spends time, several validators grade the same pair of photographs
+against that same text independently, and they must agree on three coarse judgements
 before a single coin moves. Payment and verdict are one transaction.
 
 Nothing about that reduces to a deterministic API call, and nothing about it is

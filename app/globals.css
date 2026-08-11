@@ -1,66 +1,57 @@
-/* Fieldwork design tokens.
-   Light is the default: this is read on a phone, in one hand, outdoors, in
-   daylight. Dark exists because the same worker is out after dark in winter.
-
-   `data-theme` is always written explicitly on <html> by the boot script in
-   components/Theme.tsx, so the CSS never needs a prefers-color-scheme branch
-   and the two can never disagree. */
+/* Fieldwork — tokens from the redesign.
+   Dark is the default here: the product is read on a phone, and the evidence
+   is photographs, which sit better on a dark ground. Light is opted into. */
 
 :root,
-:root[data-theme="light"] {
-  --ink: #14140f;
-  --ink-rgb: 20, 20, 15;
-  --panel: #ffffff;
-  --cream: #f5f2e9;
-  --line: #ddd8c9;
-  --muted: #6b6659;
-  /* One accent. It is allowed exactly three jobs: the primary action, the
-     live/verified state, and the mark. Nothing else. */
-  --accent: #0b7a3b;
-  --accent-rgb: 11, 122, 59;
-  --accent-ink: #ffffff;
-  --danger: #9b2c1c;
-  --shadow: rgba(20, 20, 15, 0.06);
-}
-
-:root[data-theme="dark"] {
-  --ink: #eceadf;
-  --ink-rgb: 236, 234, 223;
-  --panel: #1b1d17;
-  --cream: #121310;
-  --line: #2f322a;
-  --muted: #9b988a;
-  /* The light green fails on a dark ground, so dark gets its own value.
-     Same job, same single accent, measured for this background. */
-  --accent: #46c877;
-  --accent-rgb: 70, 200, 119;
-  --accent-ink: #08160d;
+:root[data-fw="dark"] {
+  --bg: #101216;
+  --panel: #171a1f;
+  --panel2: #14171b;
+  --line: #262a31;
+  --line2: #2f353d;
+  --ink: #eef1f4;
+  --muted: #8d949e;
+  --dim: #a4abb4;
+  --accent: #7ac943;
+  --accent-ink: #0d1a06;
+  --accent-line: #3d4a33;
+  --accent-soft: rgba(122, 201, 67, 0.08);
+  --grid: #1b1f26;
+  --glow: rgba(122, 201, 67, 0.13);
+  --shadow: rgba(0, 0, 0, 0.55);
+  --foot: #0c0e11;
   --danger: #f08a72;
-  --shadow: rgba(0, 0, 0, 0.4);
+  --field: #101216;
+  color-scheme: dark;
 }
 
-:root {
-  --s-12: 12px;
-  --s-14: 14px;
-  --s-15: 15px;
-  --s-18: 18px;
-  --s-22: 22px;
-  --s-30: 30px;
-  --s-44: 44px;
-
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
-
-  --radius: 10px;
-  --wrap: 1080px;
-
+:root[data-fw="light"] {
+  --bg: #f5f6f2;
+  --panel: #ffffff;
+  --panel2: #fbfcf9;
+  --line: #e3e6dd;
+  --line2: #d6dacf;
+  --ink: #14181a;
+  --muted: #6a7178;
+  --dim: #4d545a;
+  --accent: #4a8b1c;
+  --accent-ink: #ffffff;
+  --accent-line: #bad4a3;
+  --accent-soft: rgba(74, 139, 28, 0.07);
+  --grid: #e8ebe3;
+  --glow: rgba(74, 139, 28, 0.1);
+  --shadow: rgba(20, 24, 26, 0.14);
+  --foot: #eef0ea;
+  --danger: #9b2c1c;
+  --field: #ffffff;
   color-scheme: light;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
+:root {
+  --wrap: 1020px;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: Manrope, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
 }
 
 *,
@@ -76,47 +67,52 @@ body {
 }
 
 body {
-  background: var(--cream);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: var(--s-15);
+  font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-}
-
-/* No italics anywhere in this product. */
-i,
-em {
-  font-style: normal;
-  font-weight: 600;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
 }
 
 h1,
 h2,
 h3 {
   margin: 0;
-  font-weight: 700;
-  letter-spacing: -0.022em;
-  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.06;
 }
 
 h1 {
-  font-size: var(--s-44);
+  font-size: 58px;
+  letter-spacing: -0.045em;
 }
 h2 {
-  font-size: var(--s-30);
+  font-size: 30px;
 }
 h3 {
-  font-size: var(--s-22);
+  font-size: 18px;
+  letter-spacing: -0.02em;
 }
 
 p {
   margin: 0 0 12px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent);
+}
+
+/* No italics anywhere in this product. */
+i,
+em {
+  font-style: normal;
+  font-weight: 700;
 }
 
 :focus-visible {
@@ -129,7 +125,7 @@ p {
 .wrap {
   max-width: var(--wrap);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 30px;
 }
 
 .stack > * + * {
@@ -146,48 +142,84 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
 }
 
-/* ---------- utility type ---------- */
+/* ---------- the mono voice ---------- */
 
 .eyebrow {
-  font-family: var(--mono);
-  font-size: var(--s-12);
-  letter-spacing: 0.09em;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .mono {
   font-family: var(--mono);
-  font-size: var(--s-14);
+  font-size: 12.5px;
 }
 
 .muted {
   color: var(--muted);
 }
 
+.dim {
+  color: var(--dim);
+}
+
 .lede {
-  font-size: var(--s-18);
-  color: var(--muted);
-  max-width: 62ch;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--dim);
+  max-width: 52ch;
+}
+
+.stat {
+  font: 700 32px var(--mono);
+  letter-spacing: -0.03em;
 }
 
 /* ---------- surfaces ---------- */
 
 .panel {
-  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px;
+  border-radius: 12px;
+  background: var(--panel2);
+  padding: 22px 24px;
+}
+
+.panel-solid {
+  background: var(--panel);
 }
 
 .divider {
   height: 1px;
   background: var(--line);
   border: 0;
-  margin: 28px 0;
+  margin: 30px 0;
+}
+
+/* The hero's surveyor grid with a glow behind it. */
+.grid-bg {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: radial-gradient(900px 460px at 78% 12%, var(--glow), transparent 62%);
+}
+
+.grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.grid-bg > * {
+  position: relative;
 }
 
 /* ---------- controls ---------- */
@@ -197,50 +229,79 @@ p {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: var(--radius);
-  border: 1px solid var(--ink);
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 8px;
+  border: 1px solid var(--line2);
   background: transparent;
   color: var(--ink);
-  font: inherit;
-  font-weight: 600;
+  font: 700 15px var(--sans);
   cursor: pointer;
 }
 
 .btn:hover {
-  background: rgba(var(--ink-rgb), 0.06);
+  border-color: var(--accent-line);
+  color: var(--ink);
 }
 
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
+  font-weight: 800;
+  box-shadow: 0 10px 30px var(--glow);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.08);
-  background: var(--accent);
+  filter: brightness(1.06);
+  color: var(--accent-ink);
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-block {
   width: 100%;
 }
 
-.btn-icon {
-  min-height: 36px;
-  padding: 0 10px;
-  border-color: var(--line);
-  color: var(--muted);
-  font-size: var(--s-12);
-  font-family: var(--mono);
+.btn-sm {
+  height: 36px;
+  padding: 0 15px;
+  border-radius: 6px;
+  font: 700 12.5px var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* ---------- pills and tags ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.pill-accent {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  letter-spacing: 0.16em;
+}
+
+.pill-danger {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* ---------- table ---------- */
@@ -248,24 +309,23 @@ p {
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--s-14);
+  font-size: 14px;
 }
 
 .table th {
   text-align: left;
-  font-family: var(--mono);
-  font-size: var(--s-12);
-  letter-spacing: 0.09em;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  font-weight: 400;
-  padding: 10px 12px;
+  font-weight: 500;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
 .table td {
-  padding: 12px;
+  padding: 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
@@ -278,80 +338,54 @@ p {
   overflow-x: auto;
 }
 
-/* ---------- status ---------- */
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--mono);
-  font-size: var(--s-12);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.tag-paid {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.tag-rejected {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
 /* ---------- forms ---------- */
 
 input,
 textarea,
 select {
   width: 100%;
-  font: inherit;
+  font: 400 14px var(--sans);
   color: var(--ink);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 11px 12px;
-  min-height: 44px;
+  background: var(--field);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 12px 13px;
+  min-height: 46px;
 }
 
 input::placeholder,
 textarea::placeholder {
   color: var(--muted);
-  opacity: 0.75;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 input[type="checkbox"] {
+  width: auto;
+  min-height: 0;
   accent-color: var(--accent);
 }
 
 label {
   display: block;
-  font-family: var(--mono);
-  font-size: var(--s-12);
-  letter-spacing: 0.09em;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
-/* ---------- header / footer ---------- */
+/* ---------- header and footer ---------- */
 
 .site-head {
   border-bottom: 1px solid var(--line);
-  background: var(--cream);
+  background: var(--bg);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -361,50 +395,80 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 70px;
   gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent);
+}
+
+.brand span {
+  color: var(--ink);
+  font: 700 15px var(--mono);
+  letter-spacing: -0.02em;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 18px;
-  font-size: var(--s-14);
+  gap: 22px;
+  font: 500 12.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-.nav a:hover {
-  color: var(--accent);
+.nav a.on {
+  color: var(--ink);
 }
 
 .site-foot {
   border-top: 1px solid var(--line);
-  margin-top: 56px;
-  padding: 24px 0 40px;
+  background: var(--foot);
+  margin-top: 70px;
+  padding: 30px 0 40px;
   color: var(--muted);
-  font-size: var(--s-14);
 }
 
-/* ---------- network notice ---------- */
+/* ---------- notice ---------- */
 
 .notice {
-  border: 1px solid var(--line);
-  background: rgba(var(--accent-rgb), 0.08);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  font-size: var(--s-14);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--dim);
 }
 
-@media (max-width: 640px) {
+.notice strong {
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
   h1 {
-    font-size: var(--s-30);
+    font-size: 38px;
   }
   h2 {
-    font-size: var(--s-22);
+    font-size: 24px;
+  }
+  .wrap {
+    padding: 0 18px;
+  }
+  .nav {
+    gap: 14px;
   }
   .nav .hide-sm {
     display: none;
   }
-  .nav {
-    gap: 12px;
+  .lede {
+    font-size: 15.5px;
+  }
+  .stat {
+    font-size: 26px;
   }
 }

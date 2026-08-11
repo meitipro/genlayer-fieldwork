@@ -21,7 +21,7 @@ Build me a 60–75 second product demo video for **Fieldwork**.
 
 Bounties for physical work, verified by photograph. Someone posts a real-world
 task and locks the payment up front. A worker does it, photographs the place
-before and after, and an Intelligent Contract on GenLayer grades those two
+against a before frame the poster supplied, and an Intelligent Contract on GenLayer grades those two
 photographs against a written standard and pays — verdict and payment in one
 transaction.
 
@@ -55,7 +55,7 @@ to the person holding the money. Crypto solved paying a stranger and left
    have ninety minutes. Show the code appearing.
 
 4. **The work.** They write the code on a scrap of paper, and shoot two
-   photographs — before and after — with that paper in frame. Phone in one hand,
+   photograph of the finished work with that paper in frame. Phone in one hand,
    outdoors, daylight. This should feel physical and unglamorous. Real hands,
    real bins, real biro on real paper.
 

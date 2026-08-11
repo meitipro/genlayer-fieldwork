@@ -8,7 +8,7 @@ export function AcceptanceTest({ task }: { task: Task }) {
   return (
     <section className="panel stack">
       <div className="eyebrow">Acceptance test</div>
-      <p style={{ fontSize: "var(--s-18)", margin: 0 }}>{task.acceptanceTest}</p>
+      <p style={{ fontSize: 17, margin: 0 }}>{task.acceptanceTest}</p>
 
       <div className="divider" style={{ margin: "6px 0" }} />
 

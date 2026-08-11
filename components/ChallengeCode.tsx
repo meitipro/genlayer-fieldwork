@@ -18,7 +18,7 @@ export function ChallengeCode({ code }: { code: string }) {
       >
         {code}
       </div>
-      <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+      <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
         Write it on paper and keep it in frame.
       </p>
     </div>

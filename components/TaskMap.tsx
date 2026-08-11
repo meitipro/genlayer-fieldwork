@@ -75,7 +75,7 @@ export function TaskMap({ tasks, height = 300 }: { tasks: Task[]; height?: numbe
             borderRadius: 999,
             padding: "4px 9px",
             fontFamily: "var(--mono)",
-            fontSize: "var(--s-12)",
+            fontSize: 12,
             fontWeight: 700,
             whiteSpace: "nowrap",
           }}

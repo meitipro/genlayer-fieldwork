@@ -4,15 +4,16 @@
  *   FIELDWORK=0x... node scripts/e2e.mjs
  *
  * Covers everything that does not need a human holding a piece of paper:
- *   1. post_task with a gradeable acceptance test   -> accepted, funded
- *   2. post_task with a vague acceptance test       -> refused by the LLM gate
- *   3. post_task underfunded                        -> refused deterministically
+ *   1. post_task with a gradeable test + before photo -> accepted, funded
+ *   2. post_task with a vague acceptance test         -> refused by the LLM gate
+ *   3. post_task underfunded                          -> refused deterministically
  *   4. claim                                        -> six character code
  *   5. claim again from the same account            -> refused, already claimed
  *   6. views read back what was written
  *
- * The submit path needs two photographs with the issued code written on paper
- * and held in frame, so it is the one step a script cannot fake. The vision
+ * The submit path needs a photograph with the issued code written on paper and
+ * held in frame, so it is the one step a script cannot fake. The before frame
+ * is not a problem — the poster supplies that, and step 1 does. The vision
  * grading it depends on is proven separately by scripts/prove-vision.mjs.
  */
 
@@ -29,6 +30,12 @@ if (!ADDRESS) {
   console.error("set FIELDWORK=0x... to the deployed contract address");
   process.exit(1);
 }
+
+// A real photograph on IPFS: content addressed, served as image/jpeg with no
+// redirect and no User-Agent requirement, and large and bright enough to clear
+// the contract's pre-flight. Same file scripts/prove-vision.mjs grades with.
+const BEFORE =
+  "https://ipfs.io/ipfs/bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
 
 const GEN = (n) => BigInt(n) * BigInt(10) ** BigInt(18);
 const log = (...a) => console.log(...a);
@@ -135,7 +142,7 @@ async function main() {
   const posted = await send(
     client,
     "post_task",
-    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, 51505100, -122600, GEN(reward), 0],
+    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0],
     value
   );
   check(posted.ok, "accepted and funded", posted.ok ? "" : posted.reason);
@@ -155,6 +162,12 @@ async function main() {
       "reward stored in wei",
       String(storedReward)
     );
+    const storedBefore = await read(client, "before_url_of", [taskId]);
+    check(
+      String(storedBefore) === BEFORE,
+      "the poster's before photograph is on the task",
+      String(storedBefore).slice(-12)
+    );
   }
 
   // ---- 2. the LLM gate should refuse a vague test ----
@@ -162,7 +175,7 @@ async function main() {
   const vague = await send(
     client,
     "post_task",
-    [VAGUE.title, VAGUE.place, VAGUE.test, VAGUE.pass, VAGUE.fail, 51505100, -122600, GEN(reward), 0],
+    [VAGUE.title, VAGUE.place, VAGUE.test, VAGUE.pass, VAGUE.fail, BEFORE, 51505100, -122600, GEN(reward), 0],
     value
   );
   check(!vague.ok, "refused by the acceptance test gate", vague.reason.slice(0, 110));
@@ -174,7 +187,7 @@ async function main() {
   const poor = await send(
     client,
     "post_task",
-    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, 51505100, -122600, GEN(reward), 0],
+    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0],
     GEN(1)
   );
   check(!poor.ok, "refused for insufficient value", poor.reason.slice(0, 90));

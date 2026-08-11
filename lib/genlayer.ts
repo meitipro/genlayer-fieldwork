@@ -157,29 +157,24 @@ export function toWei(whole: number): bigint {
 export async function submitPhotographs(opts: {
   address: `0x${string}`;
   taskId: number;
-  before: Blob;
   after: Blob;
   onStage?: (s: Stage) => void;
 }): Promise<SubmitResult> {
-  const { address, taskId, before, after, onStage } = opts;
+  const { address, taskId, after, onStage } = opts;
 
   onStage?.("uploading");
   // Normalise first. A JPEG without a JFIF header is rejected by the node as
   // INVALID_IMAGE, and the worker would never learn why. See lib/image.ts.
-  const [beforeReady, afterReady] = await Promise.all([
-    normalisePhoto(before),
-    normalisePhoto(after),
-  ]);
-  const [beforeUrl, afterUrl] = await Promise.all([
-    putToCAS(beforeReady.blob),
-    putToCAS(afterReady.blob),
-  ]);
+  // Only the finished state is uploaded here — the before frame belongs to the
+  // poster and was fixed when the task was funded.
+  const ready = await normalisePhoto(after);
+  const afterUrl = await putToCAS(ready.blob);
 
   const client = writeClient(address, getProvider());
   const hash = await client.writeContract({
     address: FIELDWORK_CONTRACT,
     functionName: "submit",
-    args: [taskId, beforeUrl, afterUrl],
+    args: [taskId, afterUrl],
     value: BigInt(0),
   });
 
@@ -252,6 +247,8 @@ export type PostTaskInput = {
   acceptanceTest: string;
   examplePass: string;
   exampleFail: string;
+  /** How the place looks now. Uploaded and pinned before the task exists. */
+  before: Blob;
   latE6: number;
   lngE6: number;
   reward: number;
@@ -271,6 +268,12 @@ export async function postTask(
   onStage?: (s: Stage) => void
 ): Promise<{ hash: string; taskId: number | null }> {
   const client = writeClient(address, getProvider());
+
+  // The poster's frame goes up first: the contract stores its url, and refuses
+  // any url that is not content addressed.
+  onStage?.("uploading");
+  const beforeReady = await normalisePhoto(input.before);
+  const beforeUrl = await putToCAS(beforeReady.blob);
 
   let feeBps = 600;
   try {
@@ -296,6 +299,7 @@ export async function postTask(
       input.acceptanceTest,
       input.examplePass,
       input.exampleFail,
+      beforeUrl,
       input.latE6,
       input.lngE6,
       rewardWei,

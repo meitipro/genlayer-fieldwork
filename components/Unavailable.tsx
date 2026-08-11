@@ -8,8 +8,8 @@ import Link from "next/link";
 export function Unavailable({ what = "this page" }: { what?: string }) {
   return (
     <div className="wrap" style={{ paddingTop: 56, paddingBottom: 56, maxWidth: 560 }}>
-      <div className="eyebrow">// Temporarily unavailable</div>
-      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>
+      <span className="pill">Temporarily unavailable</span>
+      <h1 style={{ marginTop: 12, fontSize: 30 }}>
         The network is busy.
       </h1>
       <p className="lede" style={{ marginTop: 12 }}>

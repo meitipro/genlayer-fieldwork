@@ -11,6 +11,7 @@ a real network.
 import io
 import json
 import pathlib
+import re
 import urllib.error
 import urllib.request
 
@@ -82,6 +83,11 @@ def photo(seed: int = 1, w: int = 1200, h: int = 900, shade: int = 150) -> bytes
     return buf.getvalue()
 
 
+def re_escape(url: str) -> str:
+    """mock_web matches on a regex, and a URL is full of regex metacharacters."""
+    return re.escape(url)
+
+
 def web_ok(body: bytes):
     return {"response": {"status": 200, "headers": {}, "body": body}, "method": "GET"}
 
@@ -110,8 +116,11 @@ def graded(vm, *, saw=True, code=True, place=True, passed=True, reason="looks cl
     )
 
 
-def post(contract, vm, sender, *, reward=18, rep=0, **over):
+def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, **over):
+    """Post a task. The before photograph belongs to the poster, so it is
+    fetched and vetted here rather than at submission time."""
     body = {**GOOD, **over}
+    vm.mock_web(re_escape(before), web_ok(before_bytes if before_bytes else photo(1)))
     vm.sender = sender
     vm.value = reward * GEN + reward * GEN * FEE_BPS // 10000
     return contract.post_task(
@@ -120,6 +129,7 @@ def post(contract, vm, sender, *, reward=18, rep=0, **over):
         body["test"],
         body["pass"],
         body["fail"],
+        before,
         51505100,
         -122600,
         reward * GEN,
@@ -156,12 +166,13 @@ def test_refuses_a_vague_task(contract, direct_vm, direct_alice):
 
 def test_refuses_when_underfunded(contract, direct_vm, direct_alice):
     gradeable(direct_vm, True)
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
     direct_vm.sender = direct_alice
     direct_vm.value = 1 * GEN
     with pytest.raises(Exception) as err:
         contract.post_task(
             GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-            51505100, -122600, 18 * GEN, 0,
+            URL_A, 51505100, -122600, 18 * GEN, 0,
         )
     assert "reward plus the fee" in str(err.value)
 
@@ -178,6 +189,28 @@ def test_requires_a_test_long_enough_to_be_fair(contract, direct_vm, direct_alic
     with pytest.raises(Exception) as err:
         post(contract, direct_vm, direct_alice, test="clean it")
     assert "too short" in str(err.value)
+
+
+def test_refuses_a_before_photograph_nobody_could_grade(
+    contract, direct_vm, direct_alice
+):
+    """Vetting the poster's frame at posting time rather than at submission
+    time. A task funded with an unusable before photograph is unwinnable, and
+    the worker would be the one who walked there to find out."""
+    gradeable(direct_vm, True)
+    with pytest.raises(Exception) as err:
+        post(contract, direct_vm, direct_alice, before_bytes=photo(1, w=200, h=150))
+    assert "too small" in str(err.value)
+    assert int(contract.total_tasks()) == 0
+
+
+def test_refuses_a_before_url_outside_content_addressed_storage(
+    contract, direct_vm, direct_alice
+):
+    gradeable(direct_vm, True)
+    with pytest.raises(Exception) as err:
+        post(contract, direct_vm, direct_alice, before="https://example.com/b.jpg")
+    assert "content addressed" in str(err.value)
 
 
 # ---------------------------------------------------------------- claiming
@@ -248,7 +281,7 @@ def test_a_passing_submission_is_paid(contract, direct_vm, direct_alice, direct_
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    status = contract.submit(task_id, URL_A, URL_B)
+    status = contract.submit(task_id, URL_B)
 
     assert status == "paid"
     assert contract.status_of(task_id) == "paid"
@@ -267,7 +300,7 @@ def test_a_failing_test_is_rejected_and_the_claim_survives(
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    status = contract.submit(task_id, URL_A, URL_B)
+    status = contract.submit(task_id, URL_B)
 
     assert status == "rejected"
     # The claim is still theirs, so they can retake without losing the task.
@@ -287,7 +320,7 @@ def test_a_grader_that_cannot_see_refuses_instead_of_guessing(
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    status = contract.submit(task_id, URL_A, URL_B)
+    status = contract.submit(task_id, URL_B)
 
     assert status == "rejected"
     assert "could not see" in contract.reason_of(task_id)
@@ -304,7 +337,7 @@ def test_a_too_small_photograph_never_reaches_the_model(
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    status = contract.submit(task_id, URL_A, URL_B)
+    status = contract.submit(task_id, URL_B)
 
     assert status == "rejected"
     assert "too small" in contract.reason_of(task_id)
@@ -321,7 +354,7 @@ def test_a_dark_photograph_is_refused_with_advice(
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    status = contract.submit(task_id, URL_A, URL_B)
+    status = contract.submit(task_id, URL_B)
 
     assert status == "rejected"
     assert "too dark" in contract.reason_of(task_id)
@@ -333,18 +366,20 @@ def test_only_the_claimant_may_submit(contract, direct_vm, direct_alice, direct_
     direct_vm.sender = direct_charlie
     direct_vm.value = 0
     with pytest.raises(Exception) as err:
-        contract.submit(task_id, URL_A, URL_B)
+        contract.submit(task_id, URL_B)
     assert "not yours" in str(err.value)
 
 
-def test_the_same_two_urls_are_refused(contract, direct_vm, direct_alice, direct_bob):
+def test_handing_back_the_posters_photograph_is_refused(
+    contract, direct_vm, direct_alice, direct_bob
+):
     task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
     with pytest.raises(Exception) as err:
-        contract.submit(task_id, URL_A, URL_A)
-    assert "same file" in str(err.value)
+        contract.submit(task_id, URL_A)
+    assert "poster" in str(err.value)
 
 
 def test_a_url_outside_content_addressed_storage_is_refused(
@@ -355,7 +390,7 @@ def test_a_url_outside_content_addressed_storage_is_refused(
     direct_vm.sender = direct_bob
     direct_vm.value = 0
     with pytest.raises(Exception) as err:
-        contract.submit(task_id, "https://example.com/before.jpg", URL_B)
+        contract.submit(task_id, "https://example.com/after.jpg")
     assert "content addressed" in str(err.value)
 
 
@@ -364,7 +399,7 @@ def test_http_urls_are_refused(contract, direct_vm, direct_alice, direct_bob):
     direct_vm.sender = direct_bob
     direct_vm.value = 0
     with pytest.raises(Exception) as err:
-        contract.submit(task_id, f"http://ipfs.io/ipfs/{CID_A}", URL_B)
+        contract.submit(task_id, f"http://ipfs.io/ipfs/{CID_B}")
     assert "https" in str(err.value)
 
 
@@ -385,7 +420,7 @@ def test_a_rejected_task_returns_to_the_pool_when_the_claim_runs_out(
 
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    assert contract.submit(task_id, URL_A, URL_B) == "rejected"
+    assert contract.submit(task_id, URL_B) == "rejected"
 
     # ... and the worker never comes back. The claim window runs out.
     direct_vm.datetime = "2099-01-01T00:00:00"
@@ -408,7 +443,7 @@ def test_release_expired_frees_a_rejected_task_too(
     graded(direct_vm, passed=False)
     direct_vm.sender = direct_bob
     direct_vm.value = 0
-    contract.submit(task_id, URL_A, URL_B)
+    contract.submit(task_id, URL_B)
 
     direct_vm.datetime = "2099-01-01T00:00:00"
 
@@ -444,9 +479,10 @@ def test_overpaying_is_banked_rather_than_lost(contract, direct_vm, direct_alice
 
     direct_vm.sender = direct_alice
     direct_vm.value = owed + extra
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
     contract.post_task(
         GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-        51505100, -122600, reward * GEN, 0,
+        URL_A, 51505100, -122600, reward * GEN, 0,
     )
 
     # The fee for this task, plus every wei of the overpayment.

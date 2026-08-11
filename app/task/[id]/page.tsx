@@ -25,7 +25,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="eyebrow">{label}</div>
-      <div className="mono" style={{ fontSize: "var(--s-18)", fontWeight: 700 }}>
+      <div className="mono" style={{ fontSize: 17, fontWeight: 700 }}>
         {value}
       </div>
     </div>
@@ -48,13 +48,13 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       </Link>
 
       <div className="spread" style={{ marginTop: 16 }}>
-        <div className="eyebrow">// Task {task.id}</div>
-        <span className={`tag ${task.status === "paid" ? "tag-paid" : ""}`}>
+        <span className="pill pill-accent">Task {task.id}</span>
+        <span className={`pill ${task.status === "paid" ? "pill-accent" : ""}`}>
           {task.status}
         </span>
       </div>
 
-      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>{task.title}</h1>
+      <h1 style={{ marginTop: 18, fontSize: 40 }}>{task.title}</h1>
       <p className="muted" style={{ marginTop: 8 }}>
         {task.place}
         {task.distanceM > 0 ? ` · ${formatDistance(task.distanceM)} away` : ""}
@@ -70,11 +70,34 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       >
         <Fact label="Reward" value={`${task.reward} GEN`} />
         <Fact
-          label="Claim window"
+          label="Window"
           value={formatWindow(task, now)}
         />
         <Fact label="Reputation" value={`rep ${task.minReputation}`} />
       </div>
+
+      {task.beforeUrl ? (
+        <figure style={{ margin: "0 0 14px" }}>
+          <div className="eyebrow" style={{ marginBottom: 6 }}>
+            How it looks now — photographed by the poster
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={task.beforeUrl}
+            alt="The place as the poster found it"
+            style={{
+              width: "100%",
+              border: "1px solid var(--line)",
+              borderRadius: 10,
+              display: "block",
+            }}
+          />
+          <figcaption className="muted" style={{ marginTop: 8, fontSize: 13.5 }}>
+            The starting state you will be graded against, so you can see the job
+            before you walk anywhere. Take your photograph from roughly here.
+          </figcaption>
+        </figure>
+      ) : null}
 
       <AcceptanceTest task={task} />
 
@@ -82,13 +105,14 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         <div className="eyebrow">What happens when you claim</div>
         <p style={{ margin: 0 }}>
           The contract issues a six character code that is yours alone. Write it
-          on paper, keep it in frame in both photographs, and submit within
-          ninety minutes.
+          on paper, keep it in frame in the photograph you take, and submit
+          within ninety minutes. The before photograph is already on the task —
+          it came from the poster.
         </p>
         <div className="row" style={{ flexWrap: "wrap" }}>
           <ReputationTag score={task.minReputation} />
-          <span className="tag">90 minute claim</span>
-          <span className="tag">retry allowed inside the window</span>
+          <span className="pill">90 minute claim</span>
+          <span className="pill">retry allowed inside the window</span>
         </div>
       </div>
 

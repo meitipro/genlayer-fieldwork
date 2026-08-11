@@ -18,7 +18,7 @@ export function SettlementNotice({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+      <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
         On the Studio network the verdict is real but the coins do not move.
         Balances only change on a live network.
       </p>

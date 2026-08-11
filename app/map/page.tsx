@@ -16,9 +16,9 @@ export default async function MapPage() {
 
   return (
     <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20 }}>
-      <div className="eyebrow">// Find work</div>
-      <h1 style={{ marginTop: 12 }}>Tasks near you</h1>
-      <p className="lede" style={{ marginTop: 12 }}>
+      <span className="pill pill-accent">Find work</span>
+      <h1 style={{ marginTop: 18, fontSize: 42 }}>Tasks near you</h1>
+      <p className="lede" style={{ marginTop: 16 }}>
         Read the acceptance test before you claim. A claim is yours for ninety
         minutes.
       </p>
@@ -35,7 +35,7 @@ export default async function MapPage() {
               <th>Where</th>
               <th>Distance</th>
               <th>Reward</th>
-              <th>Claim window</th>
+              <th>Window</th>
               <th>Needs</th>
               <th />
             </tr>
@@ -58,7 +58,7 @@ export default async function MapPage() {
                 </td>
                 <td className="mono muted">rep {t.minReputation}</td>
                 <td>
-                  <Link className="btn" href={`/task/${t.id}`}>
+                  <Link className="btn btn-sm" href={`/task/${t.id}`}>
                     View
                   </Link>
                 </td>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IS_LIVE,
   IS_STUDIO,
@@ -39,13 +39,21 @@ export function PostTaskForm() {
     lat: "51.5051",
     lng: "-0.1226",
   });
+  const [before, setBefore] = useState<{ blob: Blob; url: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ hash: string; taskId: number | null } | null>(
     null
   );
 
-  const busy = stage === "sent" || stage === "accepted";
+  const busy = stage === "uploading" || stage === "sent" || stage === "accepted";
+
+  useEffect(() => {
+    return () => {
+      if (before) URL.revokeObjectURL(before.url);
+    };
+  }, [before]);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -60,7 +68,8 @@ export function PostTaskForm() {
     form.acceptanceTest.trim().length >= 20 &&
     form.examplePass.trim() !== "" &&
     form.exampleFail.trim() !== "" &&
-    form.reward > 0;
+    form.reward > 0 &&
+    !!before;
 
   async function onSubmit() {
     setError("");
@@ -90,6 +99,7 @@ export function PostTaskForm() {
           acceptanceTest: form.acceptanceTest.trim(),
           examplePass: form.examplePass.trim(),
           exampleFail: form.exampleFail.trim(),
+          before: before!.blob,
           latE6: Math.round(parseFloat(form.lat || "0") * 1e6),
           lngE6: Math.round(parseFloat(form.lng || "0") * 1e6),
           reward: Number(form.reward),
@@ -172,9 +182,51 @@ export function PostTaskForm() {
           onChange={(e) => set("acceptanceTest", e.target.value)}
           placeholder={EXAMPLE.acceptanceTest}
         />
-        <p className="muted" style={{ margin: "6px 0 0", fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13.5 }}>
           Name the things a photograph can show. The contract refuses a test that
           relies on words like clean or tidy without saying what those look like.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="before">Photograph of how it looks now</label>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          style={{
+            width: "100%",
+            minHeight: 150,
+            border: before ? "1px solid var(--line)" : "2px dashed var(--line2)",
+            borderRadius: 8,
+            background: before
+              ? `center/cover no-repeat url(${before.url})`
+              : "var(--panel)",
+            color: "var(--muted)",
+            font: "inherit",
+            cursor: "pointer",
+            overflow: "hidden",
+          }}
+          aria-label="Choose the before photograph"
+        >
+          {before ? "" : "tap to add the before photograph"}
+        </button>
+        <input
+          id="before"
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) setBefore({ blob: f, url: URL.createObjectURL(f) });
+          }}
+        />
+        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
+          This is the before frame, and it is yours to take rather than the
+          worker&apos;s. A worker who supplies both frames can stage the first
+          one. It is also what they will be asked to match, so shoot the whole
+          area from where you would judge it.
         </p>
       </div>
 
@@ -252,7 +304,7 @@ export function PostTaskForm() {
         </div>
       </div>
 
-      <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+      <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
         You send the reward plus the fee when you post. A vision call with two
         images runs once per validator, so rewards below roughly ten GEN do not
         cover their own settlement.
@@ -265,7 +317,9 @@ export function PostTaskForm() {
         disabled={!ready || busy}
         onClick={onSubmit}
       >
-        {stage === "sent"
+        {stage === "uploading"
+          ? "uploading your photograph"
+          : stage === "sent"
           ? "checking the acceptance test"
           : stage === "accepted"
             ? "funding the task"
@@ -273,7 +327,7 @@ export function PostTaskForm() {
       </button>
 
       {stage === "sent" ? (
-        <p className="muted" style={{ margin: 0, fontSize: "var(--s-14)" }}>
+        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
           The contract is reading your acceptance test to check it can be graded
           from a photograph. This takes a few seconds.
         </p>

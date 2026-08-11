@@ -3,8 +3,8 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="wrap" style={{ paddingTop: 64, paddingBottom: 64, maxWidth: 560 }}>
-      <div className="eyebrow">// 404</div>
-      <h1 style={{ marginTop: 12, fontSize: "var(--s-30)" }}>
+      <span className="pill">404</span>
+      <h1 style={{ marginTop: 16, fontSize: 32 }}>
         Nothing here.
       </h1>
       <p className="lede" style={{ marginTop: 12 }}>

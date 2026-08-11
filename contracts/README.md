@@ -93,7 +93,7 @@ the leader formatted an answer, not that the answer is right.
 
 | Block | Leader produces | Validator does | Compared |
 | --- | --- | --- | --- |
-| `post_task` | is this acceptance test gradeable from a photograph | judges the same test itself | the `gradeable` decision |
+| `post_task` | is this acceptance test gradeable, and is the poster's photograph usable | fetches the same photograph and judges the same test itself | `gradeable`, `refused`, `before_hash` |
 | `submit` | three judgements about two photographs | fetches the same bytes and grades again | `code_visible`, `same_place`, `test_passed`, plus `content_hash`, `phash`, `refused` |
 
 The reason strings are deliberately **not** compared. Two graders describe the
@@ -376,9 +376,9 @@ failure from `consensus_data.leader_receipt.genvm_result.stderr`, because the
 
 Writes (wallet signed):
 
-- `post_task(title, place, acceptance_test, example_pass, example_fail, lat_e6, lng_e6, reward, min_reputation)` — **payable**, send `reward + fee`
+- `post_task(title, place, acceptance_test, example_pass, example_fail, before_url, lat_e6, lng_e6, reward, min_reputation)` — **payable**, send `reward + fee`
 - `claim(task_id) -> str` — returns the six character challenge code
-- `submit(task_id, before_url, after_url) -> str` — returns `paid` or `rejected`
+- `submit(task_id, after_url) -> str` — returns `paid` or `rejected`
 - `release_expired(task_id)` — returns an abandoned claim to the pool
 - `cancel_task(task_id)` — poster only, refunds reward and fee
 - `withdraw_fees(to)`, `transfer_ownership(new_owner)` — owner only
@@ -387,6 +387,30 @@ Views are one per field (`status_of`, `reason_of`, `challenge_code_of`,
 `acceptance_test_of`, `reward_of`, `before_url_of`, `after_url_of`,
 `content_hash_of`, `reputation_of`, `total_tasks`, …). Run
 `genlayer schema <address>` for the full list.
+
+### Who supplies the before photograph
+
+The poster, not the worker. A worker who supplies both frames controls the
+comparison entirely: they can photograph a mess they made, clear it, and be paid
+for work nobody needed. Every check downstream — the acceptance test, the same
+place judgement, the pre-flight — is measured against a starting state that the
+person being paid chose. Moving that frame to the poster is the difference
+between grading work and grading a story about work.
+
+The cost is real and is stated on `/limits`: the challenge code is issued at
+claim time, so it does not exist when the poster shoots. The code can therefore
+only be checked in the worker's frame. That is the weaker of the two properties,
+and staging is the more expensive fraud to be wrong about.
+
+Two consequences in the contract:
+
+- `post_task` fetches and pre-flights the before photograph **before** it takes
+  the money, so a task can never be funded with a frame nobody could grade. The
+  worker is the one who would otherwise walk there to find that out.
+- the before CID is written into `seen_cids` when the task is posted, so handing
+  the poster's own file back as an after frame is caught by the same reuse check
+  as any other recycled photograph — plus an explicit equality check with a
+  better error message.
 
 ### The challenge code alphabet
 

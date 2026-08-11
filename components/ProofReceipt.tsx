@@ -29,7 +29,7 @@ export function ProofReceipt({ task }: { task: Task }) {
   return (
     <article className="stack">
       <div className="spread">
-        <span className={`tag ${paid ? "tag-paid" : "tag-rejected"}`}>
+        <span className={`pill ${paid ? "pill-accent" : "pill-danger"}`}>
           {paid ? "paid" : "rejected"}
         </span>
         <span className="mono muted">
@@ -59,7 +59,7 @@ export function ProofReceipt({ task }: { task: Task }) {
             style={{
               width: "100%",
               border: "1px solid var(--line)",
-              borderRadius: "var(--radius)",
+              borderRadius: 10,
               display: "block",
             }}
           />
@@ -75,7 +75,7 @@ export function ProofReceipt({ task }: { task: Task }) {
             style={{
               width: "100%",
               border: "1px solid var(--line)",
-              borderRadius: "var(--radius)",
+              borderRadius: 10,
               display: "block",
             }}
           />
@@ -84,7 +84,7 @@ export function ProofReceipt({ task }: { task: Task }) {
 
       <section className="panel">
         <div className="eyebrow">Graded against</div>
-        <p style={{ margin: "6px 0 0", fontSize: "var(--s-18)" }}>
+        <p style={{ margin: "6px 0 0", fontSize: 17 }}>
           {task.acceptanceTest}
         </p>
       </section>
@@ -126,7 +126,7 @@ export function ProofReceipt({ task }: { task: Task }) {
           >
             {task.contentHash}
           </p>
-          <p className="muted" style={{ margin: "8px 0 0", fontSize: "var(--s-14)" }}>
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: 13.5 }}>
             Stored on chain and matched against every later submission, so the
             same file cannot be paid for twice.
           </p>
@@ -139,7 +139,7 @@ export function ProofReceipt({ task }: { task: Task }) {
           <p className="mono muted" style={{ margin: "6px 0 0" }}>
             {task.phash}
           </p>
-          <p className="muted" style={{ margin: "8px 0 0", fontSize: "var(--s-14)" }}>
+          <p className="muted" style={{ margin: "8px 0 0", fontSize: 13.5 }}>
             Kept so a human reviewer can compare this photograph with others. It
             does not accept or reject anything:{" "}
             <a href="/limits" style={{ color: "var(--accent)", fontWeight: 600 }}>

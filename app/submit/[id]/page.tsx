@@ -47,12 +47,12 @@ export default async function SubmitPage({ params }: { params: { id: string } })
         style={{
           marginTop: 14,
           marginBottom: 4,
-          fontSize: "var(--s-22)",
+          fontSize: 22,
         }}
       >
         Submit for payment
       </h1>
-      <p className="muted" style={{ fontSize: "var(--s-14)" }}>
+      <p className="muted" style={{ fontSize: 13.5 }}>
         {task.place}
       </p>
 
