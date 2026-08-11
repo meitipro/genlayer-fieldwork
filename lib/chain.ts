@@ -22,6 +22,12 @@ export const chain = IS_STUDIO ? studionet : testnetBradbury;
 export const CHAIN_ID: number = chain.id;
 export const CHAIN_ID_HEX = `0x${CHAIN_ID.toString(16)}`;
 export const CHAIN_NAME: string = chain.name;
+
+/** What the footer says. The SDK's own `chain.name` is "Genlayer Studio
+ *  Network", which is long and spells the brand with a lowercase L; the design
+ *  writes it as GenLayer Studio, so display copy uses this and anything
+ *  technical keeps CHAIN_NAME. */
+export const CHAIN_LABEL = IS_STUDIO ? "GenLayer Studio" : "GenLayer Bradbury";
 export const RPC_URL: string = chain.rpcUrls.default.http[0];
 export const NATIVE_CURRENCY = chain.nativeCurrency;
 
@@ -39,7 +45,7 @@ export const EXPLORER: string = IS_STUDIO
     "https://explorer-bradbury.genlayer.com";
 
 /**
- * Studio is gasless for wallet flows — its RPC reports eth_gasPrice 0x0, and a
+ * Studio is gasless for wallet flows - its RPC reports eth_gasPrice 0x0, and a
  * normal wallet address reads 0 GEN there forever. Any "you have no GEN" guard
  * must be conditional on this, or it refuses every transaction on Studio before
  * one is ever attempted.

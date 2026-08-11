@@ -6,7 +6,7 @@
  *
  * The deployer becomes the contract owner, which is the only account that can
  * withdraw fees or transfer ownership. An ephemeral account is fine for a
- * throwaway test deploy and wrong for anything you intend to keep — for that,
+ * throwaway test deploy and wrong for anything you intend to keep - for that,
  * use `genlayer deploy --contract contracts/fieldwork.py --args 600` with a
  * named CLI account instead.
  */
@@ -81,7 +81,7 @@ async function main() {
 
   const account = createAccount();
   log(`[ok] ephemeral deployer ${account.address}`);
-  log("     this account becomes the contract owner — use the CLI with a named");
+  log("     this account becomes the contract owner - use the CLI with a named");
   log("     account for a deploy you intend to keep.\n");
 
   const client = createClient({ chain, account });

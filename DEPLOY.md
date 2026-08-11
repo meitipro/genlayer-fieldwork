@@ -4,7 +4,7 @@ From nothing to a running, seeded site. Every step says what "worked" looks
 like, because on this stack a failure often reports success.
 
 Target network is **Studio** (`studionet`). Bradbury has a confirmed bug where a
-deploy reports `FINALIZED` and the code is then unreadable — step 3 is what
+deploy reports `FINALIZED` and the code is then unreadable - step 3 is what
 catches it.
 
 ---
@@ -28,7 +28,7 @@ it crashes printing its own tick character and you cannot tell pass from fail.
 PYTHONIOENCODING=utf-8 genvm-lint check contracts/fieldwork.py
 ```
 
-Expect `No contract class found` — that is a linter bug, not yours. It skips any
+Expect `No contract class found` - that is a linter bug, not yours. It skips any
 class literally named `Contract`, which is the GenLayer convention. To really
 validate, rename into a temp copy:
 
@@ -55,7 +55,7 @@ Both should end `all ... checks passed`.
 ## 2. Prove image input works on the network
 
 Do this **before** deploying the product. It is the only thing that can sink
-Fieldwork, and it costs nothing — Studio is gasless and the script uses a
+Fieldwork, and it costs nothing - Studio is gasless and the script uses a
 throwaway in-memory account.
 
 ```bash
@@ -64,7 +64,7 @@ node scripts/prove-vision.mjs
 
 Good: `vision text ok`, `vision json ok`, and the model describing the actual
 photograph. If it says `INVALID_IMAGE`, read the three causes in
-`contracts/README.md` — it is almost always that the url returned an error page
+`contracts/README.md` - it is almost always that the url returned an error page
 rather than an image.
 
 ---
@@ -95,7 +95,7 @@ genlayer deploy --contract contracts/fieldwork.py --args 600
 genlayer schema <CONTRACT_ADDRESS>
 ```
 
-Good: 33 methods listed. If this errors, you hit the Bradbury-style bug — do not
+Good: 33 methods listed. If this errors, you hit the Bradbury-style bug - do not
 continue, redeploy.
 
 ---
@@ -115,7 +115,7 @@ Optional but worth knowing before you demo anything:
 FIELDWORK=<CONTRACT_ADDRESS> node scripts/check-payout.mjs
 ```
 
-On Studio this reports **the payout does not land** — the contract is debited by
+On Studio this reports **the payout does not land** - the contract is debited by
 exactly the right amount and the payee is never credited. That is Studio's
 ledger, not the contract. The site already says so wherever it claims payment.
 
@@ -146,8 +146,7 @@ CAS_GATEWAY=https://gateway.pinata.cloud
 ```
 
 `PINATA_JWT` (from <https://app.pinata.cloud> → API Keys) is required for photo
-upload. Without it everything else works and submitting a photograph does not —
-the contract only accepts content addressed urls.
+upload. Without it everything else works and submitting a photograph does not - the contract only accepts content addressed urls.
 
 ```bash
 npm run dev
@@ -169,7 +168,7 @@ Then walk `/`, `/map`, `/task/<id>`, `/submit/<id>`, `/console`, `/limits` in
 both themes. On the task page, "Claim this task" must be a real transaction that
 returns a six character code.
 
-A few rate-limit lines during build are normal — Studio allows 30 requests a
+A few rate-limit lines during build are normal - Studio allows 30 requests a
 minute and the reads back off and retry.
 
 ---
@@ -179,8 +178,8 @@ minute and the reads back off and retry.
 `lib/chain.ts` is the only switch. But **contract addresses are per network**:
 change `NEXT_PUBLIC_GENLAYER_NETWORK` without redeploying and updating
 `NEXT_PUBLIC_FIELDWORK_CONTRACT`, and the app points at an address that does not
-exist. Redo steps 3–6.
+exist. Redo steps 3 - 6.
 
 Two things become true on a live network that are not true on Studio: payouts
-actually land, and gas is real — `REQUIRES_GAS` turns on, so the "no GEN" guard
+actually land, and gas is real - `REQUIRES_GAS` turns on, so the "no GEN" guard
 starts rejecting unfunded wallets instead of being skipped.

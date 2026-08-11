@@ -1,24 +1,54 @@
 import Link from "next/link";
-import { TaskMap } from "@/components/TaskMap";
+import { EvidenceStack } from "@/components/EvidenceStack";
 import { SettlementNotice } from "@/components/SettlementNotice";
-import { STATS, formatDistance, formatWindow } from "@/lib/tasks";
+import { STATS, formatDistance } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
 import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
 export const revalidate = 5;
 
-/* Show real settled work, with the photographs that passed. */
+/* Direction 1c from the redesign board, applied in full: a dark instrument
+   panel, the accent kept to three jobs, and the evidence stack as the only
+   place depth is spent. */
 
-function Stat({ value, label, accent = false }: { value: string; label: string; accent?: boolean }) {
+function TaskCard({
+  id,
+  title,
+  place,
+  distanceM,
+  reward,
+  minReputation,
+}: {
+  id: number;
+  title: string;
+  place: string;
+  distanceM: number;
+  reward: number;
+  minReputation: number;
+}) {
   return (
-    <div>
-      <div className="stat" style={accent ? { color: "var(--accent)" } : undefined}>
-        {value}
+    <Link href={`/task/${id}`} className="card">
+      <div className="spread">
+        <span
+          className="eyebrow"
+          style={{ letterSpacing: "0.14em" }}
+        >
+          Task {id}
+        </span>
+        <span style={{ font: "700 18px var(--mono)", color: "var(--accent)" }}>
+          {reward} GEN
+        </span>
       </div>
-      <div className="eyebrow" style={{ marginTop: 8 }}>
-        {label}
+      <div style={{ fontWeight: 700, fontSize: 17, marginTop: 12 }}>{title}</div>
+      <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 6 }}>
+        {place}
+        {distanceM > 0 ? ` - ${formatDistance(distanceM)}` : ""}
       </div>
-    </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+        <span className="pill">90m on claim</span>
+        <span className="pill">rep {minReputation}</span>
+      </div>
+    </Link>
   );
 }
 
@@ -26,181 +56,219 @@ export default async function HomePage() {
   const all = await fetchTasks();
   const open = all.filter((t) => t.status === "open");
   const settled = all.filter((t) => t.status === "paid");
-  const now = Date.now();
+
+  // The design shows three receipt slots, filling left to right.
+  const slots = [0, 1, 2];
 
   return (
     <>
       <section className="grid-bg">
         <div
-          className="wrap"
-          style={{ paddingTop: 64, paddingBottom: 70 }}
+          style={{
+            position: "relative",
+            maxWidth: "var(--wrap)",
+            margin: "0 auto",
+            padding: "64px 30px 70px",
+          }}
+          className="hero-grid"
         >
-          <span className="pill pill-accent">
-            Live on {NETWORK} — chain {CHAIN_ID}
-          </span>
-
-          <h1 style={{ margin: "22px 0 0", maxWidth: "13ch" }}>
-            Evidence in — settlement out
-          </h1>
-
-          <p className="lede" style={{ marginTop: 20 }}>
-            One written standard, two photographs and independent graders — the
-            verdict and the payment leave the contract as a single transaction.
-          </p>
-
-          <div className="row" style={{ marginTop: 30, flexWrap: "wrap" }}>
-            <Link className="btn btn-primary" href="/console">
-              Post a task
-            </Link>
-            <Link className="btn" href="/map">
-              Find work near me
-            </Link>
+          <div>
+            <span className="pill pill-accent">
+              Live on {NETWORK} - chain {CHAIN_ID}
+            </span>
+            <h1
+              style={{
+                fontSize: 58,
+                margin: "22px 0 0",
+                maxWidth: "13ch",
+                letterSpacing: "-0.045em",
+              }}
+            >
+              Evidence in - settlement out
+            </h1>
+            <p
+              style={{
+                fontSize: 17,
+                lineHeight: 1.6,
+                color: "var(--dim)",
+                maxWidth: "46ch",
+                marginTop: 20,
+              }}
+            >
+              One written standard, two photographs and independent graders - the
+              verdict and the payment leave the contract as a single transaction
+            </p>
+            <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
+              <Link href="/console" className="btn btn-primary">
+                Post a task
+              </Link>
+              <Link href="/map" className="btn">
+                Find work near me
+              </Link>
+            </div>
+            <div style={{ display: "flex", gap: 36, marginTop: 42, flexWrap: "wrap" }}>
+              <div>
+                <div className="stat" style={{ color: "var(--accent)" }}>
+                  {STATS.tasksPaid.toLocaleString("en-GB")}
+                </div>
+                <div className="stat-label">Tasks settled</div>
+              </div>
+              <div>
+                <div className="stat">{STATS.firstTryPassRate}%</div>
+                <div className="stat-label">First attempt pass</div>
+              </div>
+              <div>
+                <div className="stat">{STATS.medianMinutesToPayment}m</div>
+                <div className="stat-label">Median to settlement</div>
+              </div>
+            </div>
           </div>
 
-          <div className="row" style={{ gap: 36, marginTop: 42, flexWrap: "wrap" }}>
-            <Stat value={STATS.tasksPaid.toLocaleString("en-GB")} label="Tasks settled" accent />
-            <Stat value={`${STATS.firstTryPassRate}%`} label="First attempt pass" />
-            <Stat value={`${STATS.medianMinutesToPayment}m`} label="Median to settlement" />
-          </div>
+          <EvidenceStack />
         </div>
       </section>
 
-      <div className="wrap" style={{ paddingTop: 44, paddingBottom: 20 }}>
-        <TaskMap tasks={all} />
-
-        <h2 style={{ marginTop: 48 }}>Open tasks</h2>
-        <p className="dim" style={{ marginTop: 8, maxWidth: "58ch" }}>
-          Distance, reward and the claim window are the only three things a
-          worker decides on, so they are the only three columns.
-        </p>
-
-        <div className="panel table-scroll" style={{ padding: 0, marginTop: 16 }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Where</th>
-                <th>Reward</th>
-                <th>Window</th>
-                <th>Needs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {open.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <Link href={`/task/${t.id}`} style={{ fontWeight: 700 }}>
-                      {t.title}
-                    </Link>
-                    <div className="eyebrow" style={{ marginTop: 4 }}>
-                      Task {t.id}
-                    </div>
-                  </td>
-                  <td className="mono muted">{formatDistance(t.distanceM)}</td>
-                  <td className="mono" style={{ fontWeight: 700, color: "var(--accent)" }}>
-                    {t.reward} GEN
-                  </td>
-                  <td className="mono muted">{formatWindow(t, now)}</td>
-                  <td className="mono muted">rep {t.minReputation}</td>
-                </tr>
-              ))}
-              {open.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="muted" style={{ textAlign: "center", padding: 28 }}>
-                    No open tasks yet — post the first from the console.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+      <section className="wrap" style={{ paddingTop: 52 }}>
+        <div className="spread" style={{ alignItems: "flex-end" }}>
+          <h2 style={{ fontSize: 28 }}>Open tasks</h2>
+          <span
+            className="eyebrow"
+            style={{ letterSpacing: "0.14em", fontSize: 11 }}
+          >
+            {open.length} open now
+          </span>
         </div>
+        {open.length > 0 ? (
+          <div className="grid-2" style={{ marginTop: 18 }}>
+            {open.slice(0, 4).map((t) => (
+              <TaskCard
+                key={t.id}
+                id={t.id}
+                title={t.title}
+                place={t.place}
+                distanceM={t.distanceM}
+                reward={t.reward}
+                minReputation={t.minReputation}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="card-dashed" style={{ marginTop: 18 }}>
+            No open tasks right now
+          </div>
+        )}
+      </section>
 
-        <h2 style={{ marginTop: 52 }}>Settled receipts</h2>
-        <p className="dim" style={{ marginTop: 8, maxWidth: "58ch" }}>
-          Every settled task leaves a public page: both photographs, the text
-          they were graded against, and the verdict.
-        </p>
-
-        <div
+      <section className="wrap" style={{ paddingTop: 46 }}>
+        <h2 style={{ fontSize: 28 }}>Settled receipts</h2>
+        <p
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 14,
-            marginTop: 16,
+            color: "var(--dim)",
+            marginTop: 8,
+            fontSize: 14.5,
+            maxWidth: "62ch",
           }}
         >
-          {settled.slice(0, 3).map((t) => (
-            <Link key={t.id} href={`/proof/${t.id}`} className="panel stack">
-              <span className="pill pill-accent">Paid</span>
-              <strong style={{ fontSize: 16, display: "block" }}>{t.title}</strong>
-              <span className="mono muted">
-                {t.reward} GEN — task {t.id}
-              </span>
-            </Link>
-          ))}
-          {settled.length === 0 ? (
-            <div className="panel">
-              <p className="eyebrow" style={{ marginBottom: 0 }}>
-                Next receipt appears on settlement
-              </p>
+          Every settled task leaves a public page carrying both photographs, the
+          text it was graded against and the verdict
+        </p>
+        <div className="grid-3" style={{ marginTop: 18 }}>
+          {slots.map((i) => {
+            const t = settled[i];
+            if (!t) {
+              return (
+                <div key={i} className="card-dashed">
+                  Next receipt appears on settlement
+                </div>
+              );
+            }
+            return (
+              <Link key={t.id} href={`/proof/${t.id}`} className="card card-media">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.afterUrl}
+                  alt="After the work"
+                  style={{
+                    width: "100%",
+                    display: "block",
+                    borderBottom: "1px solid var(--line)",
+                  }}
+                />
+                <div style={{ padding: "16px 18px" }}>
+                  <span className="pill pill-accent">Paid</span>
+                  <div style={{ fontWeight: 700, fontSize: 15.5, marginTop: 12 }}>
+                    {t.title}
+                  </div>
+                  <div
+                    style={{
+                      font: "500 12px var(--mono)",
+                      color: "var(--muted)",
+                      marginTop: 7,
+                    }}
+                  >
+                    {t.reward} GEN - task {t.id}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="wrap" style={{ paddingTop: 46 }}>
+        <h2 style={{ fontSize: 28 }}>How settlement works</h2>
+        <div className="grid-3" style={{ marginTop: 18 }}>
+          <div className="panel panel-2">
+            <div
+              className="eyebrow eyebrow-accent"
+              style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.14em" }}
+            >
+              01 - Standard
             </div>
-          ) : null}
+            <p style={{ marginTop: 11, fontSize: 14, lineHeight: 1.6, color: "var(--dim)" }}>
+              The poster writes the acceptance test, photographs how the place
+              looks now and funds the task - both are public before anyone spends
+              time on site
+            </p>
+          </div>
+          <div className="panel panel-2">
+            <div
+              className="eyebrow eyebrow-accent"
+              style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.14em" }}
+            >
+              02 - Evidence
+            </div>
+            <p style={{ marginTop: 11, fontSize: 14, lineHeight: 1.6, color: "var(--dim)" }}>
+              A six character code is issued on claim and must be legible in the
+              photograph the worker takes - the before frame is already on the
+              task
+            </p>
+          </div>
+          <div className="panel panel-2">
+            <div
+              className="eyebrow eyebrow-accent"
+              style={{ fontWeight: 700, fontSize: 11, letterSpacing: "0.14em" }}
+            >
+              03 - Settlement
+            </div>
+            <p style={{ marginTop: 11, fontSize: 14, lineHeight: 1.6, color: "var(--dim)" }}>
+              Independent validators grade the same two images against the same
+              text and must agree before a coin moves
+            </p>
+          </div>
         </div>
 
-        <h2 id="how" style={{ marginTop: 52 }}>
-          How settlement works
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 14,
-            marginTop: 16,
-          }}
-        >
-          {[
-            [
-              "The standard, and the state",
-              "A poster writes what must be true when the work is done, photographs how it looks now, and funds the task. Both are public before anyone walks anywhere.",
-            ],
-            [
-              "The code",
-              "You claim the task and the contract issues a six character code that is yours alone, for ninety minutes.",
-            ],
-            [
-              "The evidence",
-              "You do the work and photograph it with the code in frame. The poster's photograph is the other half of the pair.",
-            ],
-            [
-              "The verdict",
-              "Independent graders read both photographs against that same text. They must agree the code is legible, it is the same place, and the test passed.",
-            ],
-          ].map(([title, body], i) => (
-            <div key={title} className="panel stack">
-              <span className="eyebrow" style={{ color: "var(--accent)" }}>
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <strong style={{ fontSize: 15 }}>{title}</strong>
-              <p className="dim" style={{ margin: 0, fontSize: 14 }}>
-                {body}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 22 }}>
+        <div style={{ marginTop: 16 }}>
           <SettlementNotice />
         </div>
 
-        <p className="dim" style={{ marginTop: 22, maxWidth: "64ch" }}>
-          No system can prove where a photograph was taken —{" "}
+        <p style={{ color: "var(--muted)", marginTop: 18, fontSize: 14 }}>
+          No system can prove where a photograph was taken -{" "}
           <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 700 }}>
             here is exactly what this cannot do
           </Link>
-          .
         </p>
-      </div>
+      </section>
     </>
   );
 }

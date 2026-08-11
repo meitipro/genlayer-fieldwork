@@ -16,7 +16,7 @@ export async function generateMetadata({
   params: { id: string };
 }): Promise<Metadata> {
   const task = await fetchTask(Number(params.id));
-  return { title: task ? `Submit — ${task.title}` : "Submit" };
+  return { title: task ? `Submit - ${task.title}` : "Submit" };
 }
 
 export default async function SubmitPage({ params }: { params: { id: string } }) {
@@ -35,28 +35,21 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     : { ...task, challengeCode: "K73QXB", expiresAt: SEED_NOW + 42 * 60000 };
 
   return (
-    <div
-      className="wrap"
-      style={{ paddingTop: 24, paddingBottom: 32, maxWidth: 520 }}
-    >
-      <Link href={`/task/${task.id}`} className="mono muted">
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "30px 24px 0" }}>
+      <Link
+        href={`/task/${task.id}`}
+        className="eyebrow"
+        style={{ letterSpacing: "0.1em", fontSize: 12 }}
+      >
         ← {task.title}
       </Link>
 
-      <h1
-        style={{
-          marginTop: 14,
-          marginBottom: 4,
-          fontSize: 22,
-        }}
-      >
-        Submit for payment
-      </h1>
-      <p className="muted" style={{ fontSize: 13.5 }}>
+      <h1 style={{ fontSize: 26, marginTop: 16 }}>Submit for settlement</h1>
+      <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 6 }}>
         {task.place}
       </p>
 
-      <div style={{ marginTop: 18 }}>
+      <div style={{ marginTop: 20 }}>
         <CaptureFlow task={withCode} now={now} />
       </div>
     </div>

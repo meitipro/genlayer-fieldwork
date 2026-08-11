@@ -4,7 +4,7 @@
  *   FIELDWORK=0x... node scripts/seed.mjs
  *
  * The launch checklist asks for ten real records before any announcement.
- * Each post runs the acceptance-test gate, so this takes a while — that LLM
+ * Each post runs the acceptance-test gate, so this takes a while - that LLM
  * call is the point, not overhead.
  */
 
@@ -204,11 +204,11 @@ async function main() {
       );
       const d = explain(receipt);
       const good = !d.execResult || String(d.execResult).toUpperCase() === "SUCCESS";
-      log(good ? "ok" : `FAILED — ${d.reason.slice(0, 80)}`);
+      log(good ? "ok" : `FAILED - ${d.reason.slice(0, 80)}`);
       if (good) ok++;
       await new Promise((r) => setTimeout(r, 2500));
     } catch (e) {
-      log(`FAILED — ${String(e?.message || e).slice(0, 80)}`);
+      log(`FAILED - ${String(e?.message || e).slice(0, 80)}`);
     }
   }
 

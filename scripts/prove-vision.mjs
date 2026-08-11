@@ -6,7 +6,7 @@
  *
  * Deploys the probe once and then walks three steps, so a failure says which
  * part broke rather than just "INVALID_IMAGE":
- *   1. fetch_only    - are the bytes reaching the contract a real image?
+ *   1. fetch_only - are the bytes reaching the contract a real image?
  *   2. describe_text - vision with the default text response format
  *   3. describe_json - vision with response_format='json'
  *
@@ -155,7 +155,7 @@ async function main() {
   log(`[ok] contract code readable (${String(codeCheck.result).length} chars)`);
 
   // 1. what did the contract actually receive?
-  log("\n[1/3] fetch_only — what bytes reached the contract");
+  log("\n[1/3] fetch_only - what bytes reached the contract");
   const fetched = await callMethod(client, address, "fetch_only", [IMAGE]);
   if (!fetched.ok) {
     log(`      FAILED: ${fetched.detail.last}`);
@@ -163,17 +163,17 @@ async function main() {
     log(`      ${fetched.value}`);
     if (!String(fetched.value).includes("kind=jpeg") &&
         !String(fetched.value).includes("kind=png")) {
-      log("      ⚠ these are not image bytes — the host returned something else");
+      log("      ⚠ these are not image bytes - the host returned something else");
     }
   }
 
   // 2. vision, text mode
-  log("\n[2/3] describe_text — exec_prompt(images=[...]) default format");
+  log("\n[2/3] describe_text - exec_prompt(images=[...]) default format");
   const asText = await callMethod(client, address, "describe_text", [IMAGE]);
   log(asText.ok ? `      model saw: ${asText.value}` : `      FAILED: ${asText.detail.last}`);
 
   // 3. vision, json mode
-  log("\n[3/3] describe_json — exec_prompt(images=[...], response_format='json')");
+  log("\n[3/3] describe_json - exec_prompt(images=[...], response_format='json')");
   const asJson = await callMethod(client, address, "describe_json", [IMAGE]);
   log(asJson.ok ? `      model saw: ${asJson.value}` : `      FAILED: ${asJson.detail.last}`);
 
@@ -187,7 +187,7 @@ async function main() {
   if (asText.ok || asJson.ok) {
     log("\n✓ image input works on this network.");
     if (!asJson.ok) {
-      log("  but response_format='json' does NOT work with images —");
+      log("  but response_format='json' does NOT work with images - ");
       log("  fieldwork.py must use text mode and parse the reply itself.");
     }
   } else {

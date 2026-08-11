@@ -1,8 +1,8 @@
 /**
  * Normalise a photograph before it is uploaded.
  *
- * Measured on GenLayer Studio: a JPEG whose first bytes are ffd8ffdb — valid,
- * but carrying no JFIF/APP0 header — is rejected outright by the node with
+ * Measured on GenLayer Studio: a JPEG whose first bytes are ffd8ffdb - valid,
+ * but carrying no JFIF/APP0 header - is rejected outright by the node with
  * `NondetException {'causes': ['INVALID_IMAGE']}`, which surfaces to the worker
  * as an unexplained failure. The same photograph as a standard baseline JFIF
  * (ffd8ffe0) grades fine, at 43KB and at 520KB, so it is the container and not

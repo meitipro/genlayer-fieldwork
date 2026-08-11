@@ -17,7 +17,7 @@ InferNode build brief series.
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmeitipro%2Fgenlayer-fieldwork&env=NEXT_PUBLIC_GENLAYER_NETWORK%2CPINATA_JWT%2CCAS_GATEWAY&envDescription=Network+is+studionet.+PINATA_JWT+is+optional+at+first+-+without+it+every+page+works+and+only+photo+upload+is+disabled.+Add+NEXT_PUBLIC_FIELDWORK_CONTRACT+afterwards%2C+once+you+have+deployed+the+contract+from+%2Fdeploy.&envLink=https%3A%2F%2Fgithub.com%2Fmeitipro%2Fgenlayer-fieldwork%2Fblob%2Fmaster%2FDEPLOY.md&project-name=genlayer-fieldwork&repository-name=genlayer-fieldwork)
 
 Deploying asks for three variables. Leave `NEXT_PUBLIC_FIELDWORK_CONTRACT` out
-for now — the site runs on seed records without it, and you add it after
+for now - the site runs on seed records without it, and you add it after
 deploying the contract from `/deploy` on the live URL.
 
 ---
@@ -57,8 +57,7 @@ API names, the bugs found in the original brief, and the three traps that stood
 between "the SDK has an `images` parameter" and a model actually describing a
 photograph.
 
-**Vision is proven working** on GenLayer Studio. Reproduce it in one command —
-no account, no faucet, because Studio is gasless:
+**Vision is proven working** on GenLayer Studio. Reproduce it in one command - no account, no faucet, because Studio is gasless:
 
 ```bash
 node scripts/prove-vision.mjs
@@ -100,15 +99,14 @@ verification theatre.
 | Explorer | <https://explorer-studio.genlayer.com> |
 | Source | [`contracts/fieldwork.py`](contracts/fieldwork.py), also served live at `/api/contract-source` |
 
-There is no build step between that file and the chain — what you read is what
+There is no build step between that file and the chain - what you read is what
 runs. To deploy your own copy with your own wallet, open `/deploy` on the
 running site, or follow the CLI route below.
 
 ## Deploying
 
 [`DEPLOY.md`](DEPLOY.md) is the runbook: contract checks, proving vision on the
-network, deploy, end-to-end exercise, seeding, and pointing the site at it —
-with what "worked" looks like at each step, because on this stack a failure
+network, deploy, end-to-end exercise, seeding, and pointing the site at it - with what "worked" looks like at each step, because on this stack a failure
 often reports success.
 
 ## Why this needs GenLayer
@@ -117,7 +115,7 @@ The contract does not use a model as a backend; it uses one where a **judgment
 has to be settled between parties who do not trust each other**.
 
 A poster and a worker disagree about whether a job was done. Today the poster
-decides, days later, with a model they own — which is exactly the arrangement
+decides, days later, with a model they own - which is exactly the arrangement
 workers distrust. Here the standard is written down and made public *before*
 anyone spends time, several validators grade the same pair of photographs
 against that same text independently, and they must agree on three coarse judgements

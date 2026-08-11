@@ -54,7 +54,7 @@ export default function DeployPage() {
             >
               contracts/fieldwork.py
             </Link>{" "}
-            exactly as it is in the repository — there is no build step between
+            exactly as it is in the repository - there is no build step between
             the file and the chain, so what you read is what runs.
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function DeployPage() {
         <div className="notice" style={{ marginTop: 16 }}>
           <strong>On Studio the money does not move.</strong> Grading, verdicts
           and receipts are all real, but Studio&apos;s ledger debits the contract
-          on a payout without ever crediting the payee. Measured — see{" "}
+          on a payout without ever crediting the payee. Measured - see{" "}
           <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 600 }}>
             what this cannot do
           </Link>

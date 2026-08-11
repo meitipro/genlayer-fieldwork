@@ -30,7 +30,7 @@ export type Task = {
   beforeUrl?: string;
   afterUrl?: string;
   contentHash?: string;
-  /** Recorded for human reviewers. Never decides a verdict — see /limits. */
+  /** Recorded for human reviewers. Never decides a verdict - see /limits. */
   phash?: string;
   /** Consensus record, shown on the receipt. */
   agreement?: { agreed: number; of: number };

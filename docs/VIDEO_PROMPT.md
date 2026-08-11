@@ -1,4 +1,4 @@
-# Claude Design prompt — Fieldwork demo video
+# Claude Design prompt - Fieldwork demo video
 
 Paste everything inside the rule below into Claude Design. It is written to be
 self-contained: it carries the brand, the story, and every fact, so nothing has
@@ -15,14 +15,14 @@ Two notes before you use it:
 
 ---
 
-Build me a 60–75 second product demo video for **Fieldwork**.
+Build me a 60 - 75 second product demo video for **Fieldwork**.
 
 ## What Fieldwork is
 
 Bounties for physical work, verified by photograph. Someone posts a real-world
 task and locks the payment up front. A worker does it, photographs the place
 against a before frame the poster supplied, and an Intelligent Contract on GenLayer grades those two
-photographs against a written standard and pays — verdict and payment in one
+photographs against a written standard and pays - verdict and payment in one
 transaction.
 
 The one-line version: **Do the work. Get paid on the spot.**
@@ -31,7 +31,7 @@ The one-line version: **Do the work. Get paid on the spot.**
 
 Coordinating physical work costs you twice: once for the work, once for checking
 it. Checking usually means someone in an office, days later, looking at a folder
-of photos — or not looking at all.
+of photos - or not looking at all.
 
 So the worker doesn't know when, or whether, they get paid. The decision belongs
 to the person holding the money. Crypto solved paying a stranger and left
@@ -39,7 +39,7 @@ to the person holding the money. Crypto solved paying a stranger and left
 
 ## The story beats, in order
 
-1. **The ask.** A poster writes a task. Not "tidy the yard" — a precise
+1. **The ask.** A poster writes a task. Not "tidy the yard" - a precise
    acceptance test: *"The bin area is empty. No bags remain against the wall,
    the ground is clear of loose litter, and both bins are upright with their
    lids closed."* They fund it in the same action. Show the money locking.
@@ -47,11 +47,11 @@ to the person holding the money. Crypto solved paying a stranger and left
 2. **The gate nobody expects.** The contract reads the acceptance test *before
    accepting the task* and refuses it if it can't be judged from a photograph.
    Show a vague one being rejected: *"Make sure the area is nice and clean and
-   looks good when you finish"* → refused. This really happens on chain — it is
+   looks good when you finish"* → refused. This really happens on chain - it is
    the single most surprising beat, lead with it.
 
 3. **The claim.** A worker takes the task. The contract issues a six-character
-   code that belongs to this claim and this moment alone — e.g. `8AFMB6`. They
+   code that belongs to this claim and this moment alone - e.g. `8AFMB6`. They
    have ninety minutes. Show the code appearing.
 
 4. **The work.** They write the code on a scrap of paper, and shoot two
@@ -62,12 +62,11 @@ to the person holding the money. Crypto solved paying a stranger and left
 5. **The judgement.** Several independent validators fetch the *same two images*
    and grade them against the *same written text*. They must agree on three
    things before anything moves:
-   - the code is legible in both frames
-   - it is the same place in both frames
-   - the acceptance test passed
+ - the code is legible in both frames
+ - it is the same place in both frames
+ - the acceptance test passed
 
-   Show these as three checks landing. Emphasise that **no single party decides**
-   — not the poster, not one model, not one node.
+   Show these as three checks landing. Emphasise that **no single party decides** - not the poster, not one model, not one node.
 
 6. **The receipt.** Verdict and payment are one transaction. A public page is
    left behind: both photographs, the exact text they were graded against, the
@@ -92,7 +91,7 @@ conference stage. Confident but never breathless. No "revolutionary", no
 "disrupting", no crypto-hype vocabulary. The product's whole personality is that
 it tells you the truth including the unflattering parts.
 
-Rejections in the product never imply dishonesty — they say what to change. Keep
+Rejections in the product never imply dishonesty - they say what to change. Keep
 that register.
 
 ## Look
@@ -102,7 +101,7 @@ that register.
   background, `#46C877` accent) if you want one beat at night.
 - **One accent, three jobs only:** the primary action, the verified state, and
   the logo mark. Nothing else is coloured. Resist adding a second hue.
-- **The mark** is camera brackets around a location pin — the brackets mean
+- **The mark** is camera brackets around a location pin - the brackets mean
   framing, the pin means place, which are the two things every submission has to
   get right.
 - Monospace for codes, hashes, timestamps and small labels. Bold tight-tracked
@@ -124,7 +123,7 @@ These are false, and the product says so on its own `/limits` page:
 - ❌ That it proves *where* a photograph was taken. **No system can.** Phone
   coordinates can be changed. Never show a "location verified" badge.
 - ❌ That it detects a cropped or re-saved photograph by how it looks. This was
-  built, measured, and removed — for this product the same corner on a different
+  built, measured, and removed - for this product the same corner on a different
   day scored *closer* than the same photo re-encoded, so it would accuse honest
   workers. Reuse is caught by the challenge code instead.
 - ❌ That the model is always right. Validators agreeing is not the same as being
@@ -135,8 +134,7 @@ These are false, and the product says so on its own `/limits` page:
 ## If the video mentions money moving
 
 It currently runs on GenLayer's **Studio** development network, where the
-grading, the verdict and the receipt are all real but the transfer is not —
-Studio debits the contract and never credits the payee. Measured directly:
+grading, the verdict and the receipt are all real but the transfer is not - Studio debits the contract and never credits the payee. Measured directly:
 funding a task moved 19.08 GEN in correctly; the refund took exactly 19.08 GEN
 out of the contract and the payee's balance did not change by a single wei.
 

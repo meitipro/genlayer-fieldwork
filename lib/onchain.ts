@@ -134,7 +134,7 @@ async function backoff<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
  * Home, /map and /console all want the same list, and each task costs a call.
  * Rendering them together against a 30-requests-per-minute limit is enough to
  * start losing tasks, so concurrent callers share one in-flight read and the
- * result is held briefly. Nothing depends on the cache for correctness — a
+ * result is held briefly. Nothing depends on the cache for correctness - a
  * stale read is a cosmetic bug, never a money bug.
  */
 const TTL_MS = 5000;

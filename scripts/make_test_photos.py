@@ -2,7 +2,7 @@
 
     python scripts/make_test_photos.py 4KWJX2
 
-The code must be the one the contract issued when you claimed the task — it is
+The code must be the one the contract issued when you claimed the task - it is
 different for every claim, and the grader checks it is legible in the AFTER
 frame. Only the after frame carries it: the poster shoots the before frame when
 the task is posted, which is before any code exists.
@@ -17,7 +17,7 @@ So the pair is drawn to make each clause checkable:
   after   wall clear, ground clear, both bins upright with lids down
 
 Framing is identical in both, because the grader also has to agree they are the
-same place. Output is baseline JFIF JPEG — a JPEG without a JFIF header is
+same place. Output is baseline JFIF JPEG - a JPEG without a JFIF header is
 rejected by the node as INVALID_IMAGE.
 """
 
@@ -106,7 +106,7 @@ def bin_(d, x, y, w, h, lid_open=False):
 
 
 def bags(d, rng):
-    """Rubbish bags heaped against the wall — the thing that must be gone."""
+    """Rubbish bags heaped against the wall - the thing that must be gone."""
     for cx, cy, r in ((250, 596, 96), (394, 612, 80), (522, 598, 72), (142, 620, 68)):
         d.ellipse([cx - r, cy - int(r * 0.74), cx + r, cy + int(r * 0.74)], fill=(44, 44, 49))
         d.ellipse(
@@ -123,7 +123,7 @@ def bags(d, rng):
 
 
 def litter(d, rng):
-    """Loose litter on the ground — the other clause of the test."""
+    """Loose litter on the ground - the other clause of the test."""
     for _ in range(26):
         x = rng.randint(120, W - 120)
         y = rng.randint(HORIZON + 60, H - 60)
@@ -191,7 +191,7 @@ def build(code: str):
 
     # ---- BEFORE: bags against the wall, litter on the ground, one lid open ----
     # No code card. The poster shoots this when the task is posted, and the
-    # challenge code is not issued until somebody claims it — so a code in this
+    # challenge code is not issued until somebody claims it - so a code in this
     # frame would be a code the contract never asked for.
     rng = random.Random(11)
     before, d = wall_and_ground(rng)

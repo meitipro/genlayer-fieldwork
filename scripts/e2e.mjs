@@ -13,7 +13,7 @@
  *
  * The submit path needs a photograph with the issued code written on paper and
  * held in frame, so it is the one step a script cannot fake. The before frame
- * is not a problem — the poster supplies that, and step 1 does. The vision
+ * is not a problem - the poster supplies that, and step 1 does. The vision
  * grading it depends on is proven separately by scripts/prove-vision.mjs.
  */
 
@@ -43,7 +43,7 @@ let failures = 0;
 
 function check(ok, label, detail = "") {
   if (!ok) failures++;
-  log(`  [${ok ? "ok  " : "FAIL"}] ${label}${detail ? "  — " + detail : ""}`);
+  log(`  [${ok ? "ok  " : "FAIL"}] ${label}${detail ? " - " + detail : ""}`);
 }
 
 async function rpc(method, params) {

@@ -1,4 +1,4 @@
-# Fieldwork — Intelligent Contracts
+# Fieldwork - Intelligent Contracts
 
 Two contracts:
 
@@ -27,10 +27,10 @@ Read that, not the website.
 
 | Purpose | USE THIS | NOT THIS |
 | --- | --- | --- |
-| Revert | `raise gl.vm.UserError("msg")` | any builtin exception — they crash the WASM with no message |
-| Fetch bytes | `gl.nondet.web.request(url, method="GET").body` | — `method` is **keyword-only and required** |
-| Vision | `gl.nondet.exec_prompt(p, images=[b1, b2], response_format="json")` | — `images` is keyword-only |
-| Consensus block | `gl.vm.run_nondet_unsafe(leader_fn, validator_fn)` | — both args are **positional-only** |
+| Revert | `raise gl.vm.UserError("msg")` | any builtin exception - they crash the WASM with no message |
+| Fetch bytes | `gl.nondet.web.request(url, method="GET").body` | - `method` is **keyword-only and required** |
+| Vision | `gl.nondet.exec_prompt(p, images=[b1, b2], response_format="json")` | - `images` is keyword-only |
+| Consensus block | `gl.vm.run_nondet_unsafe(leader_fn, validator_fn)` | - both args are **positional-only** |
 | Send value | `gl.get_contract_at(addr).emit_transfer(value=amount)` | **`genlayer.chain.Account` does not exist in the pinned SDK** |
 | Current time | `gl.message_raw["datetime"]` → `str` | `datetime.now()` |
 | Signed numbers | `i64` | `u256` for anything that can go negative (latitude!) |
@@ -39,7 +39,7 @@ Read that, not the website.
 
 **`genlayer.chain` is not real here.** `sdk.genlayer.com/main` documents
 `genlayer.chain.Account(addr).emit_transfer(value)`. That module does not exist
-in the pinned SDK — `genvm-lint check` fails with
+in the pinned SDK - `genvm-lint check` fails with
 `Import error: No module named 'genlayer.chain'`. The pinned SDK puts transfers
 on the contract proxy instead: `gl.get_contract_at(addr).emit_transfer(value=…)`,
 defined in `gl/genvm_contracts.py`. It works for a plain wallet address too.
@@ -50,13 +50,13 @@ is enforced for free. It also raises a bare `ValueError` when value is zero,
 which would crash the VM with an empty error, so `_pay()` guards zero itself.
 
 **`io` is a forbidden import, but Pillow is available.** `os`, `random`,
-`pathlib`, `http`, `requests` are forbidden too — the list is
+`pathlib`, `http`, `requests` are forbidden too - the list is
 `FORBIDDEN_MODULES` in the linter's `lint/safety.py`. `hashlib`, `datetime`,
 `urllib.parse` and `dataclasses` are allowed.
 
 `io` being banned looks like it rules out image processing, because the usual
 way in is `PIL.Image.open(io.BytesIO(body))`. It does not. **Pillow is present
-in the GenVM runtime** — the SDK's own `gl.nondet.web.render(mode="screenshot")`
+in the GenVM runtime** - the SDK's own `gl.nondet.web.render(mode="screenshot")`
 does `import PIL.Image` and `PIL.Image.open(io.BytesIO(raw))` at
 `gl/nondet/web.py:146`. The ban is a linter rule on contract code, not a runtime
 limit.
@@ -99,13 +99,13 @@ the leader formatted an answer, not that the answer is right.
 The reason strings are deliberately **not** compared. Two graders describe the
 same photograph differently, and requiring identical prose would fail consensus
 on agreeing verdicts. The hashes are compared precisely because they are pure
-functions of bytes every node fetched identically — that is what stops a leader
+functions of bytes every node fetched identically - that is what stops a leader
 forging the reuse check.
 
 `prompt_non_comparative` was used for the acceptance-test gate at first and
 replaced: deciding gradeable/vague is a classification, and a validator that only
 blesses the leader's label lets one node decide alone. Verified on Studio after
-the change — the comparative gate still reaches consensus and still refuses
+the change - the comparative gate still reaches consensus and still refuses
 "Make sure the area is nice and clean and looks good when you finish".
 
 ### Error classes
@@ -140,18 +140,18 @@ they test the code that ships rather than a copy that can drift.
 
 `tests/direct` is written and currently **skips everywhere**: gltest's direct
 mode downloads `genvm-universal.tar.xz`, and no genvm release publishes that
-asset — they ship `genvm-linux-amd64` / `genvm-linux-arm64` only. The tests are
+asset - they ship `genvm-linux-amd64` / `genvm-linux-arm64` only. The tests are
 kept because they are correct and will run the moment it appears. Until then the
 deterministic half is covered by the two scripts above and the whole flow by
 `scripts/e2e.mjs` against a deployed contract.
 
 ## What the contract uses beyond the brief
 
-- **Events** — `TaskPosted`, `TaskClaimed`, `SubmissionGraded`,
+- **Events** - `TaskPosted`, `TaskClaimed`, `SubmissionGraded`,
   `SubmissionRefused`. The brief's chapter 05 wants an indexer that renders proof
   pages and drives the repeat-verification sample; events are how it follows
   along without polling every task. Event `__init__` takes indexed fields
-  positionally before `/` and everything else as `**blob` — any named parameter
+  positionally before `/` and everything else as `**blob` - any named parameter
   after the `/` fails with `specify / after indexed fields`.
 - **An LLM gate on the acceptance test at posting time.** `post_task` runs
   `gl.eq_principle.prompt_non_comparative` and refuses a test that is too vague
@@ -168,7 +168,7 @@ land, and a wrong minimum makes every `submit` fail. Add it once
 
 ## Two bugs a re-read caught
 
-Neither showed up in lint, typecheck, or any test — both lived in paths nothing
+Neither showed up in lint, typecheck, or any test - both lived in paths nothing
 exercised.
 
 **A rejected task could be locked out of the pool for ever.** A rejection
@@ -198,8 +198,7 @@ when gltest can.
 "the vision call accepts two, which is why the entire product is a before and
 after pair rather than a gallery". The SDK signature is
 `images: Sequence[bytes | Image] | None` with no bound anywhere. Before/after is
-a good *design* decision — it is what makes the same-place check meaningful —
-but it is a choice, not a constraint. If a task ever needs three angles, the SDK
+a good *design* decision - it is what makes the same-place check meaningful - but it is a choice, not a constraint. If a task ever needs three angles, the SDK
 will take them.
 
 **The reuse check as written was bypassable.** The brief computes a hash inside
@@ -230,7 +229,7 @@ afternoon. A refused photograph never reaches `exec_prompt`, so the most
 expensive call in the contract is skipped and the worker gets a specific reason
 while they are still standing there.
 
-Covered by `contracts/test_images.py` — 14 cases including the negatives that
+Covered by `contracts/test_images.py` - 14 cases including the negatives that
 matter (a dusk photo and a bright-day photo must still be accepted).
 
 **2. Exact reuse, deterministic.** The CID is parsed out of the url before
@@ -242,20 +241,20 @@ task and shown on the receipt for human reviewers, and that is all it does.
 
 ### Why there is no perceptual reuse check
 
-It was built — dHash plus LSH banding over four 16-bit bands — and then measured,
+It was built - dHash plus LSH banding over four 16-bit bands - and then measured,
 and the measurement killed it. Distances at 64 bits:
 
 | | distance |
 | --- | --- |
 | same photograph, re-encoded at q55 | 8 |
-| same photograph, resized | 4–6 |
+| same photograph, resized | 4 - 6 |
 | **same place, photographed another day** | **2** |
-| a different scene entirely | 16–20 |
+| a different scene entirely | 16 - 20 |
 
 The populations overlap, and they overlap the wrong way round: honest repeat
 work at the same corner scores *closer* than actual reuse. Going to 256 bits made
 it worse (39 vs 28). There is no threshold. This is not a tuning problem, it is
-the domain — every task in this product is a photograph of the same place, so
+the domain - every task in this product is a photograph of the same place, so
 "looks almost identical" is the normal case rather than the suspicious one.
 
 The failure mode also is not symmetric: a false positive tells a worker who did
@@ -263,7 +262,7 @@ the job that they are a fraud. So it does not vote.
 
 **What actually catches a recycled photograph is the challenge code.** It is
 issued at claim time, it is different for every claim, and an old photograph
-carries the wrong one — which the vision model is already checking for, in the
+carries the wrong one - which the vision model is already checking for, in the
 call we are already paying for. The brief's own design had the answer; the
 perceptual hash was never load-bearing.
 
@@ -272,7 +271,7 @@ separate, the decision can be revisited on evidence.
 
 ---
 
-## Vision is proven on Studio — and what it took
+## Vision is proven on Studio - and what it took
 
 `gl.nondet.exec_prompt(images=[...])` **works**. Probe
 `0xcB4ad1cdb1DF6C9069592c8eaCb357507F04D65f` on Studio, asked to describe a
@@ -310,27 +309,27 @@ GPS the worker did not mean to publish) on the way.
 **3. The router can hand the call to a model that cannot see.** Studio's
 validators run `llm-router` with policy `prd-gpt-5-4`, whose allowed families
 include the text-only `gpt-oss-120b`. Asked about the same photograph, separate
-runs returned `A white toilet bowl` and `No image provided` — the second is
+runs returned `A white toilet bowl` and `No image provided` - the second is
 honest, the first is a confident hallucination about an image the model never
 received.
 
 That is dangerous for a product that pays people on a model's say-so. The prompt
 now requires a `saw_images` boolean and the contract refuses to grade when it is
 false, so a blind grader produces a clean "please submit again" instead of a
-verdict. Consensus is the backstop — a hallucinating validator disagrees with a
-seeing one and the transaction fails rather than paying — but it is better to
+verdict. Consensus is the backstop - a hallucinating validator disagrees with a
+seeing one and the transaction fails rather than paying - but it is better to
 catch it as a stated refusal than as an unexplained disagreement.
 
 ## Deploy
 
 **Studio is the target network.** Bradbury has a confirmed network bug where a
 deploy reports `FINALIZED` with storage changes and yet `gen_getContractCode`
-answers "contract code not found" — reproduced with the official CLI, so it is
+answers "contract code not found" - reproduced with the official CLI, so it is
 not a tooling problem. Studio does not have it: the probe deployed and its code
 read back straight away.
 
 Studio is also **gasless** (`eth_gasPrice` is `0x0`), and its faucet is not a
-URL — it is the water-drop button in the account selector inside
+URL - it is the water-drop button in the account selector inside
 studio.genlayer.com, which funds Studio's own accounts rather than an external
 wallet. Because the flow is gasless, nobody needs it.
 
@@ -366,7 +365,7 @@ Reading a Studio contract over raw JSON-RPC takes a **bare address string**
 (`params: ["0x..."]`). Passing Bradbury's `[{"address": "0x..."}]` shape returns
 a psycopg2 "can't adapt type 'dict'" SQL error, which reads like a broken
 contract but is just the wrong call shape. `gen_getTransactionByHash` does not
-exist on Studio either — use `eth_getTransactionByHash`, and read the real
+exist on Studio either - use `eth_getTransactionByHash`, and read the real
 failure from `consensus_data.leader_receipt.genvm_result.stderr`, because the
 `error` field comes back empty.
 
@@ -376,12 +375,12 @@ failure from `consensus_data.leader_receipt.genvm_result.stderr`, because the
 
 Writes (wallet signed):
 
-- `post_task(title, place, acceptance_test, example_pass, example_fail, before_url, lat_e6, lng_e6, reward, min_reputation)` — **payable**, send `reward + fee`
-- `claim(task_id) -> str` — returns the six character challenge code
-- `submit(task_id, after_url) -> str` — returns `paid` or `rejected`
-- `release_expired(task_id)` — returns an abandoned claim to the pool
-- `cancel_task(task_id)` — poster only, refunds reward and fee
-- `withdraw_fees(to)`, `transfer_ownership(new_owner)` — owner only
+- `post_task(title, place, acceptance_test, example_pass, example_fail, before_url, lat_e6, lng_e6, reward, min_reputation)` - **payable**, send `reward + fee`
+- `claim(task_id) -> str` - returns the six character challenge code
+- `submit(task_id, after_url) -> str` - returns `paid` or `rejected`
+- `release_expired(task_id)` - returns an abandoned claim to the pool
+- `cancel_task(task_id)` - poster only, refunds reward and fee
+- `withdraw_fees(to)`, `transfer_ownership(new_owner)` - owner only
 
 Views are one per field (`status_of`, `reason_of`, `challenge_code_of`,
 `acceptance_test_of`, `reward_of`, `before_url_of`, `after_url_of`,
@@ -392,8 +391,8 @@ Views are one per field (`status_of`, `reason_of`, `challenge_code_of`,
 
 The poster, not the worker. A worker who supplies both frames controls the
 comparison entirely: they can photograph a mess they made, clear it, and be paid
-for work nobody needed. Every check downstream — the acceptance test, the same
-place judgement, the pre-flight — is measured against a starting state that the
+for work nobody needed. Every check downstream - the acceptance test, the same
+place judgement, the pre-flight - is measured against a starting state that the
 person being paid chose. Moving that frame to the poster is the difference
 between grading work and grading a story about work.
 
@@ -409,12 +408,12 @@ Two consequences in the contract:
   worker is the one who would otherwise walk there to find that out.
 - the before CID is written into `seen_cids` when the task is posted, so handing
   the poster's own file back as an after frame is caught by the same reuse check
-  as any other recycled photograph — plus an explicit equality check with a
+  as any other recycled photograph - plus an explicit equality check with a
   better error message.
 
 ### The challenge code alphabet
 
-`23456789ABCDEFGHJKMNPQRSTVWXYZ` — no `I`, `L`, `O`, `U`, `0` or `1`. The code is
+`23456789ABCDEFGHJKMNPQRSTVWXYZ` - no `I`, `L`, `O`, `U`, `0` or `1`. The code is
 written by hand on a scrap of paper and read back by a vision model, so
 characters that are misread by hand are simply not in the alphabet. The brief
 used `sha256` hex, which contains `0`, `1` and `O`-alikes.

@@ -152,7 +152,7 @@ export function getTask(id: number): Task | undefined {
 export function formatDistance(metres: number): string {
   // Distance is viewer relative, so it is not on chain. An unknown distance
   // says so rather than claiming the task is at your feet.
-  if (!metres || metres <= 0) return "—";
+  if (!metres || metres <= 0) return " - ";
   if (metres < 1000) return `${metres} m`;
   return `${(metres / 1000).toFixed(1)} km`;
 }
@@ -160,8 +160,7 @@ export function formatDistance(metres: number): string {
 /**
  * What to put in the clock column.
  *
- * Only a claimed task is counting down. An open one has no deadline at all —
- * the ninety minutes start when you claim it — so it says what you would get
+ * Only a claimed task is counting down. An open one has no deadline at all - * the ninety minutes start when you claim it - so it says what you would get
  * rather than a countdown that is not running.
  */
 export function formatWindow(

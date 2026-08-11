@@ -39,21 +39,57 @@ function CaptureTile({
         style={{
           width: "100%",
           aspectRatio: "3 / 4",
-          border: shot ? "1px solid var(--line)" : "2px dashed var(--line)",
-          borderRadius: 10,
-          background: shot ? `center/cover no-repeat url(${shot.url})` : "var(--panel)",
+          border: shot
+            ? "1px solid var(--accent-line)"
+            : "1px solid var(--line2)",
+          borderRadius: 12,
+          background: shot
+            ? `center/cover no-repeat url(${shot.url})`
+            : "var(--panel)",
           color: "var(--muted)",
           font: "inherit",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          flexDirection: "column",
+          gap: 10,
           padding: 0,
           overflow: "hidden",
         }}
         aria-label={`Capture the ${label.toLowerCase()} photograph`}
       >
-        {shot ? "" : "tap to capture"}
+        {shot ? null : (
+          <>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect
+                x="2.5"
+                y="6"
+                width="19"
+                height="14"
+                rx="3"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.6" />
+              <path
+                d="M8.5 6l1.4-2.2h4.2L15.5 6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span
+              style={{
+                font: "500 11px var(--mono)",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}
+            >
+              tap to capture
+            </span>
+          </>
+        )}
       </button>
       <input
         ref={ref}
@@ -109,7 +145,8 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   const minutesLeft = Math.max(0, Math.round(remaining / 60000));
   const expired = remaining <= 0;
 
-  const allTicked = CHECKS.every((c) => ticked[c.key]);
+  const checksLeft = CHECKS.filter((c) => !ticked[c.key]).length;
+  const allTicked = checksLeft === 0;
   const ready = !!after && allTicked && !expired;
 
   const busy = stage === "uploading" || stage === "sent" || stage === "accepted";
@@ -161,10 +198,8 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   if (result?.status === "paid") {
     return (
       <div className="panel stack" style={{ textAlign: "center" }}>
-        <div className="eyebrow" style={{ color: "var(--accent)" }}>
-          Paid
-        </div>
-        <h2 style={{ color: "var(--accent)" }}>{task.reward} GEN</h2>
+        <span className="pill pill-solid">Paid - {task.reward} GEN</span>
+        <h2 style={{ fontSize: 28, marginTop: 4 }}>Settled</h2>
         <p className="muted">{result.reason}</p>
         <SettlementNotice />
         <a className="btn btn-primary btn-block" href={`/proof/${task.id}`}>
@@ -181,46 +216,48 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 6 }}>
-            Before — from the poster
+            Before - from the poster
           </div>
           <div
             style={{
               width: "100%",
               aspectRatio: "3 / 4",
-              border: "1px solid var(--line)",
-              borderRadius: 8,
+              border: "1px solid var(--line2)",
+              borderRadius: 12,
               background: task.beforeUrl
                 ? `center/cover no-repeat url(${task.beforeUrl})`
                 : "var(--panel)",
               display: "grid",
               placeItems: "center",
               color: "var(--muted)",
-              fontSize: 13,
+              font: "500 11px var(--mono)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              textAlign: "center",
+              padding: 12,
               overflow: "hidden",
             }}
           >
             {task.beforeUrl ? "" : "no photograph on this task"}
           </div>
-          <p className="muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
-            This is the state you are measured against. Match the angle.
+          <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--muted)" }}>
+            The state you are measured against - match the angle
           </p>
         </div>
         <div>
           <CaptureTile
-            label="After — your work"
+            label="After - your work"
             shot={after}
             onPick={(f) => setAfter({ blob: f, url: URL.createObjectURL(f) })}
           />
-          <p className="muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
-            Keep the code in frame. Only this one is yours to take.
+          <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--muted)" }}>
+            Keep the code in frame - only this one is yours to take
           </p>
         </div>
       </div>
 
-      <section className="panel">
-        <div className="eyebrow" style={{ marginBottom: 10 }}>
-          Before you submit
-        </div>
+      <section className="panel panel-2" style={{ padding: 20 }}>
+        <div className="eyebrow">Before you submit</div>
         {CHECKS.map((c) => (
           <label
             key={c.key}
@@ -233,7 +270,8 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
               fontFamily: "var(--sans)",
               fontSize: 15,
               color: "var(--ink)",
-              marginBottom: 8,
+              marginTop: 12,
+              marginBottom: 0,
               cursor: "pointer",
             }}
           >
@@ -248,31 +286,62 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
             {c.label}
           </label>
         ))}
-        <p className="muted" style={{ margin: "10px 0 0", fontSize: 13.5 }}>
+        <p
+          style={{
+            color: "var(--muted)",
+            fontSize: 13.5,
+            lineHeight: 1.6,
+            marginTop: 14,
+            paddingTop: 14,
+            borderTop: "1px solid var(--line)",
+          }}
+        >
           {task.acceptanceTest}
         </p>
       </section>
 
-      <div className="spread">
-        <span className="mono muted">
+      <div
+        className="spread"
+        style={{
+          font: "500 11.5px var(--mono)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        <span style={{ color: "var(--muted)" }}>
           {expired
             ? "this claim has expired"
             : `claim expires in ${minutesLeft} minutes`}
         </span>
-        {stageCopy ? (
-          <span className="mono" style={{ color: "var(--accent)" }}>
-            {stageCopy}
-          </span>
-        ) : null}
+        <span style={{ color: "var(--accent)" }}>
+          {stageCopy
+            ? stageCopy
+            : checksLeft > 0
+              ? `${checksLeft} check${checksLeft === 1 ? "" : "s"} left`
+              : after
+                ? "ready"
+                : "photograph needed"}
+        </span>
       </div>
 
       <button
-        className="btn btn-primary btn-block"
+        className="btn btn-primary btn-lg"
         disabled={!ready || busy}
         onClick={onSubmit}
       >
-        {busy ? stageCopy : "Submit for payment"}
+        {busy ? stageCopy : "Submit for settlement"}
       </button>
+
+      <p
+        style={{
+          textAlign: "center",
+          color: "var(--muted)",
+          fontSize: 13,
+          margin: 0,
+        }}
+      >
+        A rejection inside the window costs a retake, not the claim
+      </p>
 
       {result?.status === "rejected" ? (
         <div className="panel" style={{ borderColor: "var(--danger)" }}>
@@ -281,8 +350,8 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
           </div>
           <p style={{ margin: "6px 0 0" }}>{result.reason}</p>
           <p className="muted" style={{ margin: "8px 0 0", fontSize: 13.5 }}>
-            Retake and submit again, the claim is still yours for {minutesLeft}{" "}
-            minutes.
+            Retake and submit again - the claim is still yours for {minutesLeft}{" "}
+            minutes
           </p>
         </div>
       ) : null}

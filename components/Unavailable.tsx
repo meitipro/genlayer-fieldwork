@@ -14,7 +14,7 @@ export function Unavailable({ what = "this page" }: { what?: string }) {
       </h1>
       <p className="lede" style={{ marginTop: 12 }}>
         We could not read {what} from the chain just now. Nothing is wrong with
-        your claim or your work — reload in a moment and it should be back.
+        your claim or your work - reload in a moment and it should be back.
       </p>
       <div className="row" style={{ marginTop: 20 }}>
         <Link className="btn btn-primary" href="/map">

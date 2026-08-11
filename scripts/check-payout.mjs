@@ -9,8 +9,8 @@
  * photographs and no vision call.
  *
  * Reports three balances so the answer is unambiguous:
- *   poster before/after   — did the money arrive?
- *   contract before/after — did the money leave?
+ *   poster before/after - did the money arrive?
+ *   contract before/after - did the money leave?
  */
 
 import { createAccount, createClient } from "genlayer-js";
@@ -87,7 +87,7 @@ function explain(receipt) {
 }
 
 const GOOD = {
-  title: "Payout probe — cancel refunds the poster",
+  title: "Payout probe - cancel refunds the poster",
   place: "nowhere",
   test:
     "The bin area is empty. No bags remain against the wall, the ground is "
@@ -123,7 +123,7 @@ async function main() {
   log(`  contract  ${fmt(contractStart)}`);
 
   if (posterFunded === BigInt(0)) {
-    log("\n[!!] poster reads 0 after funding — balances are not observable here,");
+    log("\n[!!] poster reads 0 after funding - balances are not observable here,");
     log("     so this probe cannot answer the question on this network.");
   }
 
@@ -158,7 +158,7 @@ async function main() {
   log(`  contract gained ${fmt(paidIn)}  ${paidIn > 0 ? "[ok]" : "[!! funding did not arrive]"}`);
 
   // ---- cancel (money should come BACK OUT to the poster) ----
-  log(`\ncancelling task ${taskId} — the contract should refund the poster ...`);
+  log(`\ncancelling task ${taskId} - the contract should refund the poster ...`);
   const cancelHash = await retry(() => client.writeContract({
     address: ADDRESS,
     functionName: "cancel_task",
@@ -173,7 +173,7 @@ async function main() {
   }), "cancel receipt");
 
   const d = explain(receipt);
-  log(`  execution: ${d.execResult ?? "SUCCESS"}${d.reason ? " — " + d.reason.slice(0, 70) : ""}`);
+  log(`  execution: ${d.execResult ?? "SUCCESS"}${d.reason ? " - " + d.reason.slice(0, 70) : ""}`);
   if (d.pending) {
     log(`  emitted messages: ${JSON.stringify(d.pending).slice(0, 220)}`);
   }
@@ -201,10 +201,10 @@ async function main() {
   } else if (left > 0 && arrived === BigInt(0)) {
     log("\n✗ THE PAYOUT DOES NOT LAND ON THIS NETWORK.");
     log("  The contract was debited and the payee was not credited.");
-    log("  The contract is behaving correctly — the ledger is not applying");
+    log("  The contract is behaving correctly - the ledger is not applying");
     log("  the emitted transfer. Any UI that says 'paid' here must say so.");
   } else if (left === BigInt(0)) {
-    log("\n? nothing left the contract — check the execution result above.");
+    log("\n? nothing left the contract - check the execution result above.");
   }
 }
 

@@ -50,7 +50,7 @@ export function DeployPanel() {
     return (
       <div className="panel stack">
         <div className="eyebrow" style={{ color: "var(--accent)" }}>
-          Deployed — you are the owner
+          Deployed - you are the owner
         </div>
 
         <p style={{ margin: 0 }}>
@@ -83,7 +83,7 @@ export function DeployPanel() {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 },
-                () => setError("could not copy — select the text instead")
+                () => setError("could not copy - select the text instead")
               );
             }}
           >
@@ -127,7 +127,7 @@ export function DeployPanel() {
 
       <p style={{ margin: 0 }}>
         This signs the deployment with whatever address your wallet is on, which
-        makes that address the contract <strong>owner</strong> — the only one
+        makes that address the contract <strong>owner</strong> - the only one
         that can withdraw fees or transfer ownership later. Deploying from a CLI
         keystore or from Studio&apos;s own account selector would hand ownership
         to one of those instead.

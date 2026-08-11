@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { AcceptanceTest } from "@/components/AcceptanceTest";
-import { ReputationTag } from "@/components/ReputationTag";
 import { ClaimButton } from "@/components/ClaimButton";
 import { formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
@@ -10,7 +8,11 @@ import { Unavailable } from "@/components/Unavailable";
 
 export const revalidate = 5;
 
-/* Make the acceptance test impossible to misread. */
+/* Make the acceptance test impossible to misread.
+
+   The design frames the standard as the centre of the page and the claim as a
+   consequence of having read it, so the facts strip and the test sit above the
+   button rather than beside it. */
 
 export async function generateMetadata({
   params,
@@ -19,17 +21,6 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const task = await fetchTask(Number(params.id));
   return { title: task ? task.title : "Task" };
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="eyebrow">{label}</div>
-      <div className="mono" style={{ fontSize: 17, fontWeight: 700 }}>
-        {value}
-      </div>
-    </div>
-  );
 }
 
 export default async function TaskPage({ params }: { params: { id: string } }) {
@@ -42,77 +33,159 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
   const now = Date.now();
 
   return (
-    <div className="wrap" style={{ paddingTop: 32, paddingBottom: 20, maxWidth: 760 }}>
-      <Link href="/map" className="mono muted">
+    <div style={{ maxWidth: 820, margin: "0 auto", padding: "34px 30px 0" }}>
+      <Link
+        href="/map"
+        className="eyebrow"
+        style={{ letterSpacing: "0.1em", fontSize: 12 }}
+      >
         ← All tasks
       </Link>
 
-      <div className="spread" style={{ marginTop: 16 }}>
-        <span className="pill pill-accent">Task {task.id}</span>
-        <span className={`pill ${task.status === "paid" ? "pill-accent" : ""}`}>
+      <div className="spread" style={{ marginTop: 20 }}>
+        <div className="eyebrow">Task {task.id}</div>
+        <span
+          className={task.status === "open" || task.status === "paid" ? "pill pill-accent" : "pill"}
+        >
           {task.status}
         </span>
       </div>
 
-      <h1 style={{ marginTop: 18, fontSize: 40 }}>{task.title}</h1>
-      <p className="muted" style={{ marginTop: 8 }}>
+      <h1 style={{ fontSize: 36, marginTop: 14 }}>{task.title}</h1>
+      <p style={{ color: "var(--muted)", marginTop: 10, fontSize: 15 }}>
         {task.place}
-        {task.distanceM > 0 ? ` · ${formatDistance(task.distanceM)} away` : ""}
+        {task.distanceM > 0 ? ` - ${formatDistance(task.distanceM)} away` : ""}
       </p>
 
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-          gap: 18,
-          margin: "24px 0",
-        }}
+        className="facts"
+        style={{ gridTemplateColumns: "repeat(3,1fr)", marginTop: 26 }}
       >
-        <Fact label="Reward" value={`${task.reward} GEN`} />
-        <Fact
-          label="Window"
-          value={formatWindow(task, now)}
-        />
-        <Fact label="Reputation" value={`rep ${task.minReputation}`} />
+        <div>
+          <div className="eyebrow" style={{ letterSpacing: "0.14em" }}>
+            Reward
+          </div>
+          <div className="fact-value" style={{ color: "var(--accent)" }}>
+            {task.reward} GEN
+          </div>
+        </div>
+        <div>
+          <div className="eyebrow" style={{ letterSpacing: "0.14em" }}>
+            Claim window
+          </div>
+          <div className="fact-value">{formatWindow(task, now)}</div>
+        </div>
+        <div>
+          <div className="eyebrow" style={{ letterSpacing: "0.14em" }}>
+            Reputation
+          </div>
+          <div className="fact-value">rep {task.minReputation}</div>
+        </div>
       </div>
 
       {task.beforeUrl ? (
-        <figure style={{ margin: "0 0 14px" }}>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>
-            How it looks now — photographed by the poster
+        <figure
+          style={{
+            margin: "14px 0 0",
+            border: "1px solid var(--line)",
+            borderRadius: 12,
+            overflow: "hidden",
+            background: "var(--panel)",
+          }}
+        >
+          <div className="eyebrow" style={{ padding: "12px 14px 8px", letterSpacing: "0.14em" }}>
+            How it looks now - photographed by the poster
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={task.beforeUrl}
             alt="The place as the poster found it"
-            style={{
-              width: "100%",
-              border: "1px solid var(--line)",
-              borderRadius: 10,
-              display: "block",
-            }}
+            style={{ width: "100%", display: "block" }}
           />
-          <figcaption className="muted" style={{ marginTop: 8, fontSize: 13.5 }}>
+          <figcaption
+            style={{
+              padding: "12px 14px 14px",
+              fontSize: 13.5,
+              color: "var(--muted)",
+              lineHeight: 1.6,
+            }}
+          >
             The starting state you will be graded against, so you can see the job
-            before you walk anywhere. Take your photograph from roughly here.
+            before you walk anywhere - take your photograph from roughly here
           </figcaption>
         </figure>
       ) : null}
 
-      <AcceptanceTest task={task} />
+      <section
+        className="panel panel-flush"
+        style={{ marginTop: 14 }}
+      >
+        <div style={{ padding: "22px 24px", borderBottom: "1px solid var(--line)" }}>
+          <div className="eyebrow eyebrow-accent">
+            Acceptance test - frozen before any claim
+          </div>
+          <p style={{ fontSize: 19, lineHeight: 1.5, marginTop: 12 }}>
+            {task.acceptanceTest}
+          </p>
+        </div>
+        <div className="grid-2" style={{ gap: 0 }}>
+          <div style={{ padding: "20px 24px", borderRight: "1px solid var(--line)" }}>
+            <div
+              className="eyebrow eyebrow-accent"
+              style={{ fontWeight: 700, letterSpacing: "0.14em" }}
+            >
+              Passes
+            </div>
+            <p
+              style={{
+                color: "var(--dim)",
+                marginTop: 9,
+                fontSize: 14.5,
+                lineHeight: 1.6,
+              }}
+            >
+              {task.examplePass}
+            </p>
+          </div>
+          <div style={{ padding: "20px 24px" }}>
+            <div
+              className="eyebrow"
+              style={{ fontWeight: 700, letterSpacing: "0.14em", color: "var(--danger)" }}
+            >
+              Fails
+            </div>
+            <p
+              style={{
+                color: "var(--dim)",
+                marginTop: 9,
+                fontSize: 14.5,
+                lineHeight: 1.6,
+              }}
+            >
+              {task.exampleFail}
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div className="panel stack" style={{ marginTop: 14 }}>
+      <div className="panel panel-2" style={{ marginTop: 14 }}>
         <div className="eyebrow">What happens when you claim</div>
-        <p style={{ margin: 0 }}>
-          The contract issues a six character code that is yours alone. Write it
-          on paper, keep it in frame in the photograph you take, and submit
-          within ninety minutes. The before photograph is already on the task —
-          it came from the poster.
+        <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "var(--dim)" }}>
+          The contract issues a six character code that is yours alone - write it
+          on paper, keep it in frame in the photograph you take and submit inside
+          ninety minutes
         </p>
-        <div className="row" style={{ flexWrap: "wrap" }}>
-          <ReputationTag score={task.minReputation} />
+        <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+          <span className="pill">
+            rep {task.minReputation} -{" "}
+            {task.minReputation >= 5
+              ? "high value tasks"
+              : task.minReputation >= 1
+                ? "standard tasks"
+                : "starter tasks"}
+          </span>
           <span className="pill">90 minute claim</span>
-          <span className="pill">retry allowed inside the window</span>
+          <span className="pill">retry inside the window</span>
         </div>
       </div>
 
@@ -120,7 +193,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         {claimable ? (
           <ClaimButton taskId={task.id} />
         ) : (
-          <button className="btn btn-block" disabled>
+          <button className="btn btn-primary btn-lg" disabled>
             {task.status === "paid"
               ? "Already paid"
               : task.status === "claimed"
@@ -130,9 +203,23 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         )}
       </div>
 
+      {claimable ? (
+        <p
+          style={{
+            textAlign: "center",
+            color: "var(--muted)",
+            fontSize: 13,
+            marginTop: 12,
+          }}
+        >
+          The claim is a transaction - it is what ties the photograph to you and
+          to this moment
+        </p>
+      ) : null}
+
       {task.status === "paid" ? (
         <p style={{ marginTop: 14 }}>
-          <Link href={`/proof/${task.id}`} style={{ color: "var(--accent)", fontWeight: 600 }}>
+          <Link href={`/proof/${task.id}`} style={{ color: "var(--accent)", fontWeight: 700 }}>
             See the public receipt for this task →
           </Link>
         </p>

@@ -4,7 +4,7 @@
 
 No server and no chain: the VM runs in memory and web/LLM calls are mocked, so
 these exercise business logic, validation and state transitions in ~milliseconds.
-Validator agreement is NOT exercised here — that needs the integration tests or
+Validator agreement is NOT exercised here - that needs the integration tests or
 a real network.
 """
 
@@ -27,7 +27,7 @@ def _direct_mode_available() -> bool:
 
     gltest/direct/sdk_loader.py fetches
     `<releases>/download/<version>/genvm-universal.tar.xz`, and no genvm release
-    ships that asset — they carry genvm-linux-amd64 / genvm-linux-arm64 only. So
+    ships that asset - they carry genvm-linux-amd64 / genvm-linux-arm64 only. So
     these tests cannot run anywhere today, on any OS. They are written and kept
     because they are correct and will run the moment the asset appears; the
     deterministic half of the contract is covered meanwhile by
@@ -224,7 +224,7 @@ def test_claim_issues_a_readable_code(contract, direct_vm, direct_alice, direct_
     code = contract.claim(task_id)
 
     assert len(code) == 6
-    # No I, L, O, U, 0 or 1 — the code is handwritten and read back by a model.
+    # No I, L, O, U, 0 or 1 - the code is handwritten and read back by a model.
     assert set(code) <= set("23456789ABCDEFGHJKMNPQRSTVWXYZ")
     assert contract.status_of(task_id) == "claimed"
     assert contract.challenge_code_of(task_id) == code
@@ -411,7 +411,7 @@ def test_a_rejected_task_returns_to_the_pool_when_the_claim_runs_out(
 ):
     """The bug this guards: a rejection leaves the claim with its owner so they
     can retake. A worker who is rejected and then walks away used to leave the
-    task stuck in `rejected` for ever — unclaimable by anyone, reward locked."""
+    task stuck in `rejected` for ever - unclaimable by anyone, reward locked."""
     task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
 
     direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))

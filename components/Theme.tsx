@@ -66,12 +66,14 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="btn btn-sm"
+      className="btn-mono"
+      style={{ display: "inline-flex", alignItems: "center", gap: 7 }}
       onClick={toggle}
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
       title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
     >
       {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+      <span className="hide-sm">{theme === "dark" ? "Light" : "Dark"}</span>
     </button>
   );
 }

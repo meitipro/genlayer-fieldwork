@@ -86,8 +86,7 @@ export async function isOutOfGas(address: `0x${string}`): Promise<boolean> {
 }
 
 /**
- * Contract errors carry a class prefix so validators can compare failures —
- * "[EXPECTED] this task is not open". The class is for consensus, not for the
+ * Contract errors carry a class prefix so validators can compare failures - * "[EXPECTED] this task is not open". The class is for consensus, not for the
  * person holding the phone, so it is stripped before display. The sentence
  * behind it is written for humans and is shown as-is.
  */
@@ -165,7 +164,7 @@ export async function submitPhotographs(opts: {
   onStage?.("uploading");
   // Normalise first. A JPEG without a JFIF header is rejected by the node as
   // INVALID_IMAGE, and the worker would never learn why. See lib/image.ts.
-  // Only the finished state is uploaded here — the before frame belongs to the
+  // Only the finished state is uploaded here - the before frame belongs to the
   // poster and was fixed when the task was funded.
   const ready = await normalisePhoto(after);
   const afterUrl = await putToCAS(ready.blob);
@@ -207,8 +206,7 @@ export async function submitPhotographs(opts: {
  *
  * The deployer becomes the contract `owner`, and the owner is the only account
  * that can withdraw fees or hand ownership on. Deploying from a CLI keystore or
- * from Studio's own account selector makes one of those the owner instead —
- * which is fine for a throwaway and wrong for a deployment you intend to keep.
+ * from Studio's own account selector makes one of those the owner instead - * which is fine for a throwaway and wrong for a deployment you intend to keep.
  * This is the only path that ends with your wallet holding it.
  */
 export async function deployFieldwork(
@@ -225,7 +223,7 @@ export async function deployFieldwork(
   onStage?.("sent");
 
   // A deploy is only real once the code is readable, which is a finality-time
-  // fact — some networks report a finalized deploy whose code is not there.
+  // fact - some networks report a finalized deploy whose code is not there.
   const receipt: any = await client.waitForTransactionReceipt({
     hash: hash as `0x${string}` & { length: 66 },
     status: TransactionStatus.FINALIZED,
@@ -336,7 +334,7 @@ export async function postTask(
  * Claim a task and get back the six character challenge code.
  *
  * The code is readable on acceptance, which is what the worker needs, but the
- * claim is only really theirs once finalized — so both stages are awaited and
+ * claim is only really theirs once finalized - so both stages are awaited and
  * reported rather than returning early on the first one.
  */
 export async function claimTask(

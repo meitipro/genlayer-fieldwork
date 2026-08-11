@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  *
  * Two jobs. The deploy page needs the source to hand to the chain, and anyone
  * reviewing the running site can read exactly what is deployed without cloning
- * the repository. It is the same file either way — there is no build step
+ * the repository. It is the same file either way - there is no build step
  * between `contracts/fieldwork.py` and what gets deployed.
  */
 

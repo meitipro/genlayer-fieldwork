@@ -110,7 +110,7 @@ def check(ok, label, detail=""):
     global failures
     if not ok:
         failures += 1
-    print(f"  [{'ok  ' if ok else 'FAIL'}] {label}{('  — ' + str(detail)) if detail else ''}")
+    print(f"  [{'ok  ' if ok else 'FAIL'}] {label}{(' - ' + str(detail)) if detail else ''}")
 
 
 def refuses(fn, needle, label):
@@ -197,7 +197,7 @@ def test_abandoned():
     """A claim that has run out must free the task, whatever state it is in.
 
     The bug this guards: only `claimed` used to count, so a task that was
-    rejected and then abandoned could never return to the pool — nobody could
+    rejected and then abandoned could never return to the pool - nobody could
     claim it and the reward stayed locked.
     """
     print("\nabandoned claims")

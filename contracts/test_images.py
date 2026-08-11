@@ -6,7 +6,7 @@ Run with:  python contracts/test_images.py
 parsing the file, so this exercises exactly the code that ships rather than a
 copy that can drift away from it.
 
-Requires Pillow locally. The GenVM runtime has Pillow too — the SDK's own
+Requires Pillow locally. The GenVM runtime has Pillow too - the SDK's own
 `gl.nondet.web.render(mode="screenshot")` imports it.
 """
 

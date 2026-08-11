@@ -145,15 +145,19 @@ export function PostTaskForm() {
   }
 
   return (
-    <form className="panel stack" onSubmit={(e) => e.preventDefault()}>
+    <form
+      className="panel"
+      style={{ padding: 22, position: "sticky", top: 86 }}
+      onSubmit={(e) => e.preventDefault()}
+    >
       <div className="spread">
         <div className="eyebrow">New task</div>
-        <button className="btn btn-icon" type="button" onClick={fillExample}>
+        <button className="btn-ghost-sm" type="button" onClick={fillExample}>
           Use the example
         </button>
       </div>
 
-      <div>
+      <div style={{ marginTop: 16 }}>
         <label htmlFor="title">Title</label>
         <input
           id="title"
@@ -163,7 +167,7 @@ export function PostTaskForm() {
         />
       </div>
 
-      <div>
+      <div style={{ marginTop: 14 }}>
         <label htmlFor="place">Where</label>
         <input
           id="place"
@@ -173,7 +177,7 @@ export function PostTaskForm() {
         />
       </div>
 
-      <div>
+      <div style={{ marginTop: 14 }}>
         <label htmlFor="test">Acceptance test</label>
         <textarea
           id="test"
@@ -188,15 +192,17 @@ export function PostTaskForm() {
         </p>
       </div>
 
-      <div>
-        <label htmlFor="before">Photograph of how it looks now</label>
+      <div style={{ marginTop: 14 }}>
+        <label htmlFor="before">How it looks now</label>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           style={{
             width: "100%",
             minHeight: 150,
-            border: before ? "1px solid var(--line)" : "2px dashed var(--line2)",
+            border: before
+              ? "1px solid var(--accent-line)"
+              : "1px dashed var(--line2)",
             borderRadius: 8,
             background: before
               ? `center/cover no-repeat url(${before.url})`
@@ -222,19 +228,19 @@ export function PostTaskForm() {
             if (f) setBefore({ blob: f, url: URL.createObjectURL(f) });
           }}
         />
-        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
-          This is the before frame, and it is yours to take rather than the
-          worker&apos;s. A worker who supplies both frames can stage the first
-          one. It is also what they will be asked to match, so shoot the whole
-          area from where you would judge it.
+        <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
+          Yours to take rather than the worker&apos;s - a worker who supplies
+          both frames can stage the first one. It is also what they are asked to
+          match, so shoot the whole area from where you would judge it.
         </p>
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "1fr 1fr",
           gap: 12,
+          marginTop: 14,
         }}
       >
         <div>
@@ -267,7 +273,7 @@ export function PostTaskForm() {
         }}
       >
         <div>
-          <label htmlFor="reward">Reward (GEN)</label>
+          <label htmlFor="reward">Reward - GEN</label>
           <input
             id="reward"
             type="number"

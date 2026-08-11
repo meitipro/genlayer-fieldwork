@@ -75,7 +75,7 @@ export function ClaimButton({ taskId }: { taskId: number }) {
     return (
       <div className="panel stack">
         <div className="eyebrow" style={{ color: "var(--accent)" }}>
-          Claimed — the task is yours for 90 minutes
+          Claimed - the task is yours for 90 minutes
         </div>
         {code ? (
           <div

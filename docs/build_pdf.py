@@ -1,4 +1,4 @@
-"""Build docs/Fieldwork.pdf — the complete idea document.
+"""Build docs/Fieldwork.pdf - the complete idea document.
 
     python docs/build_pdf.py
 
@@ -204,7 +204,7 @@ def build():
         rightMargin=MARGIN,
         topMargin=MARGIN,
         bottomMargin=MARGIN,
-        title="Fieldwork — physical work, verified by photo",
+        title="Fieldwork - physical work, verified by photo",
         author="Fieldwork",
         subject="Bounties for physical tasks, verified by photo against a written acceptance test",
     )
@@ -255,11 +255,11 @@ def build():
     F += [
         table(
             [
-                ["Built on", "GenLayer — Intelligent Contracts, Studio network"],
+                ["Built on", "GenLayer - Intelligent Contracts, Studio network"],
                 ["Status", "Deployed, seeded and verified end to end"],
                 ["Contract", "<font face='Courier'>0x7132E013d9b3e118319E92B8DAfFFB8De41c35bB</font>"],
                 ["Stack", "Next.js 14 · genlayer-js · Python GenVM contract"],
-                ["Vision", "Proven on chain — see page 5"],
+                ["Vision", "Proven on chain - see page 5"],
             ],
             [32 * mm, W - 32 * mm],
             header=False,
@@ -363,7 +363,7 @@ def build():
     F += [
         P(
             "This does not use a model as a backend. It uses one where a judgement has to "
-            "be settled between parties who do not trust each other — which is the only "
+            "be settled between parties who do not trust each other - which is the only "
             "thing a consensus layer is actually for."
         )
     ]
@@ -389,7 +389,7 @@ def build():
                 ],
                 [
                     "Storage",
-                    "The photographs — content addressed, so every validator provably grades identical bytes",
+                    "The photographs - content addressed, so every validator provably grades identical bytes",
                 ],
             ],
             [30 * mm, W - 30 * mm],
@@ -420,7 +420,7 @@ def build():
                 ["Pillow, in the consensus block", "Pre-flight checks on the pixels before paying for a grader"],
                 [
                     "<font face='Courier'>@gl.public.write.payable</font>",
-                    "Task funding — the reward is locked when the task is posted",
+                    "Task funding - the reward is locked when the task is posted",
                 ],
                 ["<font face='Courier'>gl.Event</font>", "TaskPosted / Claimed / Graded / Refused, for the indexer"],
             ],
@@ -456,8 +456,8 @@ def build():
         P(
             "If the worker supplies both frames they control the comparison entirely. "
             "They can photograph a mess, clear it, and be paid for work nobody needed; "
-            "every check downstream &mdash; the acceptance test, the same-place "
-            "judgement, the pre-flight &mdash; is then measured against a starting "
+            "every check downstream - the acceptance test, the same-place "
+            "judgement, the pre-flight - is then measured against a starting "
             "state the person being paid chose. That is the difference between grading "
             "work and grading a story about work."
         ),
@@ -485,16 +485,16 @@ def build():
 
     steps = [
         (
-            "1 — Post, photograph, and fund",
+            "1 - Post, photograph, and fund",
             "The poster writes an acceptance test that names observable things: "
             "<i>the bin area is empty, no bags remain against the wall, the ground is "
             "clear of loose litter, and both bins are upright with their lids closed.</i> "
             "They photograph how the place looks now, and send the reward plus the fee "
             "in the same transaction. The money is locked before any worker sees the "
-            "task &mdash; and so is the starting state.",
+            "task - and so is the starting state.",
         ),
         (
-            "2 — The gate nobody expects",
+            "2 - The gate nobody expects",
             "Before the task is created at all, the contract reads the acceptance test "
             "and decides whether it can be judged from two photographs. In the same "
             "round trip it opens the poster&rsquo;s photograph, so a task can never be "
@@ -504,35 +504,35 @@ def build():
             "worker carries the cost, so this is the cheapest possible place to catch one.",
         ),
         (
-            "3 — Claim",
+            "3 - Claim",
             "A worker takes the task. The contract issues a six character code derived "
-            "deterministically from the task, the worker and the moment — so anyone "
+            "deterministically from the task, the worker and the moment - so anyone "
             "auditing the record later can recompute it. The claim lasts ninety minutes.",
         ),
         (
-            "4 — Photograph",
+            "4 - Photograph",
             "They write the code on paper and photograph the finished work with it in "
             "frame. One frame, not two: the before frame is already on the task. The "
             "app re-encodes to a standard baseline JPEG, strips EXIF including any GPS "
             "they did not mean to publish, and puts it in content addressed storage.",
         ),
         (
-            "5 — Pre-flight",
+            "5 - Pre-flight",
             "The contract opens the worker&rsquo;s image before paying for a grader, "
             "the same way it opened the poster&rsquo;s at step 2. Unopenable, "
-            "under 480px on the long edge, or shot into the sun — refused for the price "
+            "under 480px on the long edge, or shot into the sun - refused for the price "
             "of a decode, with a specific instruction rather than a verdict.",
         ),
         (
-            "6 — Judge",
+            "6 - Judge",
             "Validators fetch the same bytes and grade them against the same text. They "
             "must agree on three things: the code is legible in the worker&rsquo;s "
             "frame, both frames show the same place, and the acceptance test passed. Reasons are never "
-            "compared — two graders describe one photograph differently, and demanding "
+            "compared - two graders describe one photograph differently, and demanding "
             "identical prose would fail consensus on agreeing verdicts.",
         ),
         (
-            "7 — Settle",
+            "7 - Settle",
             "Verdict and payment are one transaction. A public receipt is left behind: "
             "both photographs, the text they were graded against, the three judgements, "
             "and how many validators agreed.",
@@ -549,7 +549,7 @@ def build():
                 P(
                     "Not the task. Most failures are lighting and framing, not fraud, so "
                     "the claim stays with the worker and they can retake inside the "
-                    "window. And if they walk away, the task returns to the pool — a "
+                    "window. And if they walk away, the task returns to the pool - a "
                     "missed claim is not fraud either.",
                     "body",
                 ),
@@ -569,7 +569,7 @@ def build():
         )
     ]
 
-    F += [P("Vision works — and three traps that all report the same error", "h3")]
+    F += [P("Vision works - and three traps that all report the same error", "h3")]
     F += [
         P(
             "A probe contract on Studio, shown a photograph of a golden retriever holding "
@@ -597,7 +597,7 @@ def build():
                 [
                     "A model that cannot see",
                     "Studio's router can hand the call to a text-only model that answers "
-                    "confidently anyway — the same photo returned “A white toilet bowl” and "
+                    "confidently anyway - the same photo returned “A white toilet bowl” and "
                     "“No image provided” on different runs. The prompt now demands a "
                     "<font face='Courier'>saw_images</font> flag and the contract refuses to "
                     "act without it.",
@@ -611,7 +611,7 @@ def build():
     F += [
         P(
             "Detecting a cropped or re-saved photograph looks like the obvious anti-fraud "
-            "feature, so it was built — dHash plus LSH banding. Then it was measured, at "
+            "feature, so it was built - dHash plus LSH banding. Then it was measured, at "
             "64 bits:"
         )
     ]
@@ -621,7 +621,7 @@ def build():
                 ["COMPARISON", "DISTANCE"],
                 ["The same photograph, re-encoded at q55", "8"],
                 ["<b>The same place, photographed on another day</b>", "<b>2</b>"],
-                ["A different scene entirely", "16 – 20"],
+                ["A different scene entirely", "16 - 20"],
             ],
             [W - 30 * mm, 30 * mm],
         )
@@ -630,7 +630,7 @@ def build():
         P(
             "The populations overlap, and they overlap the wrong way round: honest repeat "
             "work at the same corner scores <i>closer</i> than actual reuse. Going to 256 "
-            "bits made it worse. This is not a tuning problem — it is the domain. Every "
+            "bits made it worse. This is not a tuning problem - it is the domain. Every "
             "task in this product is a photograph of the same place, so “looks almost "
             "identical” is the normal case rather than the suspicious one."
         )
@@ -639,7 +639,7 @@ def build():
         P(
             "And the failure is not symmetric: a false positive tells a worker who did the "
             "job that they are a fraud. So it does not vote. <b>The challenge code was "
-            "always the real defence</b> — a recycled photograph carries the wrong one, "
+            "always the real defence</b> - a recycled photograph carries the wrong one, "
             "and the vision call already checks for it."
         )
     ]
@@ -651,7 +651,7 @@ def build():
                 ["BUG", "CONSEQUENCE"],
                 [
                     "A rejected task never returned to the pool",
-                    "A worker rejected once and then gone left the task frozen for ever — "
+                    "A worker rejected once and then gone left the task frozen for ever - "
                     "unclaimable by anyone, reward locked until the poster noticed.",
                 ],
                 [
@@ -664,7 +664,7 @@ def build():
         ),
         Spacer(1, 6),
         P(
-            "Neither appeared in linting, type checking or any test — both lived in paths "
+            "Neither appeared in linting, type checking or any test - both lived in paths "
             "nothing exercised. Both are fixed and both now have regression tests.",
             "small",
         ),
@@ -699,7 +699,7 @@ def build():
         ),
         (
             "It does not match photographs by how they look",
-            "Exact reuse is caught — the content hash and the content id of every accepted "
+            "Exact reuse is caught - the content hash and the content id of every accepted "
             "photograph are stored. A cropped or re-saved one is not, for the measured "
             "reason on the previous page.",
         ),
@@ -726,7 +726,7 @@ def build():
             "Measured directly against the deployed contract: funding a task moved 19.08 "
             "GEN in correctly, and the refund took exactly 19.08 GEN out of the contract "
             "while the payee's balance did not change by a single wei. The contract is "
-            "correct — Studio's ledger does not apply an emitted transfer to an ordinary "
+            "correct - Studio's ledger does not apply an emitted transfer to an ordinary "
             "account. The site says so wherever it claims payment. On a live network the "
             "same transaction pays.",
         ),
@@ -762,7 +762,7 @@ def build():
     F += [P("What it costs to run", "h3")]
     F += [
         P(
-            "One vision call with two images per submission, repeated per validator — the "
+            "One vision call with two images per submission, repeated per validator - the "
             "most expensive operation in the design, which is exactly what the pre-flight "
             "checks exist to avoid wasting. Rewards need to sit above roughly ten units.",
             "small",
@@ -779,7 +779,7 @@ def build():
                 ["Worker safety", "No private property, confrontation or hazardous material"],
                 ["Vague tests", "Refused on chain by a model before the task can be funded"],
                 ["Model bias", "Published criteria, weekly sample audits, a human review path on every rejection"],
-                ["A grader that cannot see", "The saw_images flag — a blind model produces a retry, not a verdict"],
+                ["A grader that cannot see", "The saw_images flag - a blind model produces a retry, not a verdict"],
             ],
             [42 * mm, W - 42 * mm],
         )
@@ -789,12 +789,12 @@ def build():
     F += [
         table(
             [
-                ["Contract", "33 methods — lint, validate and type check all clean"],
+                ["Contract", "33 methods - lint, validate and type check all clean"],
                 ["Deployed", "<font face='Courier'>0x7132E013d9b3e118319E92B8DAfFFB8De41c35bB</font> on Studio"],
                 ["Seeded", "Real tasks on chain, posted through the acceptance-test gate"],
                 ["Proven on chain", "Posting, the vague-test refusal, underfunding, claiming, double-claim"],
                 ["Proven separately", "Vision grading, via a dedicated probe contract"],
-                ["Not yet proven", "A full passing submission — it needs two real photographs"],
+                ["Not yet proven", "A full passing submission - it needs two real photographs"],
                 ["Site", "Seven routes, light and dark, both measured for contrast"],
             ],
             [32 * mm, W - 32 * mm],
@@ -806,7 +806,7 @@ def build():
     F += rule(space_before=0, space_after=5)
     F += [
         P(
-            "Start narrow. One city, one task type, twenty workers — because a physical "
+            "Start narrow. One city, one task type, twenty workers - because a physical "
             "network that is thin everywhere is worth less than one that is dense in a "
             "single neighbourhood.",
             "quote",

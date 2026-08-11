@@ -1,0 +1,879 @@
+<div style="padding:34px 40px 70px;max-width:1240px;margin:0 auto">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:30px">
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)">
+        · Direction 1c - applied in full
+      <h1 style="font-size:34px;margin-top:12px">
+        · Fieldwork - all seven routes
+      <p style="color:var(--dim);max-width:66ch;margin-top:12px;font-size:15.5px">
+        · Dark instrument panel by default with a measured light pair - signal accent kept to three jobs, primary action, verified
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onClick="{{ toggleTheme }}" style="font:500 11px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;height:38px;padding:0 
+        · {{ themeLabel }}
+  <div style="display:flex;flex-direction:column;gap:40px">
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route / - home
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#" style="color:var(--ink)">
+                · Map
+              <a href="#">
+                · Console
+              <a href="#">
+                · Receipts
+              <a href="#">
+                · Limits
+              <a href="#" style="display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:6px;background:var(--accent);color:var(--accent-ink
+                · Post a task
+        <div style="position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(900px 460px at 78% 12%,var(--glow),transp
+          <div style="position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transpar
+          <div style="position:relative;max-width:1020px;margin:0 auto;padding:64px 30px 70px;display:grid;grid-template-columns:1fr 440px;gap:40px;align-items:
+            <div>
+              <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:999px;paddi
+                · Live on studionet - chain 61999
+              <h1 style="font-size:58px;margin:22px 0 0;max-width:13ch;letter-spacing:-.045em">
+                · Evidence in - settlement out
+              <p style="font-size:17px;line-height:1.6;color:var(--dim);max-width:46ch;margin-top:20px">
+                · One written standard, two photographs and five independent graders - the verdict and the payment leave the contract as a
+              <div style="display:flex;gap:12px;margin-top:30px;flex-wrap:wrap">
+                <a href="#" style="display:inline-flex;align-items:center;height:50px;padding:0 24px;border-radius:8px;background:var(--accent);color:var(--accent-ink
+                  · Post a task
+                <a href="#" style="display:inline-flex;align-items:center;height:50px;padding:0 24px;border-radius:8px;border:1px solid var(--line2);color:var(--ink);
+                  · Find work near me
+              <div style="display:flex;gap:36px;margin-top:42px">
+                <div>
+                  <div style="font:700 32px JetBrains Mono,monospace;letter-spacing:-.03em;color:var(--accent)">
+                    · 1,204
+                  <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                    · Tasks settled
+                <div>
+                  <div style="font:700 32px JetBrains Mono,monospace;letter-spacing:-.03em">
+                    · 83%
+                  <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                    · First attempt pass
+                <div>
+                  <div style="font:700 32px JetBrains Mono,monospace;letter-spacing:-.03em">
+                    · 4m
+                  <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                    · Median to settlement
+            <div style="perspective:1300px;perspective-origin:60% 40%">
+              <div style="transform-style:preserve-3d;transform:rotateX(54deg) rotateZ(-36deg);width:300px;height:300px;margin:20px auto;position:relative;transitio
+                <div style="position:absolute;inset:0;border-radius:14px;border:1px solid var(--accent-line);background:var(--accent-soft)">
+                <div style="position:absolute;inset:0;border-radius:14px;border:1px solid var(--line2);background:var(--panel);box-shadow:0 30px 60px var(--shadow);tr
+                  <div style="font:500 10px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+                    · Acceptance test
+                  <p style="margin-top:9px;font-size:12.5px;line-height:1.55;color:var(--dim)">
+                    · The bin area is empty - no bags against the wall - both bins upright with lids closed
+                  <div style="margin-top:14px;font:700 22px JetBrains Mono,monospace;letter-spacing:.2em;color:var(--accent)">
+                    · K73QXB
+                <div style="position:absolute;width:180px;border-radius:12px;overflow:hidden;border:1px solid var(--line2);background:var(--panel);box-shadow:0 30px 6
+                  <div style="font:500 9.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:8px 10px 4px">
+                    · Before
+                  <img src="public/samples/bins-before.svg" alt="Before the work" style="width:100%;display:block">
+                <div style="position:absolute;width:180px;border-radius:12px;overflow:hidden;border:1px solid var(--accent-line);background:var(--panel);box-shadow:0 
+                  <div style="font:500 9.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:8px 10px 4px">
+                    · After
+                  <img src="public/samples/bins-after.svg" alt="After the work" style="width:100%;display:block">
+                <div style="position:absolute;border-radius:999px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;font:800 12px JetBrains Mono,mono
+                  · Paid - 18 GEN
+        <div style="max-width:1020px;margin:0 auto;padding:52px 30px 0">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+            <h2 style="font-size:28px">
+              · Open tasks
+            <span style="font:500 11px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+              · 2 within 3 km
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+            <a href="#" style="display:block;padding:22px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);transition:transform .2s ease,b
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                  · Task 4472
+                <span style="font:700 18px JetBrains Mono,monospace;color:var(--accent)">
+                  · 12 GEN
+              <div style="font-weight:700;font-size:17px;margin-top:12px">
+                · Photograph charger 41 and its display
+              <div style="font-size:13.5px;color:var(--muted);margin-top:6px">
+                · Level 2, Northgate car park - 1.4 km
+              <div style="display:flex;gap:8px;margin-top:16px">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                  · 90m on claim
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                  · rep 0
+            <a href="#" style="display:block;padding:22px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);transition:transform .2s ease,b
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                  · Task 4473
+                <span style="font:700 18px JetBrains Mono,monospace;color:var(--accent)">
+                  · 25 GEN
+              <div style="font-weight:700;font-size:17px;margin-top:12px">
+                · Confirm shelf display for brand X
+              <div style="font-size:13.5px;color:var(--muted);margin-top:6px">
+                · Aisle 7, Weston Road - 2.1 km
+              <div style="display:flex;gap:8px;margin-top:16px">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                  · 90m on claim
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                  · rep 5
+        <div style="max-width:1020px;margin:0 auto;padding:46px 30px 0">
+          <h2 style="font-size:28px">
+            · Settled receipts
+          <p style="color:var(--dim);margin-top:8px;font-size:14.5px;max-width:62ch">
+            · Every settled task leaves a public page carrying both photographs, the text it was graded against and the verdict
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px">
+            <a href="#" style="display:block;border-radius:12px;border:1px solid var(--line);background:var(--panel2);overflow:hidden;transition:transform .2s eas
+              <img src="public/samples/bins-after.svg" alt="After the work" style="width:100%;display:block;border-bottom:1px solid var(--line)">
+              <div style="padding:16px 18px">
+                <span style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent-
+                  · Paid
+                <div style="font-weight:700;font-size:15.5px;margin-top:12px">
+                  · Clear the bin area behind 14 Mill St
+                <div style="font:500 12px JetBrains Mono,monospace;color:var(--muted);margin-top:7px">
+                  · 18 GEN - task 4471
+            <div style="border-radius:12px;border:1px dashed var(--line2);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;co
+              · Next receipt appears on settlement
+            <div style="border-radius:12px;border:1px dashed var(--line2);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;co
+              · Next receipt appears on settlement
+        <div style="max-width:1020px;margin:0 auto;padding:46px 30px 0">
+          <h2 style="font-size:28px">
+            · How settlement works
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px">
+            <div style="border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--panel2)">
+              <div style="font:700 11px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                · 01 - Standard
+              <p style="margin-top:11px;font-size:14px;line-height:1.6;color:var(--dim)">
+                · The poster writes the acceptance test and funds the task - the text is public before anyone spends time on site
+            <div style="border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--panel2)">
+              <div style="font:700 11px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                · 02 - Evidence
+              <p style="margin-top:11px;font-size:14px;line-height:1.6;color:var(--dim)">
+                · A six character code is issued on claim and must be legible in the before and the after frame
+            <div style="border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--panel2)">
+              <div style="font:700 11px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                · 03 - Settlement
+              <p style="margin-top:11px;font-size:14px;line-height:1.6;color:var(--dim)">
+                · Five validators grade the same two images against the same text and agree before a coin moves
+          <div style="margin-top:16px;border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:12px;padding:16px 18px;font-size:14px;colo
+            <strong style="color:var(--ink)">
+              · This deployment runs on the Studio development network
+            · - the grading, the verdict and the record are real, the transfer is not - Studio debits the contract and never credits t
+          <p style="color:var(--muted);margin-top:18px;font-size:14px">
+            · No system can prove where a photograph was taken -
+            <a href="#" style="color:var(--accent);font-weight:700">
+              · here is exactly what this cannot do
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:52px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /map - find work
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#" style="color:var(--accent)">
+                · Map
+              <a href="#">
+                · Console
+              <a href="#">
+                · Receipts
+              <a href="#">
+                · Limits
+              <a href="#" style="display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:6px;background:var(--accent);color:var(--accent-ink
+                · Post a task
+        <div style="max-width:1020px;margin:0 auto;padding:40px 30px 0">
+          <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)">
+            · Find work
+          <h1 style="font-size:42px;margin-top:14px">
+            · Tasks near you
+          <p style="font-size:16.5px;color:var(--dim);max-width:58ch;margin-top:14px">
+            · Read the acceptance test before you claim - a claim is yours for ninety minutes and can be retaken inside that window
+        <div style="max-width:1020px;margin:0 auto;padding:26px 30px 0;display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+          <div style="position:relative;height:420px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);overflow:hidden">
+            <div style="position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transpar
+            <div style="position:absolute;left:20px;top:18px;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mu
+              · Coverage - 5 tasks
+            <a href="#" style="position:absolute;left:35.5%;top:30.8%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;background:var(--acce
+              · 12 GEN
+            <a href="#" style="position:absolute;left:73%;top:66.8%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;background:var(--accent
+              · 25 GEN
+            <span style="position:absolute;left:60.9%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--mut
+              · 18 GEN - paid
+            <span style="position:absolute;left:20%;top:14%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--muted
+              · 30 GEN - claimed
+            <span style="position:absolute;left:80%;top:86%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--muted
+              · 10 GEN - rejected
+            <div style="position:absolute;left:20px;bottom:18px;display:flex;gap:14px;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:
+              <span style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:999px;background:var(--accent)">
+                · open
+              <span style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:999px;background:var(--line2)">
+                · settled or claimed
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <a href="#" style="display:block;padding:18px;border-radius:12px;border:1px solid var(--accent-line);background:var(--panel);transition:transform .2s 
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                  · 1.4 km
+                <span style="font:700 17px JetBrains Mono,monospace;color:var(--accent)">
+                  · 12 GEN
+              <div style="font-weight:700;font-size:15.5px;margin-top:10px">
+                · Photograph charger 41 and its display
+              <div style="font-size:13px;color:var(--muted);margin-top:5px">
+                · Level 2, Northgate car park
+              <div style="font:500 11px JetBrains Mono,monospace;color:var(--muted);margin-top:12px;letter-spacing:.08em;text-transform:uppercase">
+                · 90m on claim - rep 0
+            <a href="#" style="display:block;padding:18px;border-radius:12px;border:1px solid var(--accent-line);background:var(--panel);transition:transform .2s 
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                  · 2.1 km
+                <span style="font:700 17px JetBrains Mono,monospace;color:var(--accent)">
+                  · 25 GEN
+              <div style="font-weight:700;font-size:15.5px;margin-top:10px">
+                · Confirm shelf display for brand X
+              <div style="font-size:13px;color:var(--muted);margin-top:5px">
+                · Aisle 7, Weston Road
+              <div style="font:500 11px JetBrains Mono,monospace;color:var(--muted);margin-top:12px;letter-spacing:.08em;text-transform:uppercase">
+                · 90m on claim - rep 5
+            <div style="padding:16px 18px;border-radius:12px;border:1px dashed var(--line2);color:var(--muted);font-size:13.5px;line-height:1.6">
+              · Nothing else is open within reach - turn on alerts and this list fills as posters fund new work
+        <div style="max-width:1020px;margin:0 auto;padding:30px 30px 0">
+          <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden">
+            <div style="display:grid;grid-template-columns:1fr 190px 100px 110px 120px;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);font:500 10.
+              <span>
+                · Task
+              <span>
+                · Where
+              <span>
+                · Distance
+              <span>
+                · Reward
+              <span>
+                · Window
+            <div style="display:grid;grid-template-columns:1fr 190px 100px 110px 120px;gap:14px;padding:16px 20px;border-bottom:1px solid var(--line);align-items:
+              <span style="font-weight:700">
+                · Photograph charger 41 and its display
+              <span style="font-size:13.5px;color:var(--muted)">
+                · Level 2, Northgate car park
+              <span style="font:500 12.5px JetBrains Mono,monospace;color:var(--dim)">
+                · 1.4 km
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · 12 GEN
+              <span style="font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · 90m on claim
+            <div style="display:grid;grid-template-columns:1fr 190px 100px 110px 120px;gap:14px;padding:16px 20px;align-items:center">
+              <span style="font-weight:700">
+                · Confirm shelf display for brand X
+              <span style="font-size:13.5px;color:var(--muted)">
+                · Aisle 7, Weston Road
+              <span style="font:500 12.5px JetBrains Mono,monospace;color:var(--dim)">
+                · 2.1 km
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · 25 GEN
+              <span style="font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · 90m on claim
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:44px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /task/4472 - the standard
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#" style="color:var(--accent)">
+                · Map
+              <a href="#">
+                · Console
+              <a href="#">
+                · Receipts
+              <a href="#">
+                · Limits
+              <a href="#" style="display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:6px;background:var(--accent);color:var(--accent-ink
+                · Post a task
+        <div style="max-width:820px;margin:0 auto;padding:34px 30px 0">
+          <a href="#" style="font:500 12px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">
+            · ← All tasks
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:20px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · Task 4472
+            <span style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent-
+              · Open
+          <h1 style="font-size:36px;margin-top:14px">
+            · Photograph charger 41 and its display
+          <p style="color:var(--muted);margin-top:10px;font-size:15px">
+            · Level 2, Northgate car park - 1.4 km away
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin-top:26px;
+            <div style="padding:20px 22px;border-right:1px solid var(--line)">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                · Reward
+              <div style="font:700 24px JetBrains Mono,monospace;margin-top:8px;color:var(--accent)">
+                · 12 GEN
+            <div style="padding:20px 22px;border-right:1px solid var(--line)">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                · Claim window
+              <div style="font:700 24px JetBrains Mono,monospace;margin-top:8px">
+                · 90m
+            <div style="padding:20px 22px">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                · Reputation
+              <div style="font:700 24px JetBrains Mono,monospace;margin-top:8px">
+                · rep 0
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-top:14px;overflow:hidden">
+            <div style="padding:22px 24px;border-bottom:1px solid var(--line)">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)">
+                · Acceptance test - frozen before any claim
+              <p style="font-size:19px;line-height:1.5;margin-top:12px">
+                · Charger 41 is shown head on with its screen readable - the screen shows a status line and the charger's unit number is v
+            <div style="display:grid;grid-template-columns:1fr 1fr">
+              <div style="padding:20px 24px;border-right:1px solid var(--line)">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                  · Passes
+                <p style="color:var(--dim);margin-top:9px;font-size:14.5px;line-height:1.6">
+                  · Screen readable without glare, unit number 41 visible, code held beside the screen
+              <div style="padding:20px 24px">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--danger)">
+                  · Fails
+                <p style="color:var(--dim);margin-top:9px;font-size:14.5px;line-height:1.6">
+                  · Screen washed out by sunlight, or the unit number cropped out of frame
+          <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · What happens when you claim
+            <p style="margin-top:10px;font-size:15px;line-height:1.6;color:var(--dim)">
+              · The contract issues a six character code that is yours alone - write it on paper, keep it in frame in both photographs a
+            <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+              <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                · rep 0 - starter tasks
+              <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                · 90 minute claim
+              <span style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line2);bord
+                · retry inside the window
+          <button style="margin-top:20px;width:100%;height:54px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-family:Manrope
+            · Claim this task
+          <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:12px">
+            · The claim is a transaction - it is what ties the photographs to you and to this moment
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:44px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /submit/4472 - capture, on a phone
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#">
+                · Map
+              <a href="#" style="color:var(--accent)">
+                · Submitting
+        <div style="max-width:520px;margin:0 auto;padding:30px 24px 0">
+          <a href="#" style="font:500 12px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">
+            · ← Photograph charger 41 and its display
+          <h1 style="font-size:26px;margin-top:16px">
+            · Submit for settlement
+          <p style="color:var(--muted);font-size:14px;margin-top:6px">
+            · Level 2, Northgate car park
+          <div style="margin-top:20px;border-radius:14px;border:1px solid var(--accent-line);background:linear-gradient(180deg,var(--accent-soft),transparent);p
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · Your code for this claim
+            <div style="font:800 46px JetBrains Mono,monospace;letter-spacing:.18em;color:var(--accent);margin:10px 0 6px">
+              · K73QXB
+            <p style="color:var(--dim);font-size:13.5px">
+              · Write it on paper and keep it in frame in both photographs
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+            <div>
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+                · Before
+              <div style="width:100%;aspect-ratio:3/4;border:1px solid var(--line2);border-radius:12px;background:var(--panel);display:flex;align-items:center;justi
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <rect x="2.5" y="6" width="19" height="14" rx="3" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.6">
+                  <path d="M8.5 6l1.4-2.2h4.2L15.5 6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                <span style="font:500 11px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase">
+                  · tap to capture
+            <div>
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+                · After
+              <div style="width:100%;aspect-ratio:3/4;border:1px solid var(--accent-line);border-radius:12px;overflow:hidden;background:var(--panel);display:flex;al
+                <img src="public/samples/bins-after.svg" alt="Captured after photograph" style="width:100%;display:block">
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px;margin-top:14px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · Before you submit
+            <label style="display:flex;align-items:center;gap:12px;font-size:15px;margin-top:14px;cursor:pointer">
+              <input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--accent)">
+              · code visible in both
+            <label style="display:flex;align-items:center;gap:12px;font-size:15px;margin-top:12px;cursor:pointer">
+              <input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--accent)">
+              · same spot in both
+            <label style="display:flex;align-items:center;gap:12px;font-size:15px;margin-top:12px;cursor:pointer">
+              <input type="checkbox" style="width:20px;height:20px;accent-color:var(--accent)">
+              · whole task area in frame
+            <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+              · Charger 41 is shown head on with its screen readable - the screen shows a status line and the charger's unit number is v
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;font:500 11.5px JetBrains Mono,monospace;letter-spacing:.08e
+            <span style="color:var(--muted)">
+              · claim expires in 42 minutes
+            <span style="color:var(--accent)">
+              · 1 check left
+          <button style="margin-top:12px;width:100%;height:54px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-family:Manrope
+            · Submit for settlement
+          <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:12px">
+            · A rejection inside the window costs a retake, not the claim
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /proof/4471 - public receipt
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#">
+                · Map
+              <a href="#">
+                · Console
+              <a href="#" style="color:var(--accent)">
+                · Receipts
+              <a href="#">
+                · Limits
+        <div style="max-width:880px;margin:0 auto;padding:34px 30px 0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · Public receipt
+            <span style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);b
+              · Paid - 18 GEN
+          <h1 style="font-size:36px;margin-top:14px">
+            · Clear the bin area behind 14 Mill St
+          <p style="color:var(--muted);margin-top:10px;font:500 13px JetBrains Mono,monospace">
+            · Mill St, behind the parade - 21 Jul 15:22 - task 4471
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px">
+            <figure style="margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 14px 8px">
+                · Before photograph
+              <img src="public/samples/bins-before.svg" alt="Before the work" style="width:100%;display:block">
+            <figure style="margin:0;border:1px solid var(--accent-line);border-radius:12px;overflow:hidden;background:var(--panel)">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 14px 8px">
+                · After photograph
+              <img src="public/samples/bins-after.svg" alt="After the work" style="width:100%;display:block">
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px 24px;margin-top:14px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+              · Graded against
+            <p style="font-size:18px;line-height:1.5;margin-top:10px">
+              · The bin area is empty - no bags remain against the wall, the ground is clear of loose litter and both bins are upright w
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin-top:14px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);font:500 13px JetBrains Mono,monospace">
+              <span style="color:var(--muted)">
+                · code visible
+              <span style="color:var(--accent);font-weight:700">
+                · yes
+            <div style="display:flex;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);font:500 13px JetBrains Mono,monospace">
+              <span style="color:var(--muted)">
+                · same place
+              <span style="color:var(--accent);font-weight:700">
+                · yes
+            <div style="display:flex;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);font:500 13px JetBrains Mono,monospace">
+              <span style="color:var(--muted)">
+                · test passed
+              <span style="color:var(--accent);font-weight:700">
+                · yes
+            <div style="display:flex;justify-content:space-between;padding:16px 24px;font:500 13px JetBrains Mono,monospace">
+              <span style="color:var(--muted)">
+                · agreement
+              <span style="font-weight:700">
+                · 4 of 5 validators
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+            <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px 22px">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                · Reason given to the worker
+              <p style="margin-top:10px;font-size:14.5px;line-height:1.6;color:var(--dim)">
+                · Wall and ground clear in the after frame, code legible in both
+            <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px 22px">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+                · Content hash of the after photograph
+              <p style="margin-top:10px;font:500 12px JetBrains Mono,monospace;color:var(--dim);word-break:break-all">
+                · b31a9c0e5f74d2688a1c47f0e9d3b6521c8ae4f7920d5b3ce16a8f4d27b90cc3
+              <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">
+                · Stored on chain and matched against every later submission, so the same file cannot be paid for twice
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px 22px;margin-top:14px">
+            <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+              · Perceptual hash - recorded, not decisive
+            <p style="margin-top:10px;font:500 12px JetBrains Mono,monospace;color:var(--dim)">
+              · 3c1e0f0f87c3e1f0
+            <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">
+              · Kept so a human reviewer can compare this photograph with others - it accepts and rejects nothing,
+              <a href="#" style="color:var(--accent);font-weight:700">
+                · here is why
+          <div style="border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:12px;padding:16px 18px;margin-top:14px;font-size:14px;colo
+            <strong style="color:var(--ink)">
+              · Studio settles the verdict and not the money
+            · - the contract is debited by exactly the right amount and Studio never credits the account, so this receipt reads paid w
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap">
+            <a href="#" style="display:inline-flex;align-items:center;height:48px;padding:0 22px;border-radius:8px;border:1px solid var(--line2);color:var(--ink);
+              · Find work like this
+            <a href="#" style="font:500 12px JetBrains Mono,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">
+              · Report a problem
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:44px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /console - poster console
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#">
+                · Map
+              <a href="#" style="color:var(--accent)">
+                · Console
+              <a href="#">
+                · Receipts
+              <a href="#">
+                · Limits
+              <a href="#" style="display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:6px;background:var(--accent);color:var(--accent-ink
+                · Fund a campaign
+        <div style="max-width:1020px;margin:0 auto;padding:36px 30px 0">
+          <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)">
+            · Poster console
+          <h1 style="font-size:42px;margin-top:14px">
+            · Run a campaign
+          <p style="font-size:16.5px;color:var(--dim);max-width:60ch;margin-top:14px">
+            · A task cannot be funded without an acceptance test, a pass example and a fail example - that rule is enforced by the con
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin-top:28px;
+            <div style="padding:20px 22px;border-right:1px solid var(--line)">
+              <div style="font:700 28px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · 5
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                · Tasks posted
+            <div style="padding:20px 22px;border-right:1px solid var(--line)">
+              <div style="font:700 28px JetBrains Mono,monospace;letter-spacing:-.02em;color:var(--accent)">
+                · 95 GEN
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                · Budget committed
+            <div style="padding:20px 22px;border-right:1px solid var(--line)">
+              <div style="font:700 28px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · 50%
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                · Pass rate
+            <div style="padding:20px 22px">
+              <div style="font:700 28px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · 4m
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px">
+                · Median to settlement
+        <div style="max-width:1020px;margin:0 auto;padding:34px 30px 0;display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start">
+          <div>
+            <h2 style="font-size:24px">
+              · Coverage
+            <p style="color:var(--dim);font-size:14.5px;margin-top:8px">
+              · Density in one neighbourhood is worth more than thin coverage everywhere
+            <div style="position:relative;height:300px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);overflow:hidden;margin-top:14px">
+              <div style="position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transpar
+              <span style="position:absolute;left:60.9%;top:50%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--mut
+                · 18 GEN
+              <span style="position:absolute;left:35.5%;top:30.8%;transform:translate(-50%,-50%);background:var(--accent);color:var(--accent-ink);border-radius:999p
+                · 12 GEN
+              <span style="position:absolute;left:73%;top:66.8%;transform:translate(-50%,-50%);background:var(--accent);color:var(--accent-ink);border-radius:999px;
+                · 25 GEN
+              <span style="position:absolute;left:18%;top:14%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--muted
+                · 30 GEN
+              <span style="position:absolute;left:82%;top:86%;transform:translate(-50%,-50%);background:var(--panel);border:1px solid var(--line2);color:var(--muted
+                · 10 GEN
+            <h2 style="font-size:24px;margin-top:34px">
+              · Assurance
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+              <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                  · Repeat verification
+                <p style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--dim)">
+                  · A random sample of paid tasks is sent to a second worker - that sample is the real fraud defence, not the model
+              <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                  · Reuse detection
+                <p style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--dim)">
+                  · Every accepted photograph's content hash is stored on chain - a recycled photograph also carries the wrong challenge cod
+              <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                  · Pre-flight checks
+                <p style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--dim)">
+                  · Both photographs are opened before a grader is paid for - unopenable, undersized or sun blown frames are refused for the
+              <div style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:20px">
+                <div style="font:700 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">
+                  · Human review
+                <p style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--dim)">
+                  · Every rejection can be escalated to a person - automatic grading with no backstop would be an unfair labour product
+          <form style="border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+                · New task
+              <button type="button" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--muted);font
+                · Use the example
+            <div style="margin-top:16px">
+              <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                · Title
+              <input placeholder="Clear the bin area behind 14 Mill St" style="width:100%;height:44px;padding:0 12px;border-radius:8px;border:1px solid var(--line2)
+            <div style="margin-top:14px">
+              <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                · Where
+              <input placeholder="Mill St, behind the parade" style="width:100%;height:44px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);backgroun
+            <div style="margin-top:14px">
+              <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                · Acceptance test
+              <textarea rows="4" placeholder="The bin area is empty - no bags remain against the wall - both bins are upright with lids closed" style="width:100%;pa
+              <p style="margin-top:8px;font-size:12.5px;line-height:1.6;color:var(--muted)">
+                · Name the things a photograph can show - the contract refuses a test that leans on words like clean or tidy without sayin
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+              <div>
+                <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                  · Pass example
+                <textarea rows="3" placeholder="Wall and ground visible and clear, bins upright, code legible" style="width:100%;padding:11px 12px;border-radius:8px;b
+              <div>
+                <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                  · Fail example
+                <textarea rows="3" placeholder="Bags moved out of shot rather than removed" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+              <div>
+                <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                  · Reward - GEN
+                <input value="18" style="width:100%;height:44px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--field);color:var(--ink
+              <div>
+                <label style="display:block;font:500 10.5px JetBrains Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7p
+                  · Minimum reputation
+                <input value="1" style="width:100%;height:44px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--field);color:var(--ink)
+            <p style="margin-top:16px;font-size:12.5px;line-height:1.6;color:var(--muted)">
+              · You send the reward plus the fee when you post - a vision call with two images runs once per validator, so rewards below
+            <button type="button" style="margin-top:14px;width:100%;height:50px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);font-f
+              · Fund and post
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:44px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+    <div>
+      <div style="font:500 11px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        · Route /limits - the honest limits
+      <div style="width:1120px;flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 18px 50px var(--s
+        <header style="border-bottom:1px solid var(--line);background:var(--bg)">
+          <div style="max-width:1020px;margin:0 auto;padding:0 30px;display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px;color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M2 7.6V3.6A1.6 1.6 0 0 1 3.6 2h4M16.4 2h4A1.6 1.6 0 0 1 22 3.6v4M22 16.4v4a1.6 1.6 0 0 1-1.6 1.6h-4M7.6 22h-4A1.6 1.6 0 0 1 2 20.4v-4" stroke
+                <path d="M12 6.6c-2.35 0-4.25 1.87-4.25 4.18 0 3.02 3.42 6.3 4.02 6.85a.34.34 0 0 0 .46 0c.6-.55 4.02-3.83 4.02-6.85 0-2.31-1.9-4.18-4.25-4.18Z" fill=
+                <circle cx="12" cy="10.7" r="1.5" fill="var(--bg)">
+              <span style="color:var(--ink);font:700 15px JetBrains Mono,monospace;letter-spacing:-.02em">
+                · fieldwork
+            <nav style="display:flex;align-items:center;gap:22px;font:500 12.5px JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(
+              <a href="#">
+                · Map
+              <a href="#">
+                · Console
+              <a href="#">
+                · Receipts
+              <a href="#" style="color:var(--accent)">
+                · Limits
+        <div style="max-width:820px;margin:0 auto;padding:36px 30px 0">
+          <div style="font:500 10.5px JetBrains Mono,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">
+            · The honest limits
+          <h1 style="font-size:42px;margin-top:14px">
+            · What this cannot do
+          <p style="font-size:16.5px;color:var(--dim);max-width:58ch;margin-top:14px">
+            · Every claim below is a limit designed around rather than hidden - if a page anywhere else on this site seems to promise 
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:22px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 01
+              <h3 style="font-size:19px">
+                · It cannot prove where a photograph was taken
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · No system can cryptographically prove the location of a photograph and a phone's reported coordinates can be changed - t
+            <p style="margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · What it does instead - a challenge code issued at claim time that must be legible in both frames, a same place check bet
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 02
+              <h3 style="font-size:19px">
+                · On the Studio network the money does not move
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · Funding a task moves GEN in correctly and paying out debits the contract by exactly the right amount while the payee's b
+            <p style="margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · So a task here can read
+              <strong style="color:var(--ink)">
+                · paid
+              · without anyone being richer - on a live network the same transaction pays
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 03
+              <h3 style="font-size:19px">
+                · It does not match photographs by how they look
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · The contract stores a cryptographic hash of every accepted photograph and refuses an exact match - that catches a file s
+            <p style="margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · Perceptual matching was built and then measured, and it does not work here - the same corner on a different day scored c
+            <p style="margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · What catches a recycled photograph is the challenge code - it is different every time and an old photograph carries the 
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 04
+              <h3 style="font-size:19px">
+                · It checks the pixels before it pays for a grader
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · A photograph that cannot be opened, is too small for a six character code to be legible, or was shot straight into the s
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 05
+              <h3 style="font-size:19px">
+                · The model can be wrong
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · Several validators grade the same two images against the same written test and all of them must agree on three judgement
+            <p style="margin-top:10px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · Every rejection can be escalated to a person, the grading criteria are published and a weekly sample audit compares verd
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 06
+              <h3 style="font-size:19px">
+                · It is not for every kind of work
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · Tasks that involve private property, confrontation, hazardous material or anything a person should not do alone are refu
+          <section style="border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:22px 24px;margin-top:14px">
+            <div style="display:flex;gap:14px;align-items:baseline">
+              <span style="font:700 11px JetBrains Mono,monospace;color:var(--accent)">
+                · 07
+              <h3 style="font-size:19px">
+                · Small tasks do not pay for themselves
+            <p style="margin-top:12px;font-size:14.5px;line-height:1.65;color:var(--dim)">
+              · A vision call with two images runs once per validator, which is the most expensive thing this contract does - below roug
+          <p style="color:var(--muted);margin-top:24px;font-size:14px">
+            · Found something this page does not cover?
+            <a href="#" style="color:var(--accent);font-weight:700">
+              · Tell us on any receipt page
+            · and it gets added here rather than argued with
+        <footer style="border-top:1px solid var(--line);background:var(--foot);margin-top:44px">
+          <div style="max-width:1020px;margin:0 auto;padding:28px 30px 36px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+            <div>
+              <span style="font:700 15px JetBrains Mono,monospace">
+                · fieldwork
+              <p style="margin-top:9px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · Physical work - verified by photograph
+              <p style="margin-top:5px;font:500 12px JetBrains Mono,monospace;color:var(--muted)">
+                · GenLayer Studio - studionet
+            <nav style="display:flex;gap:18px;font:500 12.5px JetBrains Mono,monospace;color:var(--muted)">
+              <a href="#">
+                · Limits
+              <a href="#">
+                · Deploy
+              <a href="#">
+                · Find work
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quo
+· class Component extends DCLogic {
+  state = { theme: null };
+  toRgb(c) {
+    const el = document.createElement("span");
