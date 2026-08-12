@@ -232,6 +232,54 @@ while they are still standing there.
 Covered by `contracts/test_images.py` - 14 cases including the negatives that
 matter (a dusk photo and a bright-day photo must still be accepted).
 
+**The runner's Pillow has no JPEG decoder, and that shapes the whole function.**
+Measured on Studio against `py-genlayer:1jb45aa8...`, which ships Pillow
+11.3.0.dev0:
+
+| codec | `PIL.features.check_codec` |
+| --- | --- |
+| `jpg` | **False** |
+| `zlib` (PNG) | True |
+| `jpg_2000` | True |
+
+Also present: `gif`, `raw`, `pcx`, `tga`, `bcn`, `sgi_rle`, `sun_rle`, `xbm`.
+Verified with `contracts/probe_preflight.py`, which reports what the node sees
+rather than guessing at it.
+
+The consequence is specific: a JPEG **opens** - the header parse is pure Python,
+so `.format` and `.size` are genuinely correct - and then raises
+`OSError: decoder jpeg not available` the moment anything touches a pixel. So
+`_preflight` is split in two. The dimension check needs only the header and runs
+on everything. The brightness check needs pixels, and when the decoder is
+missing it is **skipped rather than failed**: a decoder we do not ship is our
+limitation, and refusing a good photograph over it would reject every JPEG ever
+submitted. `_dhash` returns `""` on every JPEG for the same reason, which is
+fine because it decides nothing.
+
+This shipped broken and no test caught it, because `test_images.py` runs against
+the host's Pillow, which links libjpeg. The guard is now
+`test_runner_has_no_jpeg_decoder()`, which monkeypatches `JpegImageFile.load` to
+raise exactly what the runner raises and asserts the split above. If you add a
+check that touches pixels, add a case there too.
+
+**A JPEG with no JFIF header is refused outright.** Magic `ffd8ffdb` - SOI
+straight into the quantisation tables. Pillow opens it happily and the vision
+model refuses it with `NondetException: {'causes': ['INVALID_IMAGE']}`. Left
+unhandled that aborts the transaction: no verdict is written, the task stays
+`claimed`, and the worker is told nothing. Two defences, both needed:
+
+- `_preflight` checks `data[2:4]` is `ffe0` (JFIF) or `ffe1` (EXIF) and refuses
+  anything else with an instruction to re-save the file, so the vision call that
+  was always going to fail never happens.
+- `_grade` wraps `exec_prompt` and converts **only** `INVALID_IMAGE` into a
+  clean rejection. Everything else is re-raised, because swallowing a transient
+  model error would turn a retryable blip into a permanent rejection of work
+  that was actually done.
+
+Covered on chain by `scripts/e2e-full.mjs`, whose no-credential path submits
+exactly such a file and asserts the run ends in `rejected` with advice rather
+than in a crash.
+
 **2. Exact reuse, deterministic.** The CID is parsed out of the url before
 anything is fetched, and `sha256` of the after image is computed in the
 consensus block. Both are exact matches against everything already paid for.

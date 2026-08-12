@@ -127,12 +127,31 @@ export default function LimitsPage() {
           </Para>
         </Limit>
 
-        <Limit n={next()} title="It checks the pixels before it pays for a grader">
+        <Limit n={next()} title="Its pre-flight check is weaker on a JPEG than on a PNG">
           <Para>
-            A photograph that cannot be opened, is too small for a six character
-            code to be legible, or was shot straight into the sun is refused
-            before the vision model runs - that is the contract saying nobody
-            could grade this image, and it costs a retake rather than the claim
+            Before it pays for a grader the contract opens the photograph and
+            refuses anything that is not an image at all, or is too small for a
+            six character code to be legible - that costs a retake rather than
+            the claim
+          </Para>
+          <Para>
+            The brightness check is the part that varies. The node&apos;s image
+            library ships without a JPEG decoder, so on a JPEG the contract can
+            read the dimensions from the header but cannot look at a single
+            pixel - a photograph shot into the sun or taken with a thumb over
+            the lens goes through to the model instead of being caught early.
+            Measured on this network, not assumed
+          </Para>
+          <Para>
+            We let it through rather than refuse it. A decoder we do not ship is
+            our limitation and charging it to the worker as a rejection would be
+            wrong. Upload a PNG and the full check runs
+          </Para>
+          <Para>
+            One JPEG is refused, and only one: a file saved without the standard
+            JFIF header. The grader cannot read those at all, so submitting one
+            would end in a transaction that dies without a verdict. It is caught
+            early instead, with an instruction to re-save the file
           </Para>
         </Limit>
 

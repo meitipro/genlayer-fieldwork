@@ -11,6 +11,14 @@
  * refusal sentence is plain text in `leader_receipt[i].result.payload`.
  */
 
+import dns from "node:dns";
+
+// Studio sits behind Cloudflare on both stacks and its AAAA addresses time out.
+// Node tries IPv6 first, so every request burns ~10s and then reports a bare
+// "fetch failed" that looks like the chain is down. This must run before any
+// client is created, in every entry point that talks to the RPC.
+dns.setDefaultResultOrder("ipv4first");
+
 import { studionet, testnetBradbury } from "genlayer-js/chains";
 
 const NETWORK = process.env.GENLAYER_NETWORK || "studionet";

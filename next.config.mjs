@@ -1,3 +1,17 @@
+import dns from "node:dns";
+
+/**
+ * Studio sits behind Cloudflare on both stacks and its AAAA addresses time out.
+ * Node tries IPv6 first, so every server-side read burns ~10s and then fails
+ * with a bare "fetch failed" - which lib/onchain.ts correctly reports as "the
+ * network is busy", so the whole site quietly falls back to seed records and
+ * looks like the contract is unreachable.
+ *
+ * This runs when the Next server boots, which covers every route handler and
+ * every server component. The scripts set it for themselves.
+ */
+dns.setDefaultResultOrder("ipv4first");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

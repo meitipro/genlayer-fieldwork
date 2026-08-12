@@ -19,6 +19,7 @@ import sys
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFilter
+import PIL.JpegImagePlugin
 
 CONTRACT = pathlib.Path(__file__).with_name("fieldwork.py")
 
@@ -104,6 +105,87 @@ def test_preflight():
     ok = "before" in msg
     bad += 0 if ok else 1
     print(f"  [{'ok  ' if ok else 'FAIL'}] refusal names which photograph")
+
+    # A JPEG with no JFIF/EXIF header. Pillow reads it, the vision model does
+    # not, and unhandled it aborts the transaction and leaves the task stuck as
+    # claimed with no reason. Measured: a real 900x600 file with magic ffd8ffdb
+    # returned NondetException INVALID_IMAGE on Studio.
+    jfif = enc(photo())
+    assert jfif[:4].hex() == "ffd8ffe0", "fixture is not JFIF"
+    stripped = b"\xff\xd8" + jfif[2 + 2 + int.from_bytes(jfif[4:6], "big") :]
+    for label, data, want in (
+        ("a JFIF jpeg is accepted", jfif, False),
+        ("a jpeg with no JFIF header is refused", stripped, True),
+    ):
+        got = _preflight(data, "after")
+        ok = (got != "") == want and (("re-save" in got) if want else True)
+        bad += 0 if ok else 1
+        print(f"  [{'ok  ' if ok else 'FAIL'}] {label:<38} {got[:44] or 'accepted'}")
+    return bad
+
+
+class no_jpeg_decoder:
+    """Make the host's Pillow behave like the runner's.
+
+    The bug this exists for: every test above passes on a JPEG because the host
+    Pillow links libjpeg. The runner's does not - measured on Studio against
+    py-genlayer:1jb45aa8..., `PIL.features.check_codec("jpg")` is False there.
+    A JPEG opens (the header parse is pure Python) and then raises
+    `OSError: decoder jpeg not available` on the first pixel access.
+
+    So the whole suite was green while `_preflight` refused every real
+    photograph on chain. This reproduces the runner by making JpegImageFile.load
+    raise exactly what the runner raises.
+    """
+
+    def __enter__(self):
+        self._real = PIL.JpegImagePlugin.JpegImageFile.load
+
+        def dead(_self, *a, **k):
+            raise OSError("decoder jpeg not available")
+
+        PIL.JpegImagePlugin.JpegImageFile.load = dead
+        return self
+
+    def __exit__(self, *exc):
+        PIL.JpegImagePlugin.JpegImageFile.load = self._real
+        return False
+
+
+def test_runner_has_no_jpeg_decoder():
+    """What pre-flight must do when it cannot see the pixels.
+
+    The rule: a decoder we do not ship is our limitation, never the worker's.
+    Anything the header alone can prove is still enforced; anything needing
+    pixels is skipped rather than failed.
+    """
+    bad = 0
+    with no_jpeg_decoder():
+        cases = [
+            # header-only checks still work on a JPEG
+            ("jpeg, too small          -> refused", enc(photo(320, 240)), True, "too small"),
+            ("not an image at all      -> refused", b"%PDF-1.7\n1 0 obj\n", True, "could not be opened"),
+            ("truncated jpeg           -> refused", enc(photo())[:40], True, "could not be opened"),
+            # pixel checks are skipped, never turned into a refusal
+            ("normal jpeg              -> accepted", enc(photo()), False, ""),
+            ("pitch black jpeg         -> accepted", enc(PIL.Image.new("RGB", (1200, 900), (2, 2, 2))), False, ""),
+            ("blown out jpeg           -> accepted", enc(PIL.Image.new("RGB", (1200, 900), (253, 253, 252))), False, ""),
+            # PNG decodes here, so it keeps the full check
+            ("png, pitch black         -> refused", enc(PIL.Image.new("RGB", (1200, 900), (2, 2, 2)), fmt="PNG"), True, "too dark"),
+            ("png, normal              -> accepted", enc(photo(), fmt="PNG"), False, ""),
+        ]
+        for label, data, should_refuse, expect in cases:
+            got = _preflight(data, "after")
+            ok = (got != "") == should_refuse and (expect in got if expect else True)
+            bad += 0 if ok else 1
+            print(f"  [{'ok  ' if ok else 'FAIL'}] {label:<38} {got[:44] or 'accepted'}")
+
+        # And the hash must stay deterministic rather than blow up.
+        h1 = _dhash(enc(photo()))
+        h2 = _dhash(enc(photo()))
+        ok = h1 == h2 == ""
+        bad += 0 if ok else 1
+        print(f"  [{'ok  ' if ok else 'FAIL'}] dhash returns \"\" on jpeg, deterministically")
     return bad
 
 
@@ -151,6 +233,8 @@ def main():
     bad = 0
     print("preflight")
     bad += test_preflight()
+    print("\nwhat the runner can actually decode")
+    bad += test_runner_has_no_jpeg_decoder()
     print("\ndeterminism")
     bad += test_determinism()
     print("\nwhy there is no perceptual reuse check")

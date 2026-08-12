@@ -435,6 +435,12 @@ class Contract(gl.Contract):
             # cannot be graded by anyone, so it is refused here and the vision
             # call never happens.
             refusal = _preflight(after, "after")
+            if refusal == "":
+                # The poster's frame goes to the model too, so a file the model
+                # cannot read is a refusal whichever half it came from. It was
+                # vetted at posting time, but a gateway can serve different
+                # bytes later.
+                refusal = _preflight(before, "before")
             if refusal != "":
                 return {
                     "refused": refusal,
@@ -446,7 +452,7 @@ class Contract(gl.Contract):
                     "phash": _dhash(after),
                 }
 
-            out = gl.nondet.exec_prompt(
+            out = _grade(
                 "Two photographs are attached. The first was taken by the person "
                 "who posted the task, and shows the place before the work. The "
                 "second was taken by the worker who says the work is done.\n"
@@ -464,9 +470,23 @@ class Contract(gl.Contract):
                 'Return json: {"saw_images":true|false,"code_visible":true|false,'
                 '"same_place":true|false,'
                 '"test_passed":true|false,"reason":"max 30 words"}',
-                images=[before, after],
-                response_format="json",
+                [before, after],
             )
+            if out is None:
+                # The node refused the images outright. See _grade.
+                unreadable = (
+                    "the grader could not read one of the photographs, retake "
+                    "it or re-save it as a standard JPEG or PNG and submit again"
+                )
+                return {
+                    "refused": unreadable,
+                    "code_visible": False,
+                    "same_place": False,
+                    "test_passed": False,
+                    "reason": unreadable,
+                    "content_hash": hashlib.sha256(after).hexdigest(),
+                    "phash": _dhash(after),
+                }
             if not isinstance(out, dict):
                 raise gl.vm.UserError(
                     ERROR_LLM + " the grader returned no usable answer"
@@ -813,6 +833,30 @@ def _flag(out, *names) -> bool:
     return False
 
 
+def _grade(prompt: str, images: list):
+    """Run the vision call, or return None if the node would not read an image.
+
+    `exec_prompt` raises `NondetException: {'causes': ['INVALID_IMAGE']}` when
+    the node's decoder refuses a file. Unhandled, that aborts the whole
+    transaction: the verdict is never written, the task stays `claimed`, and the
+    worker is told nothing at all. Returning None instead lets the caller turn
+    it into a normal rejection with advice.
+
+    Only INVALID_IMAGE is converted. Every other failure is re-raised, because a
+    transient model error must stay transient - swallowing one would turn a
+    retryable blip into a permanent rejection of good work.
+
+    Both leader and validator hit the same bytes and so reach the same answer,
+    which is what keeps this deterministic enough for consensus.
+    """
+    try:
+        return gl.nondet.exec_prompt(prompt, images=images, response_format="json")
+    except Exception as e:
+        if "INVALID_IMAGE" in str(e):
+            return None
+        raise
+
+
 def _preflight(data: bytes, which: str) -> str:
     """Refusal reason for a photograph nobody could grade, or "" if it is fine.
 
@@ -821,30 +865,78 @@ def _preflight(data: bytes, which: str) -> str:
     fraction of a cent instead of a whole vision call on a photograph that is
     obviously unusable, and to tell the worker what to change while they are
     still standing there.
+
+    **The runner's Pillow has no JPEG decoder.** Measured on Studio against
+    py-genlayer:1jb45aa8..., which ships Pillow 11.3.0.dev0 built with
+    zip/jpeg2k/gif/raw and `check_codec("jpg") is False`. A JPEG therefore
+    *opens* - the header parse is pure Python, so `.format` and `.size` are
+    real - and then raises `OSError: decoder jpeg not available` the moment
+    anything touches a pixel.
+
+    That distinction is the whole design of this function. The dimension check
+    needs only the header and runs on everything. The brightness check needs
+    pixels, so on a JPEG it is **skipped rather than failed**: refusing a
+    perfectly good photograph because this node cannot decode its format would
+    reject every JPEG ever submitted, which is exactly the bug this replaced.
+    A missing decoder is our limitation and must never be charged to the worker.
+
+    PNG and JPEG 2000 decode fully here, so a client that uploads PNG gets the
+    brightness check as well. See contracts/README.md.
     """
     try:
         import PIL.Image
 
         img = PIL.Image.open(_BytesFile(data))
         width, height = img.size
-        if max(width, height) < MIN_EDGE:
+    except Exception:
+        # Genuinely not an image: no header, truncated, or a text error page a
+        # gateway served in place of the file.
+        return "the " + which + " photograph could not be opened as an image"
+
+    # A JPEG the node cannot hand to the vision model.
+    #
+    # The model's decoder wants a JFIF (`ffd8ffe0`) or EXIF (`ffd8ffe1`) header.
+    # A JPEG that opens straight into its quantisation tables (`ffd8ffdb`) is
+    # valid by the standard and Pillow reads it happily, but `exec_prompt`
+    # rejects it with `NondetException: INVALID_IMAGE` - which surfaces as a
+    # crashed transaction rather than a verdict, leaving the task stuck as
+    # claimed with no reason for the worker.
+    #
+    # Catching it here turns that into a sentence someone can act on, and skips
+    # a vision call that was always going to fail.
+    if len(data) >= 4 and data[0] == 0xFF and data[1] == 0xD8:
+        if not (data[2] == 0xFF and data[3] in (0xE0, 0xE1)):
             return (
-                "the " + which + " photograph is too small for the code to be "
-                "legible, send the full size image"
+                "the " + which + " photograph is a JPEG variant the grader "
+                "cannot read, open it and re-save it as a standard JPEG or PNG"
             )
+
+    if max(width, height) < MIN_EDGE:
+        return (
+            "the " + which + " photograph is too small for the code to be "
+            "legible, send the full size image"
+        )
+
+    try:
         small = img.convert("L").resize((32, 32), PIL.Image.BILINEAR)
         px = list(small.getdata())
-        mean = sum(px) // len(px)
-        if mean <= DARK_MEAN:
-            return "the " + which + " photograph is too dark to grade, retake it with more light"
-        if mean >= BRIGHT_MEAN:
-            return (
-                "the " + which + " photograph is washed out, stand so the sun is "
-                "behind you and retake it"
-            )
-        return ""
     except Exception:
-        return "the " + which + " photograph could not be opened as an image"
+        # No decoder for this format on this runner. The header was valid, so
+        # the file is an image; it just cannot be measured here. Let the vision
+        # model be the judge of whether it is legible.
+        return ""
+
+    if len(px) == 0:
+        return ""
+    mean = sum(px) // len(px)
+    if mean <= DARK_MEAN:
+        return "the " + which + " photograph is too dark to grade, retake it with more light"
+    if mean >= BRIGHT_MEAN:
+        return (
+            "the " + which + " photograph is washed out, stand so the sun is "
+            "behind you and retake it"
+        )
+    return ""
 
 
 def _dhash(data: bytes) -> str:
@@ -857,6 +949,10 @@ def _dhash(data: bytes) -> str:
     Undecodable bytes return an empty string rather than raising, because
     raising inside a run_nondet_unsafe block surfaces as a bare consensus
     disagreement instead of a clean verdict.
+
+    In practice this returns "" for every JPEG, because the runner's Pillow has
+    no JPEG decoder - see the note in _preflight. It is deterministic either
+    way, which is all consensus needs, and it decides nothing.
     """
     try:
         import PIL.Image

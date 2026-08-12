@@ -15,6 +15,14 @@
  * contract use a named CLI account, because the deployer becomes the owner.
  */
 
+import dns from "node:dns";
+
+// Studio sits behind Cloudflare on both stacks and its AAAA addresses time out.
+// Node tries IPv6 first, so every request burns ~10s and then reports a bare
+// "fetch failed" that looks like the chain is down. This must run before any
+// client is created, in every entry point that talks to the RPC.
+dns.setDefaultResultOrder("ipv4first");
+
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -30,13 +38,17 @@ const NETWORK = process.env.GENLAYER_NETWORK || "studionet";
 const chain = NETWORK === "bradbury" ? testnetBradbury : studionet;
 const RPC = chain.rpcUrls.default.http[0];
 
-// Content addressed, serves image/jpeg with no redirect and no User-Agent
-// requirement. Wikimedia is a trap here: it answers 403 to a plain client and
-// the 126 byte error page reaches the model as if it were a photograph, which
-// surfaces only as NondetException INVALID_IMAGE.
+// Content addressed, and measured to work end to end on this network: the
+// gateway serves it to a node, and the model reads it and describes it.
+//
+// Two traps sit behind that sentence. Wikimedia answers 403 to a plain client
+// and the error page reaches the model as if it were a photograph. And a JPEG
+// with no JFIF header (magic ffd8ffdb rather than ffd8ffe0) is read happily by
+// Pillow and rejected by the model. Both surface only as INVALID_IMAGE, so a
+// default image for this script has to be one that is known good.
 const IMAGE =
   process.argv[2] ||
-  "https://ipfs.io/ipfs/bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi";
+  "https://gateway.pinata.cloud/ipfs/QmPiuq2ec8CRuVLXidgNYbx8VYRhhv8uBobHKQB6BvBU8Y";
 
 const log = (...a) => console.log(...a);
 

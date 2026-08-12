@@ -112,8 +112,9 @@ export default async function ConsolePage() {
             </Assurance>
             <Assurance title="Pre-flight checks">
               Your before photograph is opened while you post and the
-              worker&apos;s before a grader is paid for - unopenable, undersized
-              or sun blown frames are refused for the price of a decode
+              worker&apos;s before a grader is paid for - unopenable or
+              undersized frames are refused for the price of a decode, so a task
+              can never be funded with a frame nobody could grade
             </Assurance>
             <Assurance title="Human review">
               Every rejection can be escalated to a person - automatic grading
