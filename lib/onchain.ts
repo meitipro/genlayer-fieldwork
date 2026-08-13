@@ -80,7 +80,10 @@ function toTask(raw: RawTask): Task {
     distanceM: 0,
     expiresAt: expires,
     poster: short(raw.poster),
-    claimedBy: short(raw.claimed_by) || undefined,
+    // Full, not shortened: the task page compares this against the visitor's
+    // wallet to tell "yours" from "someone else's".
+    claimedBy:
+      raw.claimed_by && raw.claimed_by !== ZERO ? raw.claimed_by : undefined,
     challengeCode: raw.challenge_code || undefined,
     reason: raw.reason || undefined,
     beforeUrl: raw.before_url || undefined,

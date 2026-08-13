@@ -24,6 +24,11 @@ export type Task = {
   /** Unix ms. */
   expiresAt: number;
   poster: string;
+  /**
+   * The claimant's full address, not a shortened one. The task page has to be
+   * able to answer "is this claim mine?" for whoever is looking at it, and a
+   * truncated address cannot be compared.
+   */
   claimedBy?: string;
   challengeCode?: string;
   reason?: string;

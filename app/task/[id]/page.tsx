@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ClaimButton } from "@/components/ClaimButton";
+import { ClaimState } from "@/components/ClaimState";
 import { formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
 import { Unavailable } from "@/components/Unavailable";
@@ -192,13 +193,18 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       <div style={{ marginTop: 20 }}>
         {claimable ? (
           <ClaimButton taskId={task.id} minReputation={task.minReputation} />
+        ) : task.status === "claimed" ? (
+          // Whether this is "yours" or "someone else's" depends on who is
+          // looking, which the server cannot know.
+          <ClaimState
+            taskId={task.id}
+            claimedBy={task.claimedBy}
+            challengeCode={task.challengeCode}
+            expiresAt={task.expiresAt}
+          />
         ) : (
           <button className="btn btn-primary btn-lg" disabled>
-            {task.status === "paid"
-              ? "Already paid"
-              : task.status === "claimed"
-                ? "Claimed by someone else"
-                : "Not open"}
+            {task.status === "paid" ? "Already paid" : "Not open"}
           </button>
         )}
       </div>

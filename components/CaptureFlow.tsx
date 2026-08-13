@@ -112,7 +112,39 @@ const CHECKS = [
   { key: "area", label: "whole task area in frame" },
 ] as const;
 
+/**
+ * Whether the wallet already connected to this site owns this claim.
+ *
+ * Reads with `eth_accounts`, which never opens MetaMask. Stays undefined while
+ * unknown, and the interface then says nothing rather than guessing: warning
+ * someone off their own task would be worse than the warning is worth.
+ */
+function useClaimIsMine(claimedBy?: string): boolean | undefined {
+  const [mine, setMine] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    const eth = (globalThis as { ethereum?: unknown }).ethereum as
+      | { request?: (a: unknown) => Promise<string[]> }
+      | undefined;
+    if (!eth?.request || !claimedBy) return;
+    let live = true;
+    eth
+      .request({ method: "eth_accounts" })
+      .then((accounts: string[]) => {
+        const me = accounts?.[0];
+        if (live && me) setMine(me.toLowerCase() === claimedBy.toLowerCase());
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [claimedBy]);
+
+  return mine;
+}
+
 export function CaptureFlow({ task, now }: { task: Task; now: number }) {
+  const mine = useClaimIsMine(task.claimedBy);
   const [after, setAfter] = useState<Shot>(null);
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [stage, setStage] = useState<Stage>("idle");
@@ -211,6 +243,19 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
 
   return (
     <div className="stack">
+      {mine === false ? (
+        <div className="panel" style={{ borderColor: "var(--danger)" }}>
+          <div className="eyebrow" style={{ color: "var(--danger)" }}>
+            This claim belongs to another wallet
+          </div>
+          <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+            The contract will refuse a submission from anyone but the claimant,
+            so this would cost you a transaction and nothing else. Switch to the
+            wallet that claimed it, or find a task that is still open.
+          </p>
+        </div>
+      ) : null}
+
       <ChallengeCode code={task.challengeCode || "------"} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
