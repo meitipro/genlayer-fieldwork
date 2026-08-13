@@ -69,6 +69,29 @@ async function retry(fn, label, n = 6) {
   }
 }
 
+/**
+ * The refusal sentence, out of whichever shape the node used.
+ *
+ * Studio uses BOTH: some refusals arrive as `{status:"rollback", payload:"..."}`
+ * and others as base64 with a one byte tag in front. Measured on the same
+ * contract minutes apart. Handling only one of them prints mojibake and makes a
+ * correct refusal look like a broken script, so check the object first.
+ */
+function refusalText(round) {
+  const res = round?.result;
+  if (!res) return "";
+  if (typeof res === "object") return String(res.payload ?? res.data ?? "");
+  try {
+    return Buffer.from(String(res), "base64")
+      .toString("utf8")
+      .slice(1)
+      .replace(/[^\x20-\x7e\n]/g, "")
+      .trim();
+  } catch {
+    return "";
+  }
+}
+
 function verdict(receipt) {
   const lr =
     receipt?.consensus_data?.leader_receipt ?? receipt?.consensusData?.leaderReceipt;
@@ -78,13 +101,7 @@ function verdict(receipt) {
   // `result` is a refusal sentence only on ERROR. On SUCCESS it is the return
   // value in GenVM's own encoding, and reading that as text prints mojibake.
   let msg = "";
-  if (String(exec).toUpperCase() !== "SUCCESS") {
-    try {
-      msg = Buffer.from(String(r0.result ?? ""), "base64").toString("utf8").slice(1);
-    } catch {
-      msg = "";
-    }
-  }
+  if (String(exec).toUpperCase() !== "SUCCESS") msg = refusalText(r0);
   return { exec, msg, stderr: (r0.genvm_result ?? {}).stderr ?? "" };
 }
 
@@ -131,6 +148,7 @@ const h = await retry(
         -122600,
         GEN(18),
         1,
+        "",
       ],
       value: GEN(18),
     }),

@@ -116,7 +116,7 @@ def graded(vm, *, saw=True, code=True, place=True, passed=True, reason="looks cl
     )
 
 
-def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, **over):
+def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, code="", **over):
     """Post a task. The before photograph belongs to the poster, so it is
     fetched and vetted here rather than at submission time."""
     body = {**GOOD, **over}
@@ -134,6 +134,7 @@ def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=N
         -122600,
         reward * GEN,
         rep,
+        code,
     )
 
 
@@ -172,7 +173,7 @@ def test_refuses_when_underfunded(contract, direct_vm, direct_alice):
     with pytest.raises(Exception) as err:
         contract.post_task(
             GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-            URL_A, 51505100, -122600, 18 * GEN, 0,
+            URL_A, 51505100, -122600, 18 * GEN, 0, "",
         )
     assert "reward plus the fee" in str(err.value)
 
@@ -211,6 +212,47 @@ def test_refuses_a_before_url_outside_content_addressed_storage(
     with pytest.raises(Exception) as err:
         post(contract, direct_vm, direct_alice, before="https://example.com/b.jpg")
     assert "content addressed" in str(err.value)
+
+
+def test_a_published_code_is_used_instead_of_an_issued_one(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The whole point: the code is knowable before anyone claims, so a tester
+    can prepare the photograph. It is weaker on purpose and labelled as such."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, code="ABC234")
+    assert contract.fixed_code_of(task_id) == "ABC234"
+
+    direct_vm.sender = direct_bob
+    assert contract.claim(task_id) == "ABC234"
+    assert contract.challenge_code_of(task_id) == "ABC234"
+
+
+def test_a_published_code_is_normalised_and_checked(
+    contract, direct_vm, direct_alice
+):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, code="  abc234 ")
+    assert contract.fixed_code_of(task_id) == "ABC234"
+
+    for bad, expect in (("ABC23", "exactly six"), ("ABCDEFG", "exactly six"), ("ABC23O", "may only use")):
+        gradeable(direct_vm, True)
+        with pytest.raises(Exception) as err:
+            post(contract, direct_vm, direct_alice, code=bad)
+        assert expect in str(err.value)
+
+
+def test_no_published_code_still_issues_one_at_claim(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice)
+    assert contract.fixed_code_of(task_id) == ""
+
+    direct_vm.sender = direct_bob
+    code = contract.claim(task_id)
+    assert len(code) == 6
+    assert all(c in "23456789ABCDEFGHJKMNPQRSTVWXYZ" for c in code)
 
 
 # ---------------------------------------------------------------- claiming
@@ -482,7 +524,7 @@ def test_overpaying_is_banked_rather_than_lost(contract, direct_vm, direct_alice
     direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
     contract.post_task(
         GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-        URL_A, 51505100, -122600, reward * GEN, 0,
+        URL_A, 51505100, -122600, reward * GEN, 0, "",
     )
 
     # The fee for this task, plus every wei of the overpayment.

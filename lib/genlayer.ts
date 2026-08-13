@@ -330,6 +330,8 @@ export type PostTaskInput = {
   lngE6: number;
   reward: number;
   minReputation: number;
+  /** Six characters to publish with the task, or "" for the issued one. */
+  fixedCode?: string;
 };
 
 /**
@@ -381,6 +383,7 @@ export async function postTask(
       input.lngE6,
       rewardWei,
       input.minReputation,
+      (input.fixedCode ?? "").trim().toUpperCase(),
     ],
     value,
   });

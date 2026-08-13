@@ -104,6 +104,11 @@ class Task:
     # Recorded for human reviewers and the repeat verification sample. Never
     # used to accept or reject anything. See the note at the top of this file.
     phash: str
+    # A code the poster published with the task, or "" for the normal one issued
+    # at claim time. Set means the code is knowable before anyone claims, which
+    # is what makes the product testable and what makes it weaker. See
+    # _clean_fixed_code.
+    fixed_code: str
 
 
 class Contract(gl.Contract):
@@ -167,6 +172,37 @@ class Contract(gl.Contract):
             out = out + CODE_ALPHABET[digest[i] % len(CODE_ALPHABET)]
         return out
 
+    def _clean_fixed_code(self, raw: str) -> str:
+        """Validate a poster-chosen code, or "" for the normal issued one.
+
+        Exists so a task can be handed to someone who needs the code *before*
+        they set out: a tester preparing a photograph, or a team running the
+        product end to end without two people and a walk. The normal code is
+        issued at claim time and cannot be known in advance, which is exactly
+        what makes that impossible.
+
+        It is a real weakening and the site says so. An issued code proves the
+        photograph was taken after the claim, because nobody could have known
+        it before. A published one proves only that the photographer knew a
+        published string, so it can be staged ahead of time. Fine for a demo,
+        wrong for paid work, and never the default.
+        """
+        code = raw.strip().upper()
+        if code == "":
+            return ""
+        if len(code) != 6:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " a chosen code must be exactly six characters"
+            )
+        for ch in code:
+            if ch not in CODE_ALPHABET:
+                raise gl.vm.UserError(
+                    ERROR_EXPECTED + " a chosen code may only use "
+                    + CODE_ALPHABET
+                    + ", so that it cannot be misread by hand"
+                )
+        return code
+
     def _require_task(self, task_id: u256) -> Task:
         if task_id >= u256(len(self.tasks)):
             raise gl.vm.UserError(ERROR_EXPECTED + " no task with that id")
@@ -214,6 +250,7 @@ class Contract(gl.Contract):
         lng_e6: i64,
         reward: u256,
         min_reputation: u256,
+        fixed_code: str,
     ) -> u256:
         """Post a task. The poster supplies the photograph of how it looks now.
 
@@ -228,6 +265,11 @@ class Contract(gl.Contract):
         It does not exist yet - it is issued at claim time, to one worker. So
         the code is required in the after frame only, and what ties the two
         together is the same-place judgement instead.
+
+        `fixed_code` is normally "". Setting it publishes the code with the task
+        so it can be known before anyone claims, which makes the product
+        testable by one person and weakens the anti-fraud property. See
+        _clean_fixed_code.
         """
         if title.strip() == "":
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a title")
@@ -237,6 +279,10 @@ class Contract(gl.Contract):
             raise gl.vm.UserError(ERROR_EXPECTED + " a pass example and a fail example are both required")
         if reward == u256(0):
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a reward")
+
+        # Validated before any money moves or any node fetches anything, so a
+        # typo in the code costs nothing.
+        chosen_code = self._clean_fixed_code(fixed_code)
 
         fee = u256(int(reward) * int(self.fee_bps) // BPS)
         owed = int(reward) + int(fee)
@@ -356,6 +402,7 @@ class Contract(gl.Contract):
                 after_url="",
                 content_hash="",
                 phash="",
+                fixed_code=chosen_code,
             )
         )
         # The poster's frame is spent. Reusing it as a worker's after frame,
@@ -385,8 +432,12 @@ class Contract(gl.Contract):
         if self.reputation.get(sender, u256(0)) < t.min_reputation:
             raise gl.vm.UserError(ERROR_EXPECTED + " reputation too low for this task")
 
-        # Deterministic and recomputable by anyone auditing the record later.
-        t.challenge_code = self._code_from(str(task_id) + str(sender) + now)
+        # A code the poster published stands; otherwise one is derived, which is
+        # deterministic and recomputable by anyone auditing the record later.
+        if t.fixed_code != "":
+            t.challenge_code = t.fixed_code
+        else:
+            t.challenge_code = self._code_from(str(task_id) + str(sender) + now)
         t.claimed_by = sender
         t.claim_expires = self._plus_minutes(now, CLAIM_MINUTES)
         t.status = "claimed"
@@ -494,17 +545,27 @@ class Contract(gl.Contract):
             # A grader that never received the images must not be allowed to
             # produce a verdict. Some routers hand the call to a text only model
             # which answers confidently about a photograph it cannot see.
+            #
+            # This is raised rather than returned, and the difference is the
+            # whole point. Returned, it becomes a *verdict*, and the validator
+            # compares verdicts: a blind leader and a sighted validator then
+            # disagree, the block reaches NO_MAJORITY, and the transaction
+            # stalls in PROPOSING with the task stuck as claimed. Measured on
+            # 0x60743996.
+            #
+            # Raised as TRANSIENT it goes through _handle_leader_error instead,
+            # which is built for exactly this: if the validator is also blind
+            # both are transient and they agree on a clean, retryable failure;
+            # if the validator can see, it disagrees and the round rotates to
+            # another leader, which is the one outcome that actually gets the
+            # worker graded. Which model a node gets is not a property of the
+            # bytes, so it must never be treated as one.
             if not _flag(out, "saw_images", "saw_photographs", "images_visible"):
-                return {
-                    "refused": "the grader could not see your photographs, that is "
-                    "our problem and not yours, please submit again",
-                    "code_visible": False,
-                    "same_place": False,
-                    "test_passed": False,
-                    "reason": "",
-                    "content_hash": hashlib.sha256(after).hexdigest(),
-                    "phash": _dhash(after),
-                }
+                raise gl.vm.UserError(
+                    ERROR_TRANSIENT + " the grader could not see your "
+                    "photographs, that is our problem and not yours, please "
+                    "submit again"
+                )
             return {
                 "refused": "",
                 "code_visible": _flag(out, "code_visible", "code_legible"),
@@ -662,6 +723,7 @@ class Contract(gl.Contract):
                 "after_url": t.after_url,
                 "content_hash": t.content_hash,
                 "phash": t.phash,
+                "fixed_code": t.fixed_code,
             },
             sort_keys=True,
         )
@@ -725,6 +787,11 @@ class Contract(gl.Contract):
     @gl.public.view
     def lng_e6_of(self, task_id: u256) -> i64:
         return self._require_task(task_id).lng_e6
+
+    @gl.public.view
+    def fixed_code_of(self, task_id: u256) -> str:
+        """The published code, or "" when the code is issued at claim time."""
+        return self._require_task(task_id).fixed_code
 
     @gl.public.view
     def before_url_of(self, task_id: u256) -> str:

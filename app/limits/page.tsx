@@ -109,6 +109,27 @@ export default function LimitsPage() {
           </Para>
         </Limit>
 
+        <Limit n={next()} title="A task can publish its own code, and that one is weaker">
+          <Para>
+            Normally the contract issues the code when someone claims, so nobody
+            could have known it in advance. That is the whole proof: a
+            photograph carrying the code must have been taken after the claim
+          </Para>
+          <Para>
+            A poster can instead choose the code and publish it with the task.
+            Then anyone can prepare the photograph beforehand, which is what
+            makes the product testable by one person rather than needing two
+            people and a walk. It is also exactly what an honest worker cannot
+            distinguish themselves by any more
+          </Para>
+          <Para>
+            So those tasks carry a <strong style={{ color: "var(--ink)" }}>test
+            task</strong> label everywhere they appear, and the code is printed
+            on the task page in the open. Use them for demonstrations. Do not use
+            one for work you are really paying for
+          </Para>
+        </Limit>
+
         <Limit n={next()} title="It does not match photographs by how they look">
           <Para>
             The contract stores a cryptographic hash of every accepted photograph

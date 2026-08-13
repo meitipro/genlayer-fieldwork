@@ -280,6 +280,31 @@ Covered on chain by `scripts/e2e-full.mjs`, whose no-credential path submits
 exactly such a file and asserts the run ends in `rejected` with advice rather
 than in a crash.
 
+**A blind grader is an error, never a verdict.** Studio's `llm-router` does not
+hand every validator the same model, and some of the allowed families are text
+only. Such a model answers confidently about photographs it never received, so
+the prompt asks for a `saw_images` boolean and the contract refuses to act on a
+verdict when it is false.
+
+The subtlety is *how* it refuses. Returning that as a verdict makes it something
+validators compare, and then a blind leader plus a sighted validator disagree,
+the round reaches `NO_MAJORITY`, and the transaction stalls in `PROPOSING` with
+the task stuck as `claimed` forever. Measured on `0x60743996`: leader
+`execution_result` was `SUCCESS`, its verdict was "the grader could not see your
+photographs", and consensus was `NO_MAJORITY`.
+
+So it is **raised** as `[TRANSIENT]` instead, which routes it into
+`_handle_leader_error`:
+
+- validator also blind: both transient, they agree, and the worker gets a clean
+  "please submit again" rather than a hung transaction
+- validator can see: it succeeds where the leader failed, disagrees, and the
+  round rotates to another leader, which is the only outcome that actually gets
+  the work graded
+
+The rule this encodes: **which model a node happens to be given is not a
+property of the bytes, so it must never be compared as though it were.**
+
 **2. Exact reuse, deterministic.** The CID is parsed out of the url before
 anything is fetched, and `sha256` of the after image is computed in the
 consensus block. Both are exact matches against everything already paid for.
@@ -423,7 +448,7 @@ failure from `consensus_data.leader_receipt.genvm_result.stderr`, because the
 
 Writes (wallet signed):
 
-- `post_task(title, place, acceptance_test, example_pass, example_fail, before_url, lat_e6, lng_e6, reward, min_reputation)` - **payable**, send `reward + fee`
+- `post_task(title, place, acceptance_test, example_pass, example_fail, before_url, lat_e6, lng_e6, reward, min_reputation, fixed_code)` - **payable**, send `reward + fee`. `fixed_code` is normally `""`
 - `claim(task_id) -> str` - returns the six character challenge code
 - `submit(task_id, after_url) -> str` - returns `paid` or `rejected`
 - `release_expired(task_id)` - returns an abandoned claim to the pool
@@ -458,6 +483,30 @@ Two consequences in the contract:
   the poster's own file back as an after frame is caught by the same reuse check
   as any other recycled photograph - plus an explicit equality check with a
   better error message.
+
+### A poster can publish the code, and that is a deliberate weakening
+
+`post_task` takes a `fixed_code`. Empty, which is the normal case, means the
+contract derives the code at claim time from the task, the worker and the
+moment, so nobody can know it in advance. Six characters from `CODE_ALPHABET`
+instead means the code is stored on the task and handed out unchanged when
+somebody claims.
+
+The reason it exists: the issued code makes the product impossible to try on
+your own. You cannot photograph the finished work in advance, because the code
+you must hold in the frame does not exist until you claim, and by then you are
+supposed to be standing in a car park. A team demonstrating the product, or one
+person testing the whole loop, needs the code first.
+
+What it costs, stated plainly because the site states it plainly: an issued code
+proves a photograph was taken **after** the claim, since nobody could have known
+it before. A published one proves only that the photographer read the task page,
+so the work can be staged in advance. Tasks carrying one are labelled `test task`
+everywhere they appear and print the code openly on the task page.
+
+Validation happens before any money moves or any node fetches anything, so a
+typo costs nothing: exactly six characters, drawn from the same alphabet, upper
+cased and trimmed first.
 
 ### The challenge code alphabet
 

@@ -60,6 +60,7 @@ export default async function MapPage() {
                 }}
               >
                 90m on claim - rep {t.minReputation}
+                {t.fixedCode ? " - test task" : ""}
               </div>
             </Link>
           ))}

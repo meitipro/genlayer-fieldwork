@@ -169,12 +169,58 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         </div>
       </section>
 
+      {task.fixedCode ? (
+        <div
+          className="panel"
+          style={{
+            marginTop: 14,
+            borderColor: "var(--accent-line)",
+            background: "linear-gradient(180deg,var(--accent-soft),transparent)",
+          }}
+        >
+          <div className="spread">
+            <div className="eyebrow eyebrow-accent">
+              The code for this task is published
+            </div>
+            <span className="pill">test task</span>
+          </div>
+          <div
+            style={{
+              font: "800 34px var(--mono)",
+              letterSpacing: "0.18em",
+              color: "var(--accent)",
+              marginTop: 12,
+            }}
+          >
+            {task.fixedCode}
+          </div>
+          <p style={{ marginTop: 10, color: "var(--dim)", lineHeight: 1.6 }}>
+            The poster chose it, so you can write it on paper and take the
+            photograph before you claim. That is the point of it: one person can
+            run the whole thing through on their own.
+          </p>
+          <p
+            style={{
+              marginTop: 8,
+              color: "var(--muted)",
+              fontSize: 13.5,
+              lineHeight: 1.6,
+            }}
+          >
+            It also makes this task weaker than a real one. A code nobody could
+            know in advance is what proves a photograph was taken after the
+            claim, and a published one proves only that the photographer read
+            this page.
+          </p>
+        </div>
+      ) : null}
+
       <div className="panel panel-2" style={{ marginTop: 14 }}>
         <div className="eyebrow">What happens when you claim</div>
         <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "var(--dim)" }}>
-          The contract issues a six character code that is yours alone - write it
-          on paper, keep it in frame in the photograph you take and submit inside
-          ninety minutes
+          {task.fixedCode
+            ? "You get the code above, which is already public on this task - write it on paper, keep it in frame in the photograph you take and submit inside ninety minutes"
+            : "The contract issues a six character code that is yours alone - write it on paper, keep it in frame in the photograph you take and submit inside ninety minutes"}
         </p>
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <span className="pill">

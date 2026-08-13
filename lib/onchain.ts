@@ -41,6 +41,7 @@ type RawTask = {
   after_url: string;
   content_hash: string;
   phash: string;
+  fixed_code: string;
 };
 
 const ZERO = "0x0000000000000000000000000000000000000000";
@@ -90,6 +91,7 @@ function toTask(raw: RawTask): Task {
     afterUrl: raw.after_url || undefined,
     contentHash: raw.content_hash || undefined,
     phash: raw.phash || undefined,
+    fixedCode: raw.fixed_code || undefined,
     verdict:
       raw.status === "paid"
         ? { codeVisible: true, samePlace: true, testPassed: true }

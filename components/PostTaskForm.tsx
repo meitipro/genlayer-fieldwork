@@ -36,6 +36,7 @@ export function PostTaskForm() {
     exampleFail: "",
     reward: 18,
     minReputation: 1,
+    fixedCode: "",
     lat: "51.5051",
     lng: "-0.1226",
   });
@@ -104,6 +105,7 @@ export function PostTaskForm() {
           lngE6: Math.round(parseFloat(form.lng || "0") * 1e6),
           reward: Number(form.reward),
           minReputation: Number(form.minReputation),
+          fixedCode: form.fixedCode,
         },
         setStage
       );
@@ -292,6 +294,39 @@ export function PostTaskForm() {
             onChange={(e) => set("minReputation", Number(e.target.value))}
           />
         </div>
+        <div style={{ gridColumn: "1 / -1" }}>
+          <label htmlFor="fixedCode">Set the code yourself (for testing)</label>
+          <input
+            id="fixedCode"
+            value={form.fixedCode}
+            maxLength={6}
+            placeholder="leave empty for a real task"
+            onChange={(e) =>
+              set(
+                "fixedCode",
+                e.target.value.toUpperCase().replace(/[^23456789ABCDEFGHJKMNPQRSTVWXYZ]/g, "")
+              )
+            }
+            style={{
+              fontFamily: "var(--mono)",
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+            }}
+          />
+          <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
+            Normally the contract issues the code when someone claims, so nobody
+            can know it in advance. That is what proves the photograph was taken
+            after the claim, and it is also what makes the task impossible to
+            test on your own.
+          </p>
+          <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
+            Put six characters here and the code is published with the task, so
+            anyone can prepare the photograph before claiming. Use it to hand a
+            task to a colleague. Do not use it for work you are really paying
+            for. Letters and digits only, no I, L, O, U, 0 or 1.
+          </p>
+        </div>
+
         <div>
           <label htmlFor="lat">Latitude</label>
           <input

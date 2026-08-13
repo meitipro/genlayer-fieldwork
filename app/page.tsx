@@ -18,6 +18,7 @@ function TaskCard({
   distanceM,
   reward,
   minReputation,
+  fixedCode,
 }: {
   id: number;
   title: string;
@@ -25,6 +26,7 @@ function TaskCard({
   distanceM: number;
   reward: number;
   minReputation: number;
+  fixedCode?: string;
 }) {
   return (
     <Link href={`/task/${id}`} className="card">
@@ -47,6 +49,7 @@ function TaskCard({
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
         <span className="pill">90m on claim</span>
         <span className="pill">rep {minReputation}</span>
+        {fixedCode ? <span className="pill pill-accent">test task</span> : null}
       </div>
     </Link>
   );
@@ -149,6 +152,7 @@ export default async function HomePage() {
                 distanceM={t.distanceM}
                 reward={t.reward}
                 minReputation={t.minReputation}
+                fixedCode={t.fixedCode}
               />
             ))}
           </div>

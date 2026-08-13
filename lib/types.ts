@@ -31,6 +31,12 @@ export type Task = {
    */
   claimedBy?: string;
   challengeCode?: string;
+  /**
+   * A code the poster published with the task, readable before anyone claims.
+   * Empty for the normal one, which is issued at claim time and cannot be known
+   * in advance. Set means the task is a test rig, and the site says so.
+   */
+  fixedCode?: string;
   reason?: string;
   beforeUrl?: string;
   afterUrl?: string;

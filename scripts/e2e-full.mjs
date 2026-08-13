@@ -113,6 +113,29 @@ async function rpc(method, params) {
 }
 
 /**
+ * The refusal sentence, out of whichever shape the node used.
+ *
+ * Studio uses BOTH: some refusals arrive as `{status:"rollback", payload:"..."}`
+ * and others as base64 with a one byte tag in front. Measured on the same
+ * contract minutes apart. Handling only one of them prints mojibake and makes a
+ * correct refusal look like a broken script, so check the object first.
+ */
+function refusalText(round) {
+  const res = round?.result;
+  if (!res) return "";
+  if (typeof res === "object") return String(res.payload ?? res.data ?? "");
+  try {
+    return Buffer.from(String(res), "base64")
+      .toString("utf8")
+      .slice(1)
+      .replace(/[^\x20-\x7e\n]/g, "")
+      .trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Only `execution_result` says whether the contract's own code succeeded.
  *
  * Read the round the leader actually ran rather than round 0: later rounds are
@@ -270,6 +293,7 @@ const ph = await retry(
         -122600,
         GEN(18),
         0,
+        CAN_UPLOAD ? "" : "TEST42",
       ],
       value: GEN(18),
     }),

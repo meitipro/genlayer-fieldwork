@@ -142,7 +142,7 @@ async function main() {
   const postHash = await retry(() => client.writeContract({
     address: ADDRESS,
     functionName: "post_task",
-    args: [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 0, 0, GEN(reward), 0],
+    args: [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 0, 0, GEN(reward), 0, ""],
     value,
   }), "post");
   await retry(() => client.waitForTransactionReceipt({
