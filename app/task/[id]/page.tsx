@@ -191,7 +191,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
 
       <div style={{ marginTop: 20 }}>
         {claimable ? (
-          <ClaimButton taskId={task.id} />
+          <ClaimButton taskId={task.id} minReputation={task.minReputation} />
         ) : (
           <button className="btn btn-primary btn-lg" disabled>
             {task.status === "paid"

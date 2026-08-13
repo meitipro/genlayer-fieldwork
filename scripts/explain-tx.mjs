@@ -129,18 +129,50 @@ if (rounds.length === 0) {
 
 console.log(`\nleader receipt (${rounds.length} round${rounds.length === 1 ? "" : "s"})`);
 
+/**
+ * The refusal sentence, wherever this build happens to put it.
+ *
+ * Studio sends `result` as a **base64 string** with a one byte tag in front, so
+ * `result.payload` is undefined and reading it silently prints nothing - which
+ * looks exactly like a transaction that failed for no reason. Other builds send
+ * `{status, payload}`. Handle both, and strip the tag byte.
+ */
+function refusalOf(r) {
+  const res = r.result;
+  if (!res) return "";
+  if (typeof res === "object") return String(res.payload ?? res.data ?? "");
+  try {
+    const text = Buffer.from(String(res), "base64").toString("utf8");
+    // Drop the leading tag byte, then anything else unprintable.
+    return text
+      .slice(1)
+      .replace(/[^\x20-\x7e\n]/g, "")
+      .trim();
+  } catch {
+    return "";
+  }
+}
+
 rounds.forEach((r, i) => {
   const exec = r.execution_result ?? r.executionResult;
   console.log(`\n  round ${i}`);
   line("execution_result", exec);
-  if (r.result) {
-    line("result.status", r.result.status ?? "-");
-    const payload = r.result.payload ?? r.result.data ?? "";
+  line("mode / vote", `${r.mode ?? "?"} / ${r.vote ?? "-"}`);
+  {
+    const payload = refusalOf(r);
     if (payload) {
       console.log("\n  refusal:");
-      String(payload)
-        .split("\n")
-        .forEach((l) => console.log("    " + l));
+      payload.split("\n").forEach((l) => console.log("    " + l));
+    }
+    // The nondet block's own return value, which carries the grader's verdict.
+    if (r.eq_outputs) {
+      for (const [k, v] of Object.entries(r.eq_outputs)) {
+        const text = Buffer.from(String(v), "base64")
+          .toString("utf8")
+          .replace(/[^\x20-\x7e]+/g, " ")
+          .trim();
+        if (text) console.log(`\n  nondet output [${k}]:\n    ${text.slice(0, 600)}`);
+      }
     }
   }
   const stderr = (r.genvm_result ?? r.genvmResult ?? {}).stderr ?? "";

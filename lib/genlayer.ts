@@ -86,8 +86,85 @@ export async function isOutOfGas(address: `0x${string}`): Promise<boolean> {
 }
 
 /**
- * Contract errors carry a class prefix so validators can compare failures - * "[EXPECTED] this task is not open". The class is for consensus, not for the
- * person holding the phone, so it is stripped before display. The sentence
+ * The sentence the contract refused with, out of whichever shape this build
+ * uses. Studio sends `result` as base64 with a one byte tag in front; other
+ * builds send `{status, payload}`.
+ */
+function refusalText(round: any): string {
+  const res = round?.result;
+  if (!res) return "";
+  if (typeof res === "object") return String(res.payload ?? res.data ?? "");
+  try {
+    return atob(String(res))
+      .slice(1)
+      .replace(/[^\x20-\x7e\n]/g, "")
+      .trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Throw if the contract refused the call, however cheerful the receipt looks.
+ *
+ * This is the single most important line of defence in this file. A GenLayer
+ * receipt carries three fields that all read like a verdict, and two of them
+ * lie: `status` is `FINALIZED` on a refused call, because refusing is a
+ * perfectly successful transaction, and `result` is `MAJORITY_AGREE`, because
+ * validators agreeing that a call failed is still agreement. Only
+ * `consensus_data.leader_receipt[].execution_result` answers "did my code run".
+ *
+ * Without this, every write in the app reports success on a refusal: a claim
+ * that was rejected for low reputation handed the worker an empty code and a
+ * link to go and photograph a task that was never theirs. Measured on
+ * transaction 0xfa6f7d9f, which finalized, agreed, and refused.
+ */
+function assertExecuted(receipt: any, what: string): void {
+  const lr =
+    receipt?.consensus_data?.leader_receipt ?? receipt?.consensusData?.leaderReceipt;
+  const rounds = Array.isArray(lr) ? lr : lr ? [lr] : [];
+  const leader =
+    rounds.find((r: any) => String(r?.mode ?? "").toLowerCase() === "leader") ??
+    rounds[0];
+
+  // No leader receipt at all means the shape is unfamiliar, not that the call
+  // failed. Inventing a failure here would be worse than missing one.
+  if (!leader) return;
+
+  const exec = String(leader.execution_result ?? leader.executionResult ?? "");
+  if (exec === "" || exec.toUpperCase() === "SUCCESS") return;
+
+  throw new Error(refusalText(leader) || `${what} was refused by the contract`);
+}
+
+/**
+ * How many tasks this address has been paid for.
+ *
+ * Read before claiming so the worker is told they are not eligible *before*
+ * signing, rather than after a transaction that was always going to be refused.
+ * Returns null when the chain will not say, and the caller then lets the
+ * contract be the judge rather than blocking on a failed read.
+ */
+export async function reputationOf(
+  address: `0x${string}`
+): Promise<number | null> {
+  try {
+    const raw: any = await readClient().readContract({
+      address: FIELDWORK_CONTRACT,
+      functionName: "reputation_of",
+      args: [address],
+    });
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Contract errors carry a class prefix so validators can compare failures, as
+ * in "[EXPECTED] this task is not open". The class is for consensus, not for
+ * the person holding the phone, so it is stripped before display. The sentence
  * behind it is written for humans and is shown as-is.
  */
 export function humanError(raw: unknown): string {
@@ -185,6 +262,7 @@ export async function submitPhotographs(opts: {
     status: TransactionStatus.ACCEPTED,
   });
   onStage?.("accepted");
+  assertExecuted(accepted, "your submission");
 
   const status = accepted?.result?.status === "paid" ? "paid" : "rejected";
   const reason = accepted?.result?.reason ?? "";
@@ -229,6 +307,7 @@ export async function deployFieldwork(
     status: TransactionStatus.FINALIZED,
   });
   onStage?.("finalized");
+  assertExecuted(receipt, "the deploy");
 
   const contract =
     receipt?.data?.contract_address ??
@@ -313,6 +392,7 @@ export async function postTask(
     status: TransactionStatus.ACCEPTED,
   });
   onStage?.("accepted");
+  assertExecuted(accepted, "posting this task");
 
   const taskId =
     accepted?.result === undefined || accepted?.result === null
@@ -355,6 +435,7 @@ export async function claimTask(
     status: TransactionStatus.ACCEPTED,
   });
   onAccepted?.();
+  assertExecuted(accepted, "the claim");
 
   const code = String(accepted?.result ?? "");
 

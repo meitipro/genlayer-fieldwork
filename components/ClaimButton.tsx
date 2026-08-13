@@ -8,6 +8,7 @@ import {
   connectWallet,
   humanError,
   isOutOfGas,
+  reputationOf,
   txUrl,
 } from "@/lib/genlayer";
 
@@ -18,7 +19,13 @@ import {
 
 type Phase = "idle" | "wallet" | "sent" | "accepted" | "done" | "failed";
 
-export function ClaimButton({ taskId }: { taskId: number }) {
+export function ClaimButton({
+  taskId,
+  minReputation = 0,
+}: {
+  taskId: number;
+  minReputation?: number;
+}) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [code, setCode] = useState("");
@@ -56,6 +63,23 @@ export function ClaimButton({ taskId }: { taskId: number }) {
         return;
       }
 
+      // The contract refuses a claim below the task's reputation bar, and that
+      // refusal costs a transaction and tells you two numbers you cannot see.
+      // Ask first, and say exactly where the wallet stands. A read that fails
+      // is not a reason to block: the contract stays the judge.
+      if (minReputation > 0) {
+        const rep = await reputationOf(address);
+        if (rep !== null && rep < minReputation) {
+          setError(
+            `This task needs reputation ${minReputation} and this wallet has ${rep}. ` +
+              `Reputation is one point per task paid, so start on a task that asks for ` +
+              `${rep === 0 ? "none" : rep} and work up to this one.`
+          );
+          setPhase("failed");
+          return;
+        }
+      }
+
       setPhase("sent");
       const res = await claimTask(address, taskId, () => setPhase("accepted"));
       setHash(res.hash);
@@ -91,7 +115,8 @@ export function ClaimButton({ taskId }: { taskId: number }) {
           </div>
         ) : null}
         <p className="muted" style={{ margin: 0 }}>
-          Write that code on paper and keep it in frame in both photographs.
+          Write that code on paper and keep it in frame in the photograph you
+          take.
         </p>
         <a className="btn btn-primary btn-block" href={`/submit/${taskId}`}>
           Take the photographs
