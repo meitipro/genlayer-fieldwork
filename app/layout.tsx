@@ -65,7 +65,7 @@ export default function RootLayout({
                 <NavLink href="/receipts">Receipts</NavLink>
               </span>
               <span className="nav-secondary">
-                <NavLink href="/limits">Limits</NavLink>
+                <NavLink href="/how-it-works">How it works</NavLink>
               </span>
               <ThemeToggle />
               <Link href="/console" className="nav-cta">
@@ -87,8 +87,8 @@ export default function RootLayout({
               </p>
             </div>
             <nav>
-              <Link href="/limits">Limits</Link>
-              <Link href="/deploy">Deploy</Link>
+              <Link href="/how-it-works">How it works</Link>
+              <Link href="/receipts">Receipts</Link>
               <Link href="/map">Find work</Link>
             </nav>
           </div>

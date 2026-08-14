@@ -25,20 +25,20 @@ export function SettlementNotice({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
       <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-        On the Studio network the verdict is real but the coins do not move.
-        Balances only change on a live network.
+        Studio is a development network - the verdict is real, and balances only
+        change on a live one.
       </p>
     );
   }
 
   return (
     <div className="notice">
-      <strong>This is the Studio development network.</strong> The grading, the
-      verdict and the record are all real. The payment is not. Here a payout is
-      delivered to the worker as a contract call, and a wallet is not a contract,
-      so it fails with <span className="mono">not found</span> and the balance
-      never moves. The verdict is already final by then and stands. On a live
-      network the same transaction pays.
+      <strong>Running on Studio, a development network.</strong> The grading,
+      the verdict and the record are all real here. Studio delivers a payout as
+      a contract call, and a wallet is not a contract, so the balance does not
+      move on this network. The verdict is final before the transfer is even
+      attempted, so it stands either way. On a live network the same transaction
+      pays.
     </div>
   );
 }

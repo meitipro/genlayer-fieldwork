@@ -168,7 +168,7 @@ the dev server dies with `Cannot find module './682.js'`. Fix: stop it,
 npm run build
 ```
 
-Then walk `/`, `/map`, `/task/<id>`, `/submit/<id>`, `/console`, `/limits` in
+Then walk `/`, `/map`, `/task/<id>`, `/submit/<id>`, `/console`, `/how-it-works` in
 both themes. On the task page, "Claim this task" must be a real transaction that
 returns a six character code.
 

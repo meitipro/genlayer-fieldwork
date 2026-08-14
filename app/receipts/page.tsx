@@ -28,8 +28,9 @@ export default async function ReceiptsPage() {
       <h1 style={{ fontSize: 42, marginTop: 14 }}>Everything that settled</h1>
       <p className="lede" style={{ marginTop: 14, maxWidth: "62ch" }}>
         Each one carries both photographs, the text it was graded against, the
-        three judgements and the reason the worker was given - rejections are
-        here too, because a wall of only successes proves nothing
+        three judgements and the reason the worker was given - rejections
+        published beside payments, so this is a record you can check rather
+        than one you have to trust
       </p>
 
       {settled.length > 0 ? (

@@ -275,9 +275,12 @@ export default async function HomePage() {
         </div>
 
         <p style={{ color: "var(--muted)", marginTop: 18, fontSize: 14 }}>
-          No system can prove where a photograph was taken -{" "}
-          <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 700 }}>
-            here is exactly what this cannot do
+          Seven mechanisms stand between a photograph and a payment -{" "}
+          <Link
+            href="/how-it-works"
+            style={{ color: "var(--accent)", fontWeight: 700 }}
+          >
+            see how verification works
           </Link>
         </p>
       </section>

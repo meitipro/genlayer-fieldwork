@@ -124,30 +124,26 @@ guessing at one.
 
 ---
 
-## What this cannot do
+## What stands between a photograph and a payment
 
-A first class page in the product, not a footnote. It opens by saying that if
-any other page seems to promise more, that page is wrong.
+Seven mechanisms, all of them in the contract, all of them running on every
+submission.
 
-1. **It cannot prove where a photograph was taken.** No system can, and phone
-   coordinates can be changed. Nothing is ever marked location verified.
-2. **The challenge code cannot appear in the before frame.** It does not exist
-   yet when the poster shoots it.
-3. **It does not match photographs by how they look.** Perceptual matching was
-   built, measured and removed: the same corner on a different day scored closer
-   than the same photograph re-encoded, so it would have accused honest workers.
-   What catches a recycled photograph is the challenge code.
-4. **Its pre-flight is weaker on a JPEG than on a PNG.** The runtime ships no
-   JPEG decoder, so the brightness checks cannot run. That is our limitation, so
-   the photograph goes through rather than being charged to the worker.
-5. **The model can be wrong, and there is no appeal.** Nothing overturns a final
-   verdict and there is no human review step. What a rejected worker has is the
-   rest of their window to retake, and a receipt anyone can check the grading
-   against.
-6. **It does not know whether a task is safe to do.** The posting gate tests
-   gradeability only. A posted task is not a vetted task.
-7. **Small tasks do not pay for themselves.** Below roughly ten GEN a task costs
-   more to settle than it is worth, and there is no batching.
+1. **A standard that cannot move.** The acceptance test is frozen at posting and
+   is the exact text the graders are handed.
+2. **A gate before the money.** A model refuses a test too vague to grade from a
+   photograph, and refuses a before frame nobody could grade, before a coin is
+   committed.
+3. **The before frame from the poster.** Staging a mess and clearing it stops
+   being possible when the person paying owns the starting photograph.
+4. **A code nobody can know in advance.** Issued at claim time, required in the
+   worker's frame. A recycled photograph carries the wrong one.
+5. **Identical bytes for every grader.** Photographs are content addressed, and
+   the contract refuses any other kind of url.
+6. **Independent graders who must agree.** Three judgements, every validator
+   reaching its own, compared rather than blessed.
+7. **A public receipt.** Both photographs, the exact text, the judgements and
+   the reason - published for every settled task.
 
 ---
 

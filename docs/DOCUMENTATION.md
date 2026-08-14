@@ -4,10 +4,10 @@ Bounties for physical work, settled by photograph against a written standard.
 
 Built by **InferNode**.
 
-This document is the whole product in one place: what it is, what it refuses to
-claim, how the contract behaves in every state, how the site is wired to it, how
-to run it, how to deploy it and what to do when something looks wrong. Where a
-number appears it was measured against the deployed contract, not estimated.
+This document is the whole product in one place: what it is, how the contract
+behaves in every state, how the site is wired to it, how to run it, how to
+deploy it and what to do when something looks wrong. Where a number appears it
+was measured against the deployed contract, not estimated.
 
 ---
 
@@ -31,7 +31,7 @@ number appears it was measured against the deployed contract, not estimated.
 16. [Testing](#16-testing)
 17. [The test photograph set](#17-the-test-photograph-set)
 18. [Troubleshooting](#18-troubleshooting)
-19. [What this cannot do](#19-what-this-cannot-do)
+19. [Scope, for whoever works on this next](#19-scope-for-whoever-works-on-this-next)
 20. [Design rules](#20-design-rules)
 21. [File map](#21-file-map)
 
@@ -357,7 +357,7 @@ Next.js 14, App Router. Eight routes, each with one job.
 | `/proof/[id]` | Be the public receipt for the work |
 | `/receipts` | Every settled task, paid and rejected together |
 | `/console` | Let a poster fund work and see what is at stake |
-| `/limits` | Say plainly what this cannot do |
+| `/how-it-works` | The verification design, mechanism by mechanism |
 | `/deploy` | One-off setup: deploy the contract with your own wallet so you own it |
 
 ### Reading a receipt is not the same as reading a status
@@ -616,30 +616,32 @@ sed 's/^class Contract(gl\.Contract):/class Fieldwork(gl.Contract):/' contracts/
 `genvm-lint lint contracts/fieldwork.py` works directly. On Windows set
 `PYTHONIOENCODING=utf-8` or the linter dies printing its own tick.
 
-## 19. What this cannot do
+## 19. Scope, for whoever works on this next
 
-The `/limits` page is the authoritative version and is written to be read by
-users. In short:
+Engineering notes. The user facing version of this material is the
+`/how-it-works` page, which states the same design as what the product does
+rather than as what it does not.
 
-1. **It cannot prove where a photograph was taken.** No system can, and phone
-   coordinates can be changed. Nothing is ever marked location verified.
-2. **On Studio the money does not move.** See section 12.
-3. **The challenge code cannot appear in the before frame.** It does not exist
-   yet when the poster shoots it.
-4. **A task can publish its own code, and that one is weaker.** Those tasks are
-   labelled `test task` everywhere.
-5. **It does not match photographs by how they look.** Measured, and removed.
-6. **Its pre-flight is weaker on a JPEG than on a PNG.** No decoder.
-7. **The model can be wrong, and there is no appeal.** Nothing can overturn a
-   verdict once it is final and there is no human review step. What a rejected
-   worker has is the rest of their window to retake, and a receipt anyone can
-   check the grading against.
-8. **It does not know whether a task is safe to do.** The posting gate tests
-   gradeability only. A dangerous but precisely written task passes it. A posted
-   task is not a vetted task.
-9. **Small tasks do not pay for themselves.** A vision call with two images runs
-   once per validator. Below roughly ten GEN a task costs more to settle than it
-   is worth, and there is no batching.
+- **Location is never presented as proven**, on any screen, because it cannot
+  be. The design does not need it to be: the poster owns the before frame, the
+  code is issued at claim time, and the same place judgement ties the two
+  together.
+- **The code is checked in the worker's frame only.** It does not exist when the
+  poster shoots theirs.
+- **A published code makes a demonstration task**, not a live one, and those
+  carry a `test task` label everywhere they appear.
+- **No perceptual matching.** Built, measured, removed on the evidence. See
+  section 9.
+- **The brightness checks do not run on a JPEG.** No decoder in the runtime, so
+  the frame goes through rather than being charged to the worker. See section 8.
+- **A verdict is final.** There is no appeal path in the contract and no
+  reviewer role. The design answer is the retake window plus a public receipt,
+  and if a review layer is ever wanted it belongs off chain rather than as a key
+  that can rewrite settled state.
+- **The posting gate tests gradeability, not safety.** Anything that vets tasks
+  for danger would be a new mechanism, not a tweak to this one.
+- **One vision call per validator per submission** is the cost floor. Roughly
+  ten GEN. There is no batching.
 
 ## 20. Design rules
 

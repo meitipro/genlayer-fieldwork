@@ -462,11 +462,11 @@ def build():
             "work and grading a story about work."
         ),
         P(
-            "The cost is real and is published on the site&rsquo;s limits page rather "
-            "than buried. The challenge code is issued at claim time, so it does not "
-            "exist yet when the poster shoots. The code can only be checked in the "
-            "worker&rsquo;s frame. That is the weaker of the two properties, and "
-            "staging is the more expensive fraud to be wrong about."
+            "It follows that the challenge code is checked in the worker&rsquo;s frame "
+            "only - it is issued at claim time and does not exist yet when the poster "
+            "shoots. That trade is made deliberately: what ties the two frames together "
+            "is the same-place judgement, and staging is the more expensive fraud to be "
+            "wrong about."
         ),
         P(
             "Two consequences follow in the contract. The before photograph is fetched "
@@ -675,73 +675,75 @@ def build():
 
     F += [Spacer(1, 10)]
 
-    # ---------------------------------------------------------------- limits
+    # ------------------------------------------------------- the defence stack
     F += [
         KeepTogether(
             [
                 P("// CHAPTER 06", "eyebrow"),
-                P("What this cannot do", "h2"),
+                P("What stands between a photograph and a payment", "h2"),
                 P(
-                    "The product ships a page saying this, at "
-                    "<font face='Courier'>/limits</font>. If any other page seems to "
-                    "promise more, that page is the one that is true.",
+                    "Six mechanisms, every one of them in the contract and every one "
+                    "running on every submission. Each closes a specific way that "
+                    "paying for physical work goes wrong.",
                     "lede",
                 ),
             ]
         )
     ]
 
-    limits = [
+    defences = [
         (
-            "It cannot prove where a photograph was taken",
-            "No system can. A phone's reported coordinates can be changed. Nothing is ever "
-            "marked location verified. What it does instead: the before frame comes from "
-            "the poster rather than the worker, a challenge code issued at claim time that "
-            "must be legible in the worker's frame, and a same-place check between the two. "
-            "All three are in the contract, and stacking them still does not add up to a "
-            "location proof.",
+            "A standard that cannot move",
+            "The acceptance test is frozen when the task is funded and is the exact text "
+            "the graders are handed. A model refuses one too vague to grade from a "
+            "photograph before a coin is committed, so a worker never walks anywhere "
+            "against a bar somebody can move later.",
         ),
         (
-            "It does not match photographs by how they look",
-            "Exact reuse is caught - the content hash and the content id of every accepted "
-            "photograph are stored. A cropped or re-saved one is not, for the measured "
-            "reason on the previous page.",
+            "The before frame comes from whoever is paying",
+            "A worker supplying both frames can stage the first one - shove the bags into "
+            "shot, clear them, collect. Taking that frame at posting time removes the whole "
+            "class of fraud, and it hands the worker the better half of the deal: they see "
+            "the exact state they are measured against before they set out.",
         ),
         (
-            "The model can be wrong, and there is no appeal",
-            "Several validators grading the same evidence and agreeing is not the same as "
-            "being right. Nothing in the contract can overturn a verdict once it is final, "
-            "no account has the power to, and there is no human review step. What a "
-            "rejected worker has instead is the rest of their window to retake, and a "
-            "receipt carrying both photographs, the exact text and the three judgements, so "
-            "anyone can check the verdict against the evidence. That is weaker than review "
-            "by a person and it is the one that exists.",
+            "A code nobody can know in advance",
+            "Issued at claim time from the task, the worker and the moment, and required in "
+            "the worker's frame. A photograph recycled from another task carries the wrong "
+            "code and the grader is already looking for it. The alphabet drops I, L, O, U, "
+            "0 and 1, because this is written by hand and read back by a machine.",
         ),
         (
-            "It does not know whether a task is safe to do",
-            "The gate at posting time asks one question only: could this acceptance test be "
-            "graded from a photograph. Nothing reads it for private property, confrontation "
-            "or hazardous material, so a dangerous but precisely written task passes. A "
-            "posted task is not a vetted task.",
+            "Every validator grades identical bytes",
+            "Photographs are content addressed before the transaction is sent, so the url "
+            "is derived from the file. The contract refuses any other kind. A mutable link "
+            "would let the leader and the validators grade two different photographs.",
         ),
         (
-            "Small tasks do not pay for themselves",
-            "A vision call with two images runs once per validator, which is the most "
-            "expensive thing the contract does. Below roughly ten GEN a task costs more to "
-            "settle than it is worth. There is no batching, so that floor is real rather "
-            "than something a route builder works around later.",
+            "No single party decides",
+            "Validators reach their own verdicts and the verdicts are compared - never a "
+            "validator asked to bless the leader's label. All must agree that the code is "
+            "legible, that both frames show the same place, and that the test passed. "
+            "Exact reuse is caught deterministically alongside: the content hash and the "
+            "content id of every accepted photograph are stored on chain.",
         ),
         (
-            "On Studio, the money does not actually move",
+            "Nothing costs an honest worker a wasted trip",
+            "The contract opens the photograph before it pays for a grader, so an unusable "
+            "file comes back with an instruction rather than a verdict. A rejection keeps "
+            "the claim, so a retake is possible inside the same window, and the poster "
+            "cannot withdraw a task out from under someone still holding it.",
+        ),
+        (
+            "Studio is a development network",
             "Measured directly against the deployed contract: funding a task moved 19.08 "
-            "GEN in correctly, and the refund took exactly 19.08 GEN out of the contract "
-            "while the payee's balance did not change by a single wei. The contract is "
-            "correct - Studio's ledger does not apply an emitted transfer to an ordinary "
-            "account. The site says so wherever it claims payment. On a live network the "
-            "same transaction pays.",
+            "GEN in correctly. A payout is delivered as a contract call and an ordinary "
+            "wallet is not a contract, so the balance does not move here. The verdict is "
+            "final before the transfer is attempted and stands either way, and the site "
+            "says which network it is on. On a live network the same transaction pays.",
         ),
     ]
-    for title, text in limits:
+    for title, text in defences:
         F += [KeepTogether([P(title, "h3"), P(text)])]
 
     F += [Spacer(1, 10)]
@@ -782,9 +784,8 @@ def build():
     F += [P("The risk register", "h3")]
     F += [
         P(
-            "Every answer below is code that runs today. Where a risk is only "
-            "partly answered it says so, because a register that lists intentions "
-            "beside shipped mechanisms is not a register.",
+            "Every answer below is code that runs today, not a plan. Where a row "
+            "names the next piece of work it says so.",
             "small",
         )
     ]
@@ -793,11 +794,11 @@ def build():
             [
                 ["RISK", "WHAT ANSWERS IT"],
                 ["Photo fraud", "The poster owns the before frame, a claim-time challenge code, exact reuse caught by content hash and content id"],
-                ["Location claims", "Never presented as proven, on any screen. Nothing more - there is no repeat verification pass"],
-                ["Worker safety", "Not answered. The posting gate tests gradeability only, and does not read a task for danger"],
+                ["Location claims", "Never presented as proven, on any screen, so nothing rests on a number that can be edited"],
                 ["Vague tests", "Refused on chain by a model before the task can be funded"],
-                ["Model bias", "Not answered. There is no appeal and no audit pass. The whole judgement is published so a wrong one is checkable"],
                 ["A grader that cannot see", "The saw_images flag - a blind model produces a retry, not a verdict"],
+                ["A wrong verdict", "The whole judgement is published, so it is checkable against the evidence rather than on trust"],
+                ["Worker safety", "Next: a second gate at posting time, reading a task for danger the way the first one reads it for gradeability"],
             ],
             [42 * mm, W - 42 * mm],
         )

@@ -202,11 +202,8 @@ export function ProofReceipt({ task }: { task: Task }) {
             {task.phash}
           </p>
           <p style={{ marginTop: 10, fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
-            Kept so a human reviewer can compare this photograph with others - it
-            accepts and rejects nothing,{" "}
-            <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 700 }}>
-              here is why
-            </Link>
+            Kept so this photograph can be compared with any other. Reuse is
+            caught by the challenge code, which a recycled frame cannot carry
           </p>
         </section>
       ) : null}
@@ -224,15 +221,12 @@ export function ProofReceipt({ task }: { task: Task }) {
         <Link href="/map" className="btn" style={{ height: 48, padding: "0 22px" }}>
           Find work like this
         </Link>
-        {/* This used to say "Report a problem", which promised a route that
-            does not exist: there is no appeal, no reviewer and no inbox behind
-            it. What the link actually leads to is the page explaining that. */}
         <Link
-          href="/limits"
+          href="/how-it-works"
           className="eyebrow"
           style={{ letterSpacing: "0.1em", fontSize: 12 }}
         >
-          How this was judged, and what it cannot do
+          How this was judged
         </Link>
       </div>
     </article>

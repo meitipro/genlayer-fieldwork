@@ -43,7 +43,7 @@ export type Task = {
   beforeUrl?: string;
   afterUrl?: string;
   contentHash?: string;
-  /** Recorded for human reviewers. Never decides a verdict - see /limits. */
+  /** Recorded so two photographs can be compared. Never decides a verdict. */
   phash?: string;
   /**
    * When the graders reached a verdict, from the contract.

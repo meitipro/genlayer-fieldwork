@@ -204,9 +204,11 @@ that register everywhere.
 
 Then the mark, and **fieldwork**.
 
-## Do not claim any of this
+## Keep the film accurate
 
-Each of these is false, and the product says so on its own limits page:
+The product's argument is that it settles work honestly, so a film that oversells
+it undercuts the thing it is selling. None of the following is true of it, so do
+not put any of them on screen:
 
 - **Never** that it proves *where* a photograph was taken. No system can. Phone
   coordinates can be changed. Never show a "location verified" badge.
@@ -216,11 +218,10 @@ Each of these is false, and the product says so on its own limits page:
   workers. Reuse is caught by the challenge code instead.
 - **Never** that the code appears in the before frame. It cannot. The code is
   issued at claim time, and the poster shot that frame before anyone claimed.
-- **Never** that the model is always right, and never that a rejection can be
-  appealed. Validators agreeing is not the same as being correct, and nothing
-  can overturn a verdict once it is final. What a rejected worker has is the
-  rest of their window to retake, and a public receipt anyone can check the
-  grading against.
+- **Never** show an appeal, a reviewer or a support queue. There is none, and
+  none is wanted: what a rejected worker gets is the rest of their window to
+  retake, and a public receipt anyone can check the grading against. Show the
+  retake.
 - **Never** that a posted task has been vetted for safety. The gate at posting
   time asks one question only: can this acceptance test be graded from a
   photograph. Nothing reads a task for danger.

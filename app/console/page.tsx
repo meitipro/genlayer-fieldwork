@@ -116,16 +116,19 @@ export default async function ConsolePage() {
               undersized frames are refused for the price of a decode, so a task
               can never be funded with a frame nobody could grade
             </Assurance>
-            <Assurance title="No appeal, so the evidence is public">
-              There is no review step and nothing can overturn a verdict - what
-              a rejected worker gets instead is the rest of their window to
-              retake, and a receipt anyone can check the grading against
+            <Assurance title="Every judgement is public">
+              Both photographs, the exact text they were graded against and the
+              three judgements are published on a receipt anyone can open - a
+              verdict that can be checked beats one somebody promises to review
             </Assurance>
           </div>
 
           <p style={{ color: "var(--muted)", marginTop: 24, fontSize: 14 }}>
-            <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 700 }}>
-              What this product cannot do →
+            <Link
+              href="/how-it-works"
+              style={{ color: "var(--accent)", fontWeight: 700 }}
+            >
+              How a photograph settles →
             </Link>
           </p>
         </div>

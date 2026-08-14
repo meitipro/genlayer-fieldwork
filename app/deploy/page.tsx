@@ -76,13 +76,10 @@ export default function DeployPage() {
 
       {IS_STUDIO ? (
         <div className="notice" style={{ marginTop: 16 }}>
-          <strong>On Studio the money does not move.</strong> Grading, verdicts
-          and receipts are all real, but Studio&apos;s ledger debits the contract
-          on a payout without ever crediting the payee. Measured - see{" "}
-          <Link href="/limits" style={{ color: "var(--accent)", fontWeight: 600 }}>
-            what this cannot do
-          </Link>
-          .
+          <strong>Studio is a development network.</strong> Grading, verdicts
+          and receipts are all real here. The transfer is not: Studio delivers a
+          payout as a contract call and a wallet is not a contract, so the
+          balance does not move. On a live network the same transaction pays.
         </div>
       ) : null}
 

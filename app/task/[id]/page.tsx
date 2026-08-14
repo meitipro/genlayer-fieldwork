@@ -224,10 +224,9 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
               lineHeight: 1.6,
             }}
           >
-            It also makes this task weaker than a real one. A code nobody could
-            know in advance is what proves a photograph was taken after the
-            claim, and a published one proves only that the photographer read
-            this page.
+            On a live task the code is issued at claim time and nobody can know
+            it in advance, which is what proves the photograph came after. This
+            one is labelled because it is a demonstration.
           </p>
         </div>
       ) : null}
