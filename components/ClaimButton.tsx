@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ESTIMATE_MS,
   IS_LIVE,
   claimTask,
   connectWallet,
@@ -11,13 +12,15 @@ import {
   reputationOf,
   txUrl,
 } from "@/lib/genlayer";
+import { StillSettling, TxProgress } from "./TxProgress";
+import type { Stage } from "@/lib/genlayer";
 
 /* Claiming is a real transaction: it is what issues the code that ties the
    photographs to this worker and this moment. The button therefore shows the
    whole lifecycle rather than a spinner, because a write takes longer than a
    token transfer and a silent wait reads as a broken page. */
 
-type Phase = "idle" | "wallet" | "sent" | "accepted" | "done" | "failed";
+type Phase = "idle" | "wallet" | "sent" | "accepted" | "confirming" | "done" | "failed";
 
 export function ClaimButton({
   taskId,
@@ -30,9 +33,16 @@ export function ClaimButton({
   const [phase, setPhase] = useState<Phase>("idle");
   const [code, setCode] = useState("");
   const [hash, setHash] = useState("");
+  const [settled, setSettled] = useState(true);
+  const [startedAt, setStartedAt] = useState(0);
+  const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
 
-  const busy = phase === "wallet" || phase === "sent" || phase === "accepted";
+  const busy =
+    phase === "wallet" ||
+    phase === "sent" ||
+    phase === "accepted" ||
+    phase === "confirming";
 
   const label =
     phase === "wallet"
@@ -40,11 +50,14 @@ export function ClaimButton({
       : phase === "sent"
         ? "claiming, this takes a few seconds"
         : phase === "accepted"
-          ? "issuing your code"
-          : "Claim this task";
+          ? "waiting for the network to agree"
+          : phase === "confirming"
+            ? "confirming before we answer"
+            : "Claim this task";
 
   async function onClaim() {
     setError("");
+    setStartedAt(Date.now());
     if (!IS_LIVE) {
       setError(
         "No contract address is set, so nothing was sent. Set NEXT_PUBLIC_FIELDWORK_CONTRACT."
@@ -81,9 +94,18 @@ export function ClaimButton({
       }
 
       setPhase("sent");
-      const res = await claimTask(address, taskId, () => setPhase("accepted"));
+      const res = await claimTask(
+        address,
+        taskId,
+        () => setPhase("accepted"),
+        (st) => {
+          setStage(st);
+          if (st === "confirming") setPhase("confirming");
+        }
+      );
       setHash(res.hash);
       setCode(res.code);
+      setSettled(res.settled);
       setPhase("done");
 
       // The submit screen reads the code from the chain, so it needs the fresh
@@ -118,6 +140,7 @@ export function ClaimButton({
           Write that code on paper and keep it in frame in the photograph you
           take.
         </p>
+        {settled ? null : <StillSettling what="Your claim" />}
         <a className="btn btn-primary btn-block" href={`/submit/${taskId}`}>
           Take the photographs
         </a>
@@ -148,9 +171,11 @@ export function ClaimButton({
       </button>
 
       {busy ? (
-        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          The contract is issuing a code that belongs to this claim alone.
-        </p>
+        <TxProgress
+          stage={stage === "idle" ? "sent" : stage}
+          estimateMs={ESTIMATE_MS.claim}
+          startedAt={startedAt}
+        />
       ) : null}
 
       {error ? (

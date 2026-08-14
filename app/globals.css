@@ -725,12 +725,23 @@ input[type="checkbox"] {
 /* The one place depth is spent. Hovering the hero eases the whole stack up
    towards the viewer; the transition is on the container, so all five layers
    move as one solid object rather than five independent cards. */
+/* Headroom, because the stack is taller than its box.
+   The top layer sits at translateZ(226px) and the plane is tilted 54 degrees,
+   so it projects roughly 226 * sin(54) = 183px upward on screen, plus its own
+   offset. Half the 300px box is only 150px, so the payment pill was landing
+   outside the container and the hero's overflow was cutting it off. The
+   padding here is that shortfall plus the pill's own height. */
+.evidence-stack {
+  padding-top: 120px;
+  padding-bottom: 40px;
+}
+
 .evidence-stack-inner {
   transform-style: preserve-3d;
   transform: rotateX(54deg) rotateZ(-36deg);
   width: 300px;
   height: 300px;
-  margin: 20px auto;
+  margin: 0 auto;
   position: relative;
   transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
 }

@@ -5,12 +5,14 @@ import type { Task } from "@/lib/types";
 import { ChallengeCode } from "./ChallengeCode";
 import { SettlementNotice } from "./SettlementNotice";
 import {
+  ESTIMATE_MS,
   IS_LIVE,
   connectWallet,
   humanError,
   submitPhotographs,
   type Stage,
 } from "@/lib/genlayer";
+import { StillSettling, TxProgress } from "./TxProgress";
 
 /* Mobile first, one hand, outdoors.
    The checklist catches the rejection before it happens, which is worth more
@@ -43,8 +45,11 @@ function CaptureTile({
             ? "1px solid var(--accent-line)"
             : "1px solid var(--line2)",
           borderRadius: 12,
+          // The whole photograph, not a crop of it. A worker has to be able to
+          // check the code is in frame before they send it, and cover hides the
+          // edges where they just put it.
           background: shot
-            ? `center/cover no-repeat url(${shot.url})`
+            ? `center/contain no-repeat var(--panel) url(${shot.url})`
             : "var(--panel)",
           color: "var(--muted)",
           font: "inherit",
@@ -148,9 +153,12 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   const [after, setAfter] = useState<Shot>(null);
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [stage, setStage] = useState<Stage>("idle");
-  const [result, setResult] = useState<{ status: string; reason: string } | null>(
-    null
-  );
+  const [result, setResult] = useState<{
+    status: string;
+    reason: string;
+    settled: boolean;
+  } | null>(null);
+  const [startedAt, setStartedAt] = useState(0);
   const [error, setError] = useState("");
   const initialRemaining = task.expiresAt - now;
   const [remaining, setRemaining] = useState(initialRemaining);
@@ -181,7 +189,11 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   const allTicked = checksLeft === 0;
   const ready = !!after && allTicked && !expired;
 
-  const busy = stage === "uploading" || stage === "sent" || stage === "accepted";
+  const busy =
+    stage === "uploading" ||
+    stage === "sent" ||
+    stage === "accepted" ||
+    stage === "confirming";
 
   const stageCopy = useMemo(() => {
     switch (stage) {
@@ -201,6 +213,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   async function onSubmit() {
     setError("");
     if (!after) return;
+    setStartedAt(Date.now());
 
     if (!IS_LIVE) {
       setError(
@@ -217,7 +230,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
         after: after.blob,
         onStage: setStage,
       });
-      setResult({ status: res.status, reason: res.reason });
+      setResult({ status: res.status, reason: res.reason, settled: res.settled });
       if (res.status === "rejected") setStage("idle");
     } catch (e: unknown) {
       setStage("failed");
@@ -233,6 +246,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
         <span className="pill pill-solid">Paid - {task.reward} GEN</span>
         <h2 style={{ fontSize: 28, marginTop: 4 }}>Settled</h2>
         <p className="muted">{result.reason}</p>
+        {result.settled ? null : <StillSettling what="Your submission" />}
         <SettlementNotice />
         <a className="btn btn-primary btn-block" href={`/proof/${task.id}`}>
           See the public receipt
@@ -270,7 +284,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
               border: "1px solid var(--line2)",
               borderRadius: 12,
               background: task.beforeUrl
-                ? `center/cover no-repeat url(${task.beforeUrl})`
+                ? `center/contain no-repeat var(--panel) url(${task.beforeUrl})`
                 : "var(--panel)",
               display: "grid",
               placeItems: "center",
@@ -344,6 +358,14 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
           {task.acceptanceTest}
         </p>
       </section>
+
+      {busy ? (
+        <TxProgress
+          stage={stage}
+          estimateMs={ESTIMATE_MS.submit}
+          startedAt={startedAt}
+        />
+      ) : null}
 
       <div
         className="spread"

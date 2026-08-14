@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ESTIMATE_MS,
   IS_LIVE,
   IS_STUDIO,
   cancelTask,
@@ -10,6 +11,8 @@ import {
   humanError,
   txUrl,
 } from "@/lib/genlayer";
+import { StillSettling, TxProgress } from "./TxProgress";
+import type { Stage } from "@/lib/genlayer";
 
 /* Let a poster take a task back and get the money out.
 
@@ -69,6 +72,9 @@ export function CancelTask({
   const isPoster = useIsPoster(poster);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<Stage>("idle");
+  const [startedAt, setStartedAt] = useState(0);
+  const [settled, setSettled] = useState(true);
   const [error, setError] = useState("");
   const [hash, setHash] = useState("");
 
@@ -81,10 +87,12 @@ export function CancelTask({
       return;
     }
     setBusy(true);
+    setStartedAt(Date.now());
     try {
       const address = (await connectWallet()) as `0x${string}`;
-      const res = await cancelTask(address, taskId);
+      const res = await cancelTask(address, taskId, setStage);
       setHash(res.hash);
+      setSettled(res.settled);
       router.refresh();
     } catch (e: unknown) {
       setError(humanError(e) || "the task was not cancelled");
@@ -103,6 +111,7 @@ export function CancelTask({
             ? " On this development network the refund is recorded and the balance does not move, the same as a payout."
             : ""}
         </p>
+        {settled ? null : <StillSettling what="The withdrawal" />}
         <a
           className="mono"
           style={{
@@ -148,6 +157,16 @@ export function CancelTask({
             work they have done, so if someone holds a live claim it is worth
             waiting for their ninety minutes to run out.
           </p>
+          {busy ? (
+            <div style={{ marginTop: 14 }}>
+              <TxProgress
+                stage={stage === "idle" ? "sent" : stage}
+                estimateMs={ESTIMATE_MS.cancel}
+                startedAt={startedAt}
+              />
+            </div>
+          ) : null}
+
           <div className="row" style={{ marginTop: 14, flexWrap: "wrap" }}>
             <button
               className="btn"

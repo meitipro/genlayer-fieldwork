@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  ESTIMATE_MS,
   IS_LIVE,
   IS_STUDIO,
   connectWallet,
@@ -11,6 +12,7 @@ import {
   humanError,
   type Stage,
 } from "@/lib/genlayer";
+import { StillSettling, TxProgress } from "./TxProgress";
 
 /* Write the test as the worker will read it.
    The contract refuses a test too vague to grade from a photograph, so that
@@ -44,11 +46,18 @@ export function PostTaskForm() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
-  const [done, setDone] = useState<{ hash: string; taskId: number | null } | null>(
-    null
-  );
+  const [done, setDone] = useState<{
+    hash: string;
+    taskId: number | null;
+    settled: boolean;
+  } | null>(null);
+  const [startedAt, setStartedAt] = useState(0);
 
-  const busy = stage === "uploading" || stage === "sent" || stage === "accepted";
+  const busy =
+    stage === "uploading" ||
+    stage === "sent" ||
+    stage === "accepted" ||
+    stage === "confirming";
 
   useEffect(() => {
     return () => {
@@ -78,6 +87,7 @@ export function PostTaskForm() {
   async function onSubmit() {
     setError("");
     setDone(null);
+    setStartedAt(Date.now());
 
     if (!IS_LIVE) {
       setError(
@@ -133,6 +143,7 @@ export function PostTaskForm() {
             ? `It is live as task ${done.taskId} and workers can claim it now.`
             : "It is live and workers can claim it now."}
         </p>
+        {done.settled ? null : <StillSettling what="Your task" />}
         <a
           className="mono"
           style={{ color: "var(--accent)", wordBreak: "break-all" }}
@@ -209,9 +220,13 @@ export function PostTaskForm() {
               ? "1px solid var(--accent-line)"
               : "1px dashed var(--line2)",
             borderRadius: 8,
+            // contain, not cover: the poster has to see the whole frame they
+            // are committing to, and a crop hides exactly the edges the worker
+            // will be judged against.
             background: before
-              ? `center/cover no-repeat url(${before.url})`
+              ? `center/contain no-repeat var(--panel) url(${before.url})`
               : "var(--panel)",
+            aspectRatio: before ? "4 / 3" : undefined,
             color: "var(--muted)",
             font: "inherit",
             cursor: "pointer",
@@ -369,19 +384,23 @@ export function PostTaskForm() {
         {IS_STUDIO ? " This network is gasless, so there is nothing else to pay." : ""}
       </p>
 
+      {busy ? (
+        <div style={{ marginTop: 14 }}>
+          <TxProgress
+            stage={stage}
+            estimateMs={ESTIMATE_MS.post}
+            startedAt={startedAt}
+          />
+        </div>
+      ) : null}
+
       <button
         className="btn btn-primary"
         type="button"
         disabled={!ready || busy}
         onClick={onSubmit}
       >
-        {stage === "uploading"
-          ? "uploading your photograph"
-          : stage === "sent"
-          ? "checking the acceptance test"
-          : stage === "accepted"
-            ? "funding the task"
-            : "Fund and post"}
+        {busy ? "working" : "Fund and post"}
       </button>
 
       {stage === "sent" ? (

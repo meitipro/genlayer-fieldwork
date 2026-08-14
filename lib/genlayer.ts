@@ -149,7 +149,7 @@ export async function cancelTask(
   address: `0x${string}`,
   taskId: number,
   onStage?: (s: Stage) => void
-): Promise<{ hash: string }> {
+): Promise<{ hash: string; settled: boolean }> {
   const client = writeClient(address, getProvider());
   const hash = await client.writeContract({
     address: FIELDWORK_CONTRACT,
@@ -159,20 +159,86 @@ export async function cancelTask(
   });
   onStage?.("sent");
 
-  const accepted: any = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.ACCEPTED,
-  });
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
   assertExecuted(accepted, "cancelling this task");
   onStage?.("accepted");
 
   // The refund is a value movement, so it only really happens on finality.
-  await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-  });
+  const settled = await settle(client, hash, onStage);
+  return { hash, settled };
+}
+
+/**
+ * A dropped connection is not a failed transaction.
+ *
+ * Studio drops TLS roughly one call in three, and genlayer-js also gives up on
+ * its own poll loop with "Timed out while waiting for transaction". Neither
+ * means anything went wrong on chain, so a bare await here reports a failure for
+ * a transaction that is sitting in a block.
+ */
+function isTransientRpc(e: unknown): boolean {
+  const msg = String((e as Error)?.message ?? e);
+  return /fetch failed|ECONNRESET|socket|network|timed out|timeout|Server busy|-32006|Rate limit/i.test(
+    msg
+  );
+}
+
+async function waitFor(
+  client: any,
+  hash: string,
+  status: TransactionStatus,
+  attempts = 5
+): Promise<any> {
+  let wait = 2000;
+  for (let i = 1; ; i++) {
+    try {
+      return await client.waitForTransactionReceipt({ hash, status });
+    } catch (e) {
+      if (i >= attempts || !isTransientRpc(e)) throw e;
+      await new Promise((r) => setTimeout(r, wait));
+      wait = Math.min(Math.round(wait * 1.8), 15000);
+    }
+  }
+}
+
+/**
+ * Wait for finality without letting a slow chain become a reported failure.
+ *
+ * Once a call is ACCEPTED and `assertExecuted` has passed, the write happened:
+ * the task exists, the claim is issued, the money is committed. Finality is a
+ * matter of time. Awaiting it bare meant a dropped socket during the second
+ * wait threw, the form showed "your transaction was rejected", and the task was
+ * sitting on chain the whole time. That is worse than saying nothing, because
+ * the poster then posts it twice.
+ *
+ * Returns whether finality was actually observed, so the interface can say
+ * "still settling" rather than claiming either outcome it does not have.
+ */
+async function settle(
+  client: any,
+  hash: string,
+  onStage?: (s: Stage) => void
+): Promise<boolean> {
+  onStage?.("confirming");
+  try {
+    await waitFor(client, hash, TransactionStatus.FINALIZED);
+  } catch {
+    return false;
+  }
+  // Finality reached. Hold before speaking, then the caller reads the answer
+  // off the chain rather than off the receipt.
+  await new Promise((r) => setTimeout(r, HOLD_MS));
   onStage?.("finalized");
-  return { hash };
+  return true;
+}
+
+/** Read one view, tolerating the network rather than failing the whole write. */
+async function readView(functionName: string, args: unknown[] = []): Promise<any> {
+  return (readClient() as any).readContract({
+    address: FIELDWORK_CONTRACT,
+    functionName,
+    args,
+  });
 }
 
 /**
@@ -208,7 +274,7 @@ export async function ownerAndFees(): Promise<{
 export async function withdrawFees(
   address: `0x${string}`,
   to: `0x${string}`
-): Promise<{ hash: string }> {
+): Promise<{ hash: string; settled: boolean }> {
   const client = writeClient(address, getProvider());
   const hash = await client.writeContract({
     address: FIELDWORK_CONTRACT,
@@ -216,16 +282,10 @@ export async function withdrawFees(
     args: [to],
     value: BigInt(0),
   });
-  const accepted: any = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.ACCEPTED,
-  });
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
   assertExecuted(accepted, "withdrawing fees");
-  await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-  });
-  return { hash };
+  const settled = await settle(client, hash);
+  return { hash, settled };
 }
 
 /**
@@ -297,18 +357,60 @@ export function humanError(raw: unknown): string {
 }
 
 /** The stages the interface has to show, because a write is not a spinner. */
+/**
+ * The stages a write actually passes through, and the interface shows all of
+ * them rather than a spinner.
+ *
+ * `confirming` is deliberate. A GenLayer call is readable as soon as it is
+ * ACCEPTED, and the site used to answer from there, so it announced "paid" or
+ * "rejected" while consensus was still running and could still rotate to
+ * another leader. Now nothing is said until the transaction is FINALIZED and a
+ * further hold has passed, and the answer is then read back off the chain
+ * rather than taken from the receipt that arrived first.
+ */
 export type Stage =
   | "idle"
   | "uploading"
   | "sent"
   | "accepted"
+  | "confirming"
   | "finalized"
   | "failed";
+
+/**
+ * How long each write usually takes end to end on Studio, measured across the
+ * runs in scripts/e2e-full.mjs rather than guessed. Shown to the user as an
+ * estimate, because a two minute wait with no number on it reads as a hang.
+ */
+export const ESTIMATE_MS: Record<string, number> = {
+  post: 3 * 60_000,
+  claim: 90_000,
+  submit: 4 * 60_000,
+  deploy: 2 * 60_000,
+  cancel: 90_000,
+  withdraw: 90_000,
+};
+
+/**
+ * Held after finality before any verdict is shown.
+ *
+ * Finality is the chain's answer, but the read that follows it can still race
+ * ahead of the node's own view of state. Half a minute costs the user nothing
+ * next to a four minute wait and removes the whole class of "it said rejected
+ * and then the task was there".
+ */
+export const HOLD_MS = 30_000;
 
 export type SubmitResult = {
   status: "paid" | "rejected";
   reason: string;
   hash: string;
+  /**
+   * Whether finality was actually observed. False means the write is on chain
+   * and the site simply could not watch it land, which the interface says
+   * plainly instead of guessing at an outcome.
+   */
+  settled: boolean;
 };
 
 /** Whole GEN -> wei. */
@@ -347,27 +449,28 @@ export async function submitPhotographs(opts: {
 
   onStage?.("sent");
 
-  // The verdict is readable on acceptance, so the worker is told immediately.
-  const accepted: any = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.ACCEPTED,
-  });
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
   onStage?.("accepted");
   assertExecuted(accepted, "your submission");
 
-  const status = accepted?.result?.status === "paid" ? "paid" : "rejected";
-  const reason = accepted?.result?.reason ?? "";
+  // Nothing is said here, deliberately. The verdict is readable off this
+  // receipt and it is not final: consensus can still rotate. So wait for
+  // finality, hold, and then ask the chain what the task actually says.
+  const settled = await settle(client, hash, onStage);
 
-  if (status === "paid") {
-    // The coins themselves move on finality, which is seconds later.
-    await client.waitForTransactionReceipt({
-      hash,
-      status: TransactionStatus.FINALIZED,
-    });
-    onStage?.("finalized");
+  let status: "paid" | "rejected" = "rejected";
+  let reason = "";
+  try {
+    status = String(await readView("status_of", [taskId])) === "paid" ? "paid" : "rejected";
+    reason = String((await readView("reason_of", [taskId])) ?? "");
+  } catch {
+    // The chain would not answer. Fall back to the receipt rather than
+    // inventing a verdict, and say so through `settled`.
+    status = accepted?.result?.status === "paid" ? "paid" : "rejected";
+    reason = accepted?.result?.reason ?? "";
   }
 
-  return { status, reason, hash };
+  return { status, reason, hash, settled };
 }
 
 /**
@@ -393,12 +496,17 @@ export async function deployFieldwork(
 
   // A deploy is only real once the code is readable, which is a finality-time
   // fact - some networks report a finalized deploy whose code is not there.
-  const receipt: any = await client.waitForTransactionReceipt({
-    hash: hash as `0x${string}` & { length: 66 },
-    status: TransactionStatus.FINALIZED,
-  });
-  onStage?.("finalized");
+  onStage?.("confirming");
+  const receipt: any = await waitFor(
+    client,
+    hash as string,
+    TransactionStatus.FINALIZED
+  );
   assertExecuted(receipt, "the deploy");
+  // Same hold as every other write, so a deploy is never announced before the
+  // chain has actually settled on it.
+  await new Promise((r) => setTimeout(r, HOLD_MS));
+  onStage?.("finalized");
 
   const contract =
     receipt?.data?.contract_address ??
@@ -436,7 +544,7 @@ export async function postTask(
   address: `0x${string}`,
   input: PostTaskInput,
   onStage?: (s: Stage) => void
-): Promise<{ hash: string; taskId: number | null }> {
+): Promise<{ hash: string; taskId: number | null; settled: boolean }> {
   const client = writeClient(address, getProvider());
 
   // The poster's frame goes up first: the contract stores its url, and refuses
@@ -481,10 +589,7 @@ export async function postTask(
 
   onStage?.("sent");
 
-  const accepted: any = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.ACCEPTED,
-  });
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
   onStage?.("accepted");
   assertExecuted(accepted, "posting this task");
 
@@ -493,15 +598,11 @@ export async function postTask(
       ? null
       : Number(accepted.result);
 
-  // The task exists on acceptance, but the funds it holds are only committed on
-  // finality, so the poster is not told it is live until then.
-  await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-  });
-  onStage?.("finalized");
+  // The task exists on acceptance and its money is only committed on finality,
+  // so the poster hears nothing until then.
+  const settled = await settle(client, hash, onStage);
 
-  return { hash, taskId };
+  return { hash, taskId, settled };
 }
 
 /**
@@ -514,8 +615,9 @@ export async function postTask(
 export async function claimTask(
   address: `0x${string}`,
   taskId: number,
-  onAccepted?: () => void
-): Promise<{ hash: string; code: string }> {
+  onAccepted?: () => void,
+  onStage?: (s: Stage) => void
+): Promise<{ hash: string; code: string; settled: boolean }> {
   const client = writeClient(address, getProvider());
   const hash = await client.writeContract({
     address: FIELDWORK_CONTRACT,
@@ -524,21 +626,23 @@ export async function claimTask(
     value: BigInt(0),
   });
 
-  const accepted: any = await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.ACCEPTED,
-  });
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
   onAccepted?.();
   assertExecuted(accepted, "the claim");
 
-  const code = String(accepted?.result ?? "");
+  const settled = await settle(client, hash, onStage);
 
-  await client.waitForTransactionReceipt({
-    hash,
-    status: TransactionStatus.FINALIZED,
-  });
+  // Read the code back rather than trusting the first receipt: the claim is
+  // only really this worker's once it is final.
+  let code = String(accepted?.result ?? "");
+  try {
+    const onChain = String(await readView("challenge_code_of", [taskId]));
+    if (onChain) code = onChain;
+  } catch {
+    // keep the receipt's copy
+  }
 
-  return { hash, code };
+  return { hash, code, settled };
 }
 
 /**

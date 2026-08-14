@@ -9,8 +9,10 @@ import {
   deployFieldwork,
   humanError,
   txUrl,
+  ESTIMATE_MS,
   type Stage,
 } from "@/lib/genlayer";
+import { TxProgress } from "./TxProgress";
 
 /* Deploy the contract with your own wallet.
    The deployer becomes the owner, so this is the difference between a contract
@@ -25,13 +27,16 @@ export function DeployPanel() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const busy = stage === "sent" || stage === "accepted";
+  const busy =
+    stage === "sent" || stage === "accepted" || stage === "confirming";
+  const [startedAt, setStartedAt] = useState(0);
 
   async function onDeploy() {
     setError("");
     setResult(null);
     try {
       const address = await connectWallet();
+      setStartedAt(Date.now());
       setStage("sent");
       const res = await deployFieldwork(address, feeBps, setStage);
       setResult(res);
@@ -155,19 +160,15 @@ export function DeployPanel() {
         onClick={onDeploy}
         disabled={busy || feeBps < 0 || feeBps > 2000}
       >
-        {stage === "sent"
-          ? "deploying, this takes a few seconds"
-          : stage === "finalized"
-            ? "finishing"
-            : `Deploy to ${CHAIN_NAME}`}
+        {busy ? "deploying" : `Deploy to ${CHAIN_NAME}`}
       </button>
 
       {busy ? (
-        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-          Waiting for finality. A deploy is only real once the code is readable
-          back off the chain, so this waits for that rather than reporting
-          success early.
-        </p>
+        <TxProgress
+          stage={stage}
+          estimateMs={ESTIMATE_MS.deploy}
+          startedAt={startedAt}
+        />
       ) : null}
 
       {error ? (
