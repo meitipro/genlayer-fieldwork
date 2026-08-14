@@ -197,7 +197,7 @@ async function main() {
           client.writeContract({
             address: ADDRESS,
             functionName: "post_task",
-            args: [t.title, t.place, t.test, t.pass, t.fail, BEFORE, t.lat, t.lng, rewardWei, t.rep, ""],
+            args: [t.title, t.place, t.test, t.pass, t.fail, BEFORE, t.lat, t.lng, rewardWei, t.rep, "", 0],
             value,
           }),
         "post_task"

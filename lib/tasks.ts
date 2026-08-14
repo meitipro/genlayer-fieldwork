@@ -26,6 +26,7 @@ export const TASKS: Task[] = [
     latE6: 51_505_100,
     lngE6: -122_600,
     reward: 18,
+    claimMinutes: 90,
     minReputation: 1,
     status: "paid",
     distanceM: 800,
@@ -55,6 +56,7 @@ export const TASKS: Task[] = [
     latE6: 51_512_800,
     lngE6: -131_900,
     reward: 12,
+    claimMinutes: 90,
     minReputation: 0,
     status: "open",
     distanceM: 1400,
@@ -74,6 +76,7 @@ export const TASKS: Task[] = [
     latE6: 51_498_400,
     lngE6: -118_200,
     reward: 25,
+    claimMinutes: 90,
     minReputation: 5,
     status: "open",
     distanceM: 2100,
@@ -93,6 +96,7 @@ export const TASKS: Task[] = [
     latE6: 51_520_300,
     lngE6: -140_500,
     reward: 30,
+    claimMinutes: 90,
     minReputation: 2,
     status: "claimed",
     distanceM: 3200,
@@ -113,6 +117,7 @@ export const TASKS: Task[] = [
     latE6: 51_489_900,
     lngE6: -112_700,
     reward: 10,
+    claimMinutes: 90,
     minReputation: 0,
     status: "rejected",
     distanceM: 4100,
@@ -141,7 +146,7 @@ export function getTask(id: number): Task | undefined {
 export function formatDistance(metres: number): string {
   // Distance is viewer relative, so it is not on chain. An unknown distance
   // says so rather than claiming the task is at your feet.
-  if (!metres || metres <= 0) return " - ";
+  if (!metres || metres <= 0) return "-";
   if (metres < 1000) return `${metres} m`;
   return `${(metres / 1000).toFixed(1)} km`;
 }
@@ -149,14 +154,21 @@ export function formatDistance(metres: number): string {
 /**
  * What to put in the clock column.
  *
- * Only a claimed task is counting down. An open one has no deadline at all - * the ninety minutes start when you claim it - so it says what you would get
- * rather than a countdown that is not running.
+ * A task only counts down once someone holds it, and a rejection leaves the
+ * claim with its owner so they can retake, so `rejected` is counting down too.
+ * An unclaimed task has no deadline at all, and says what the poster chose
+ * rather than showing a countdown that is not running.
+ *
+ * This used to return a hard coded "90m on claim", which was true when ninety
+ * minutes was the only window the contract had. With the window per task, a
+ * three day job was still being advertised as ninety minutes.
  */
 export function formatWindow(
-  task: Pick<Task, "status" | "expiresAt">,
+  task: Pick<Task, "status" | "expiresAt" | "claimMinutes">,
   now: number
 ): string {
-  if (task.status !== "claimed" || !task.expiresAt) return "90m on claim";
+  const running = task.status === "claimed" || task.status === "rejected";
+  if (!running || !task.expiresAt) return `${shortWindow(task.claimMinutes)} on claim`;
   return formatRemaining(task.expiresAt, now);
 }
 
@@ -180,4 +192,35 @@ export function formatStamp(ms: number): string {
   return `${day} ${month} ${hh}:${mm}`;
 }
 
-/** The epoch the seed records are written against. */
+/**
+ * A claim window in words, from the minutes the poster chose.
+ *
+ * Every screen used to say "90 minutes" because that was the only value the
+ * contract had. Now it is per task, so anything that states a duration has to
+ * read it rather than repeat the old constant.
+ */
+export function formatWindowLength(minutes: number): string {
+  if (!minutes || minutes <= 0) return "90 minutes";
+  if (minutes < 60) return `${minutes} minutes`;
+  const hours = minutes / 60;
+  // Stops at 24 so that a full day reads "1 day" rather than "24 hours", which
+  // is what the poster picked it as.
+  if (minutes % 60 === 0 && hours < 24) {
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  if (minutes < 24 * 60) {
+    return `${Math.floor(hours)}h ${minutes % 60}m`;
+  }
+  const days = Math.round(minutes / (24 * 60));
+  return days === 1 ? "1 day" : `${days} days`;
+}
+
+/** The same, compact, for a pill. */
+export function shortWindow(minutes: number): string {
+  const m = minutes && minutes > 0 ? minutes : 90;
+  if (m < 60) return `${m}m`;
+  if (m % 60 === 0 && m < 24 * 60) return `${m / 60}h`;
+  if (m < 24 * 60) return `${Math.floor(m / 60)}h${m % 60}`;
+  const d = Math.round(m / (24 * 60));
+  return `${d}d`;
+}

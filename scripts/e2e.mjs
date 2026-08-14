@@ -152,7 +152,7 @@ async function main() {
   const posted = await send(
     client,
     "post_task",
-    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0, ""],
+    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0, "", 0],
     value
   );
   check(posted.ok, "accepted and funded", posted.ok ? "" : posted.reason);
@@ -185,7 +185,7 @@ async function main() {
   const vague = await send(
     client,
     "post_task",
-    [VAGUE.title, VAGUE.place, VAGUE.test, VAGUE.pass, VAGUE.fail, BEFORE, 51505100, -122600, GEN(reward), 0, ""],
+    [VAGUE.title, VAGUE.place, VAGUE.test, VAGUE.pass, VAGUE.fail, BEFORE, 51505100, -122600, GEN(reward), 0, "", 0],
     value
   );
   check(!vague.ok, "refused by the acceptance test gate", vague.reason.slice(0, 110));
@@ -197,7 +197,7 @@ async function main() {
   const poor = await send(
     client,
     "post_task",
-    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0, ""],
+    [GOOD.title, GOOD.place, GOOD.test, GOOD.pass, GOOD.fail, BEFORE, 51505100, -122600, GEN(reward), 0, "", 0],
     GEN(1)
   );
   check(!poor.ok, "refused for insufficient value", poor.reason.slice(0, 90));

@@ -61,12 +61,18 @@ export function CancelTask({
   poster,
   reward,
   cancellable,
+  blockedReason,
+  windowLabel = "90 minutes",
 }: {
   taskId: number;
   poster?: string;
   reward: number;
-  /** The contract allows it only while the task is open or rejected. */
+  /** Open always, rejected only once the claim window has run out. */
   cancellable: boolean;
+  /** Why not, when the poster would otherwise be looking at nothing at all. */
+  blockedReason?: string;
+  /** The window this task actually runs, for the copy. */
+  windowLabel?: string;
 }) {
   const router = useRouter();
   const isPoster = useIsPoster(poster);
@@ -78,7 +84,22 @@ export function CancelTask({
   const [error, setError] = useState("");
   const [hash, setHash] = useState("");
 
-  if (!isPoster || !cancellable) return null;
+  if (!isPoster) return null;
+
+  // A poster whose task is held by a worker used to get no panel at all, which
+  // reads as the site having lost their withdraw button rather than as the
+  // contract protecting someone who is part way through the job.
+  if (!cancellable) {
+    if (!blockedReason) return null;
+    return (
+      <div className="panel panel-2" style={{ marginTop: 14 }}>
+        <div className="eyebrow">You posted this task</div>
+        <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
+          {blockedReason}
+        </p>
+      </div>
+    );
+  }
 
   async function onCancel() {
     setError("");
@@ -153,9 +174,10 @@ export function CancelTask({
       ) : (
         <>
           <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
-            This closes the task for good. Anyone part way through it loses the
-            work they have done, so if someone holds a live claim it is worth
-            waiting for their ninety minutes to run out.
+            This closes the task for good and nobody can claim it afterwards.
+            The contract will not let you do it while a worker still holds a
+            live claim, so what you are withdrawing here is a task that either
+            nobody took or whose {windowLabel} have already run out.
           </p>
           {busy ? (
             <div style={{ marginTop: 14 }}>

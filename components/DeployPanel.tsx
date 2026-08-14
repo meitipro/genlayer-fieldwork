@@ -68,7 +68,11 @@ export function DeployPanel() {
           style={{
             margin: 0,
             padding: 12,
-            background: "var(--cream)",
+            // Was `var(--cream)`, a token from the palette before the redesign
+            // and defined nowhere since. An undefined variable with no fallback
+            // invalidates the declaration, so the block that holds the two
+            // lines you have to copy had no surface behind it at all.
+            background: "var(--panel2)",
             border: "1px solid var(--line)",
             borderRadius: 10,
             overflowX: "auto",

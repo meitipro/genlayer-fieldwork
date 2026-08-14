@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EvidenceStack } from "@/components/EvidenceStack";
 import { SettlementNotice } from "@/components/SettlementNotice";
-import { formatDistance } from "@/lib/tasks";
+import { formatDistance, shortWindow } from "@/lib/tasks";
 import { fetchTasks, statsFrom } from "@/lib/onchain";
 import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
@@ -18,6 +18,7 @@ function TaskCard({
   distanceM,
   reward,
   minReputation,
+  claimMinutes,
   fixedCode,
 }: {
   id: number;
@@ -26,6 +27,7 @@ function TaskCard({
   distanceM: number;
   reward: number;
   minReputation: number;
+  claimMinutes: number;
   fixedCode?: string;
 }) {
   return (
@@ -47,7 +49,7 @@ function TaskCard({
         {distanceM > 0 ? ` - ${formatDistance(distanceM)}` : ""}
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-        <span className="pill">90m on claim</span>
+        <span className="pill">{shortWindow(claimMinutes)} on claim</span>
         <span className="pill">rep {minReputation}</span>
         {fixedCode ? <span className="pill pill-accent">test task</span> : null}
       </div>
@@ -119,11 +121,9 @@ export default async function HomePage() {
               </div>
               <div>
                 <div className="stat">
-                  {stats.firstAttemptPassRate === null
-                    ? "-"
-                    : `${stats.firstAttemptPassRate}%`}
+                  {stats.paidShare === null ? "-" : `${stats.paidShare}%`}
                 </div>
-                <div className="stat-label">First attempt pass</div>
+                <div className="stat-label">Settled as paid</div>
               </div>
               <div>
                 <div className="stat">{stats.openNow.toLocaleString("en-GB")}</div>
@@ -157,6 +157,7 @@ export default async function HomePage() {
                 distanceM={t.distanceM}
                 reward={t.reward}
                 minReputation={t.minReputation}
+                claimMinutes={t.claimMinutes}
                 fixedCode={t.fixedCode}
               />
             ))}

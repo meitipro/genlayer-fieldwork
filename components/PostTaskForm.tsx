@@ -18,6 +18,15 @@ import { StillSettling, TxProgress } from "./TxProgress";
    The contract refuses a test too vague to grade from a photograph, so that
    rejection has to read as help rather than as an error. */
 
+/** Windows that cover the shapes of job this is actually for. */
+const WINDOWS = [
+  { minutes: 30, label: "30 min" },
+  { minutes: 90, label: "90 min" },
+  { minutes: 240, label: "4 hours" },
+  { minutes: 1440, label: "1 day" },
+  { minutes: 4320, label: "3 days" },
+] as const;
+
 const EXAMPLE = {
   title: "Clear the bin area behind 14 Mill St",
   place: "Mill St, behind the parade",
@@ -38,6 +47,7 @@ export function PostTaskForm() {
     exampleFail: "",
     reward: 18,
     minReputation: 1,
+    claimMinutes: 90,
     fixedCode: "",
     lat: "51.5051",
     lng: "-0.1226",
@@ -82,7 +92,9 @@ export function PostTaskForm() {
     !!before &&
     // The contract wants exactly six or nothing at all. Half a code is the one
     // way to fill this field in and still be refused, so it is caught here.
-    (form.fixedCode.length === 0 || form.fixedCode.length === 6);
+    (form.fixedCode.length === 0 || form.fixedCode.length === 6) &&
+    form.claimMinutes >= 10 &&
+    form.claimMinutes <= 10080;
 
   async function onSubmit() {
     setError("");
@@ -118,6 +130,7 @@ export function PostTaskForm() {
           lngE6: Math.round(parseFloat(form.lng || "0") * 1e6),
           reward: Number(form.reward),
           minReputation: Number(form.minReputation),
+          claimMinutes: Number(form.claimMinutes),
           fixedCode: form.fixedCode,
         },
         setStage
@@ -161,9 +174,15 @@ export function PostTaskForm() {
   }
 
   return (
+    /* Not sticky. It was `position: sticky; top: 86`, and this form is far
+       taller than a viewport - a sticky element that does not fit pins its top
+       and puts everything below the fold out of reach, so the reward, the
+       window and the post button could not be scrolled to. It is also the
+       tallest thing on the page, so sticking it bought nothing even when it
+       did fit. */
     <form
       className="panel"
-      style={{ padding: 22, position: "sticky", top: 86 }}
+      style={{ padding: 22 }}
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="spread">
@@ -290,6 +309,7 @@ export function PostTaskForm() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
           gap: 12,
+          marginTop: 14,
         }}
       >
         <div>
@@ -312,6 +332,46 @@ export function PostTaskForm() {
             onChange={(e) => set("minReputation", Number(e.target.value))}
           />
         </div>
+        <div style={{ gridColumn: "1 / -1" }}>
+          <label htmlFor="window">How long a worker gets, once they claim</label>
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            {WINDOWS.map((w) => (
+              <button
+                key={w.minutes}
+                type="button"
+                className={
+                  form.claimMinutes === w.minutes ? "pill pill-accent" : "pill"
+                }
+                style={{ cursor: "pointer", background: "none" }}
+                onClick={() => set("claimMinutes", w.minutes)}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <input
+            id="window"
+            type="number"
+            min={10}
+            max={10080}
+            value={form.claimMinutes}
+            onChange={(e) => set("claimMinutes", Number(e.target.value))}
+            style={{ marginTop: 8 }}
+          />
+          <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
+            Minutes. The clock starts when someone claims, not when you post. Pick
+            it for the job: a noticeboard is a ten minute look, a fly tipping
+            clearance needs a van and an afternoon. Too short and the worker
+            cannot reach the place before it expires; too long and one person can
+            sit on a task to keep others off it.
+          </p>
+          {form.claimMinutes < 10 || form.claimMinutes > 10080 ? (
+            <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--danger)" }}>
+              The contract accepts 10 minutes to 7 days.
+            </p>
+          ) : null}
+        </div>
+
         <div style={{ gridColumn: "1 / -1" }}>
           <label htmlFor="fixedCode">Set the code yourself (for testing)</label>
           <input
@@ -375,9 +435,23 @@ export function PostTaskForm() {
             onChange={(e) => set("lng", e.target.value)}
           />
         </div>
+        {/* These are prefilled, and every task on the deployed contract had
+            kept the prefilled pair - so the plot drew each task on the same
+            point. The map handles that now, but a real coordinate is what
+            actually gets a worker there. */}
+        <p
+          className="muted"
+          style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12.5, lineHeight: 1.6 }}
+        >
+          These start on an example. Change them, or every task you post lands on
+          the same point of the plot and the distance a worker reads is not
+          yours. Nothing on chain treats them as proof of anything.
+        </p>
       </div>
 
-      <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
+      {/* `.panel` spaces nothing for its children, so these last three blocks
+          were sitting flush against the field grid above them. */}
+      <p className="muted" style={{ margin: "18px 0 0", fontSize: 13.5 }}>
         You send the reward plus the fee when you post. A vision call with two
         images runs once per validator, so rewards below roughly ten GEN do not
         cover their own settlement.
@@ -395,8 +469,9 @@ export function PostTaskForm() {
       ) : null}
 
       <button
-        className="btn btn-primary"
+        className="btn btn-primary btn-block"
         type="button"
+        style={{ marginTop: 16 }}
         disabled={!ready || busy}
         onClick={onSubmit}
       >
@@ -404,14 +479,17 @@ export function PostTaskForm() {
       </button>
 
       {stage === "sent" ? (
-        <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
+        <p className="muted" style={{ margin: "12px 0 0", fontSize: 13.5 }}>
           The contract is reading your acceptance test to check it can be graded
           from a photograph. This takes a few seconds.
         </p>
       ) : null}
 
       {error ? (
-        <div className="panel" style={{ borderColor: "var(--danger)" }}>
+        <div
+          className="panel"
+          style={{ borderColor: "var(--danger)", marginTop: 14 }}
+        >
           <div className="eyebrow" style={{ color: "var(--danger)" }}>
             Not posted
           </div>

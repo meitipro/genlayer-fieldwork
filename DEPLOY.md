@@ -36,7 +36,11 @@ validate, rename into a temp copy:
 sed 's/^class Contract(gl.Contract):/class Probe(gl.Contract):/' contracts/fieldwork.py > /tmp/probe.py && PYTHONIOENCODING=utf-8 genvm-lint check /tmp/probe.py
 ```
 
-Good: `Lint passed`, `Validation passed`, **33 methods (26 view, 7 write)**.
+Good: `Lint passed`, `Validation passed`, **36 methods (29 view, 7 write)**.
+
+A quick `npm run check` is worth running here too. It is twelve repo guards, and
+one of them is that every field on `Task` is both set on construction and
+exposed on `task_json` - the two places a new field is silently forgotten.
 
 Then the logic that needs no chain:
 

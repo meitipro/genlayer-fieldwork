@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { formatRemaining, formatWindowLength } from "@/lib/tasks";
 
 /* What to show on a task that is already claimed.
 
@@ -63,6 +64,7 @@ export function ClaimState({
   claimedBy,
   challengeCode,
   expiresAt,
+  claimMinutes = 90,
   rejected = false,
   reason,
 }: {
@@ -70,6 +72,8 @@ export function ClaimState({
   claimedBy?: string;
   challengeCode?: string;
   expiresAt: number;
+  /** The window the poster chose, for the copy on a task nobody here holds. */
+  claimMinutes?: number;
   /** A rejection keeps the claim, so the holder can retake inside the window. */
   rejected?: boolean;
   reason?: string;
@@ -84,9 +88,11 @@ export function ClaimState({
   }, []);
 
   // Rendered on the server too, so the clock only exists after mount.
-  const minutesLeft =
-    now && expiresAt > 0 ? Math.max(0, Math.round((expiresAt - now) / 60000)) : null;
-  const expired = minutesLeft !== null && minutesLeft === 0;
+  // Expiry is decided on the raw milliseconds, not on the rounded label: a
+  // claim with forty seconds left rounds to "0 minutes" and is still live.
+  const timeLeft = now && expiresAt > 0 ? formatRemaining(expiresAt, now) : null;
+  const expired = now !== null && expiresAt > 0 && now >= expiresAt;
+  const windowLabel = formatWindowLength(claimMinutes);
 
   if (owned === "theirs") {
     return (
@@ -101,7 +107,7 @@ export function ClaimState({
       <div className="panel panel-2">
         <div className="eyebrow">Claimed, and being worked on</div>
         <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
-          Someone has ninety minutes on this one. If it is you, connect the
+          Someone has {windowLabel} on this one. If it is you, connect the
           wallet you claimed with and this will turn into your code. If the
           window runs out the task comes back to the pool.
         </p>
@@ -114,7 +120,7 @@ export function ClaimState({
       <div className="panel panel-2">
         <div className="eyebrow">Your claim has run out</div>
         <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
-          The ninety minutes are up, so this task has gone back to the pool and
+          Your {windowLabel} are up, so this task has gone back to the pool and
           anyone can take it. Claim it again if it is still open.
         </p>
       </div>
@@ -127,7 +133,7 @@ export function ClaimState({
         <div className="eyebrow eyebrow-accent">
           {rejected ? "Still yours, and worth another go" : "This task is yours"}
         </div>
-        {minutesLeft !== null ? (
+        {timeLeft !== null ? (
           <span
             style={{
               font: "500 11.5px var(--mono)",
@@ -136,7 +142,7 @@ export function ClaimState({
               color: "var(--muted)",
             }}
           >
-            {minutesLeft} minutes left
+            {timeLeft} left
           </span>
         ) : null}
       </div>

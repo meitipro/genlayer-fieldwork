@@ -73,9 +73,9 @@ export default async function ConsolePage() {
           </div>
           <div>
             <div style={{ font: "700 28px var(--mono)", letterSpacing: "-0.02em" }}>
-              {stats.firstAttemptPassRate === null ? "-" : `${stats.firstAttemptPassRate}%`}
+              {stats.paidShare === null ? "-" : `${stats.paidShare}%`}
             </div>
-            <div className="stat-label">First attempt pass</div>
+            <div className="stat-label">Settled as paid</div>
           </div>
           <div>
             <div style={{ font: "700 28px var(--mono)", letterSpacing: "-0.02em" }}>
@@ -101,8 +101,9 @@ export default async function ConsolePage() {
           <div className="grid-2" style={{ marginTop: 14 }}>
             <Assurance title="You own the before frame">
               The starting state comes from you and not from the person being
-              paid, so nobody can stage a mess and then clear it - a random
-              sample of paid tasks still goes to a second worker
+              paid, so nobody can stage a mess and then clear it - and the worker
+              can see what they are being measured against before they walk
+              anywhere
             </Assurance>
             <Assurance title="Reuse detection">
               Every accepted photograph&apos;s content hash is stored on chain -
@@ -115,9 +116,10 @@ export default async function ConsolePage() {
               undersized frames are refused for the price of a decode, so a task
               can never be funded with a frame nobody could grade
             </Assurance>
-            <Assurance title="Human review">
-              Every rejection can be escalated to a person - automatic grading
-              with no backstop would be an unfair labour product
+            <Assurance title="No appeal, so the evidence is public">
+              There is no review step and nothing can overturn a verdict - what
+              a rejected worker gets instead is the rest of their window to
+              retake, and a receipt anyone can check the grading against
             </Assurance>
           </div>
 

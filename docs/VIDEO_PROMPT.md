@@ -216,10 +216,14 @@ Each of these is false, and the product says so on its own limits page:
   workers. Reuse is caught by the challenge code instead.
 - **Never** that the code appears in the before frame. It cannot. The code is
   issued at claim time, and the poster shot that frame before anyone claimed.
-- **Never** that the model is always right. Validators agreeing is not the same
-  as being correct. Every rejection can be escalated to a person.
-- **Never** that it suits any task. Private property, confrontation and
-  hazardous work are refused at posting.
+- **Never** that the model is always right, and never that a rejection can be
+  appealed. Validators agreeing is not the same as being correct, and nothing
+  can overturn a verdict once it is final. What a rejected worker has is the
+  rest of their window to retake, and a public receipt anyone can check the
+  grading against.
+- **Never** that a posted task has been vetted for safety. The gate at posting
+  time asks one question only: can this acceptance test be graded from a
+  photograph. Nothing reads a task for danger.
 
 ## If the film shows money moving
 

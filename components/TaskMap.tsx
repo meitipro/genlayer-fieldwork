@@ -28,7 +28,8 @@ export function TaskMap({
         style={{ height, display: "grid", placeItems: "center" }}
       >
         <p className="muted" style={{ margin: 0, position: "relative" }}>
-          No tasks near you yet, turn on alerts for this area
+          {/* This offered alerts. There is no alerting in the product. */}
+          No tasks here yet - a pin appears as soon as one is funded
         </p>
       </div>
     );
@@ -41,13 +42,39 @@ export function TaskMap({
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
-  const spanLat = Math.max(maxLat - minLat, 1);
-  const spanLng = Math.max(maxLng - minLng, 1);
 
+  /* Below this the tasks are the same place as far as a 400px plot is
+     concerned. 500 e6 units is about 50 metres. */
+  const SAME_PLACE = 500;
+  const spreadLat = maxLat - minLat >= SAME_PLACE;
+  const spreadLng = maxLng - minLng >= SAME_PLACE;
+
+  /* An axis with no spread centres rather than dividing by a fake span of 1.
+     The old code did `Math.max(span, 1)`, so a single task projected to
+     x = 14%, y = 86% - one pin pushed into the bottom left corner of an empty
+     plot, which reads as a positioning bug because it is one. */
   const x = (lng: number) =>
-    (pad + ((lng - minLng) / spanLng) * (1 - 2 * pad)) * 100;
+    spreadLng
+      ? (pad + ((lng - minLng) / (maxLng - minLng)) * (1 - 2 * pad)) * 100
+      : 50;
   const y = (lat: number) =>
-    (pad + (1 - (lat - minLat) / spanLat) * (1 - 2 * pad)) * 100;
+    spreadLat
+      ? (pad + (1 - (lat - minLat) / (maxLat - minLat)) * (1 - 2 * pad)) * 100
+      : 50;
+
+  /* Every task at one coordinate stacks every pin on one pixel, and only the
+     last one is clickable. This is not a hypothetical: the post form prefills
+     a single lat/lng, so a run of test tasks all carry it. When there is no
+     geography to draw, fan the pins into a ring and say so in the label rather
+     than drawing one pin over another. */
+  const coincident = !spreadLat && !spreadLng && tasks.length > 1;
+  const ring = (i: number) => {
+    const angle = (i / tasks.length) * Math.PI * 2 - Math.PI / 2;
+    return {
+      left: `${50 + Math.cos(angle) * 26}%`,
+      top: `${50 + Math.sin(angle) * 24}%`,
+    };
+  };
 
   return (
     <div className="plot" style={{ height, borderRadius: 14 }}>
@@ -55,15 +82,20 @@ export function TaskMap({
         className="eyebrow"
         style={{ position: "absolute", left: 20, top: 18, zIndex: 1 }}
       >
-        {label ?? `Coverage - ${tasks.length} tasks`}
+        {label ??
+          (coincident
+            ? `${tasks.length} tasks, all at one location`
+            : `Coverage - ${tasks.length} tasks`)}
       </div>
 
-      {tasks.map((t) => {
+      {tasks.map((t, i) => {
         const open = t.status === "open";
-        const pos = {
-          left: `${x(t.lngE6)}%`,
-          top: `${y(t.latE6)}%`,
-        };
+        const pos = coincident
+          ? ring(i)
+          : {
+              left: `${x(t.lngE6)}%`,
+              top: `${y(t.latE6)}%`,
+            };
         const body = open ? `${t.reward} GEN` : `${t.reward} GEN - ${t.status}`;
         return open ? (
           <Link

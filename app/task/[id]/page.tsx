@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { ClaimButton } from "@/components/ClaimButton";
 import { ClaimState } from "@/components/ClaimState";
 import { CancelTask } from "@/components/CancelTask";
-import { formatDistance, formatWindow } from "@/lib/tasks";
+import { formatDistance, formatWindow, formatWindowLength } from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
 import { Unavailable } from "@/components/Unavailable";
 
@@ -236,8 +236,8 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         <div className="eyebrow">What happens when you claim</div>
         <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "var(--dim)" }}>
           {task.fixedCode
-            ? "You get the code above, which is already public on this task - write it on paper, keep it in frame in the photograph you take and submit inside ninety minutes"
-            : "The contract issues a six character code that is yours alone - write it on paper, keep it in frame in the photograph you take and submit inside ninety minutes"}
+            ? "You get the code above, which is already public on this task - write it on paper, keep it in frame in the photograph you take and submit inside the window"
+            : "The contract issues a six character code that is yours alone - write it on paper, keep it in frame in the photograph you take and submit inside the window"}
         </p>
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <span className="pill">
@@ -248,14 +248,33 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
                 ? "standard tasks"
                 : "starter tasks"}
           </span>
-          <span className="pill">90 minute claim</span>
+          <span className="pill">{formatWindowLength(task.claimMinutes)} claim</span>
           <span className="pill">retry inside the window</span>
         </div>
       </div>
 
+      {/* The pill above shows the chain's own word, and for an abandoned task
+          that word is still "claimed". Rather than overwrite it, say what it
+          means: the previous claim ran out and the contract returns the task to
+          the pool on the next claim. */}
+      {stale ? (
+        <div className="panel panel-2" style={{ marginTop: 20 }}>
+          <div className="eyebrow eyebrow-accent">Available again</div>
+          <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
+            The last claim on this ran out without a passing submission, so it is
+            open to anyone - including whoever held it. Claiming returns it to
+            the pool and issues a fresh code in the same transaction.
+          </p>
+        </div>
+      ) : null}
+
       <div style={{ marginTop: 20 }}>
         {claimable ? (
-          <ClaimButton taskId={task.id} minReputation={task.minReputation} />
+          <ClaimButton
+            taskId={task.id}
+            minReputation={task.minReputation}
+            claimMinutes={task.claimMinutes}
+          />
         ) : heldByClaimant ? (
           // Whether this is "yours" or "someone else's" depends on who is
           // looking, which the server cannot know.
@@ -264,6 +283,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
             claimedBy={task.claimedBy}
             challengeCode={task.challengeCode}
             expiresAt={task.expiresAt}
+            claimMinutes={task.claimMinutes}
             rejected={task.status === "rejected"}
             reason={task.reason}
           />
@@ -292,12 +312,27 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
         </p>
       ) : null}
 
-      {/* The contract allows a cancel while the task is open or rejected. */}
+      {/* Mirrors the contract exactly: open always, rejected only once the
+          claim window has run out. A rejection leaves the claim with the worker
+          so they can retake, and cancelling underneath them would take the task
+          away from someone who has already made the trip. */}
       <CancelTask
         taskId={task.id}
         poster={task.poster}
         reward={task.reward}
-        cancellable={task.status === "open" || task.status === "rejected"}
+        windowLabel={formatWindowLength(task.claimMinutes)}
+        cancellable={task.status === "open" || (task.status === "rejected" && stale)}
+        blockedReason={
+          heldByClaimant
+            ? task.status === "rejected"
+              ? `A worker holds this task. Their submission was rejected and they can retake it inside the same window, so you can withdraw it once their ${formatWindowLength(
+                  task.claimMinutes
+                )} have run out.`
+              : `A worker holds a live claim on this. You can withdraw it once their ${formatWindowLength(
+                  task.claimMinutes
+                )} have run out.`
+            : undefined
+        }
       />
 
       {task.status === "paid" ? (

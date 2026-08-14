@@ -507,7 +507,9 @@ def build():
             "3 - Claim",
             "A worker takes the task. The contract issues a six character code derived "
             "deterministically from the task, the worker and the moment - so anyone "
-            "auditing the record later can recompute it. The claim lasts ninety minutes.",
+            "auditing the record later can recompute it. The claim lasts as long as the "
+            "poster chose when they funded the task, between ten minutes and a week, and "
+            "ninety minutes when they did not choose.",
         ),
         (
             "4 - Photograph",
@@ -693,9 +695,11 @@ def build():
         (
             "It cannot prove where a photograph was taken",
             "No system can. A phone's reported coordinates can be changed. Nothing is ever "
-            "marked location verified. What it does instead: a challenge code that must be "
-            "legible in both frames, a same-place check between them, and a second worker "
-            "sent to a random sample of paid tasks.",
+            "marked location verified. What it does instead: the before frame comes from "
+            "the poster rather than the worker, a challenge code issued at claim time that "
+            "must be legible in the worker's frame, and a same-place check between the two. "
+            "All three are in the contract, and stacking them still does not add up to a "
+            "location proof.",
         ),
         (
             "It does not match photographs by how they look",
@@ -704,22 +708,28 @@ def build():
             "reason on the previous page.",
         ),
         (
-            "The model can be wrong",
+            "The model can be wrong, and there is no appeal",
             "Several validators grading the same evidence and agreeing is not the same as "
-            "being right. Every rejection can be escalated to a person, the criteria are "
-            "published, and a weekly sample audit compares verdicts against human review. "
-            "Automatic grading with no human backstop would be an unfair labour product.",
+            "being right. Nothing in the contract can overturn a verdict once it is final, "
+            "no account has the power to, and there is no human review step. What a "
+            "rejected worker has instead is the rest of their window to retake, and a "
+            "receipt carrying both photographs, the exact text and the three judgements, so "
+            "anyone can check the verdict against the evidence. That is weaker than review "
+            "by a person and it is the one that exists.",
         ),
         (
-            "It is not for every kind of work",
-            "Anything involving private property, confrontation, hazardous material, or "
-            "anything a person should not do alone is refused at posting time.",
+            "It does not know whether a task is safe to do",
+            "The gate at posting time asks one question only: could this acceptance test be "
+            "graded from a photograph. Nothing reads it for private property, confrontation "
+            "or hazardous material, so a dangerous but precisely written task passes. A "
+            "posted task is not a vetted task.",
         ),
         (
             "Small tasks do not pay for themselves",
             "A vision call with two images runs once per validator, which is the most "
             "expensive thing the contract does. Below roughly ten GEN a task costs more to "
-            "settle than it is worth, so small jobs are batched into routes.",
+            "settle than it is worth. There is no batching, so that floor is real rather "
+            "than something a route builder works around later.",
         ),
         (
             "On Studio, the money does not actually move",
@@ -771,14 +781,22 @@ def build():
 
     F += [P("The risk register", "h3")]
     F += [
+        P(
+            "Every answer below is code that runs today. Where a risk is only "
+            "partly answered it says so, because a register that lists intentions "
+            "beside shipped mechanisms is not a register.",
+            "small",
+        )
+    ]
+    F += [
         table(
             [
                 ["RISK", "WHAT ANSWERS IT"],
-                ["Photo fraud", "Challenge codes, paired shots, exact reuse detection, random repeat verification"],
-                ["Location claims", "Never presented as proven; high value tasks require a second worker"],
-                ["Worker safety", "No private property, confrontation or hazardous material"],
+                ["Photo fraud", "The poster owns the before frame, a claim-time challenge code, exact reuse caught by content hash and content id"],
+                ["Location claims", "Never presented as proven, on any screen. Nothing more - there is no repeat verification pass"],
+                ["Worker safety", "Not answered. The posting gate tests gradeability only, and does not read a task for danger"],
                 ["Vague tests", "Refused on chain by a model before the task can be funded"],
-                ["Model bias", "Published criteria, weekly sample audits, a human review path on every rejection"],
+                ["Model bias", "Not answered. There is no appeal and no audit pass. The whole judgement is published so a wrong one is checkable"],
                 ["A grader that cannot see", "The saw_images flag - a blind model produces a retry, not a verdict"],
             ],
             [42 * mm, W - 42 * mm],

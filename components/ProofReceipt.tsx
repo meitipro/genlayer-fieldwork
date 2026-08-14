@@ -224,12 +224,15 @@ export function ProofReceipt({ task }: { task: Task }) {
         <Link href="/map" className="btn" style={{ height: 48, padding: "0 22px" }}>
           Find work like this
         </Link>
+        {/* This used to say "Report a problem", which promised a route that
+            does not exist: there is no appeal, no reviewer and no inbox behind
+            it. What the link actually leads to is the page explaining that. */}
         <Link
           href="/limits"
           className="eyebrow"
           style={{ letterSpacing: "0.1em", fontSize: 12 }}
         >
-          Report a problem
+          How this was judged, and what it cannot do
         </Link>
       </div>
     </article>

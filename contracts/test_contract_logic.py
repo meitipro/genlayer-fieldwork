@@ -58,9 +58,21 @@ def load():
         "ERROR_EXTERNAL",
         "ERROR_TRANSIENT",
         "ERROR_LLM",
+        "ZERO_ADDRESS",
+        "CLAIM_MINUTES",
+        "MIN_CLAIM_MINUTES",
+        "MAX_CLAIM_MINUTES",
     }
     wanted_funcs = {"_flag"}
-    wanted_methods = {"_cid_of", "_code_from", "_normalise", "_abandoned"}
+    wanted_methods = {
+        "_cid_of",
+        "_code_from",
+        "_normalise",
+        "_abandoned",
+        "_return_to_pool",
+        "_clean_claim_minutes",
+        "_clean_fixed_code",
+    }
 
     found_consts, found_funcs, found_methods = set(), set(), set()
 
@@ -68,7 +80,18 @@ def load():
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id in wanted_consts:
-                    env[target.id] = ast.literal_eval(node.value)
+                    try:
+                        env[target.id] = ast.literal_eval(node.value)
+                    except ValueError:
+                        # literal_eval refuses arithmetic (MAX_CLAIM_MINUTES is
+                        # 7 * 24 * 60) and calls (ZERO_ADDRESS wraps Address).
+                        # Evaluate those against the same stub namespace the
+                        # extracted methods run in, with no builtins available.
+                        env[target.id] = eval(  # noqa: S307 - contract source, no builtins
+                            compile(ast.Expression(node.value), "extract", "eval"),
+                            {"__builtins__": {}, "Address": env["Address"]},
+                            {},
+                        )
                     found_consts.add(target.id)
         elif isinstance(node, ast.FunctionDef) and node.name in wanted_funcs:
             exec(compile(ast.Module([node], []), "extract", "exec"), env)
@@ -99,7 +122,14 @@ _code_from = ENV["_code_from"]
 _normalise = ENV["_normalise"]
 _flag = ENV["_flag"]
 _abandoned = ENV["_abandoned"]
+_return_to_pool = ENV["_return_to_pool"]
+_clean_claim_minutes = ENV["_clean_claim_minutes"]
+_clean_fixed_code = ENV["_clean_fixed_code"]
 CODE_ALPHABET = ENV["CODE_ALPHABET"]
+CLAIM_MINUTES = ENV["CLAIM_MINUTES"]
+MIN_CLAIM_MINUTES = ENV["MIN_CLAIM_MINUTES"]
+MAX_CLAIM_MINUTES = ENV["MAX_CLAIM_MINUTES"]
+ZERO_ADDRESS = ENV["ZERO_ADDRESS"]
 
 CID = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
 
@@ -228,6 +258,99 @@ def test_abandoned():
     )
 
 
+class FakeSettledTask:
+    """A task carrying a whole finished attempt, for the release path."""
+
+    def __init__(self):
+        self.status = "rejected"
+        self.claimed_by = "0xW0RKER"
+        self.challenge_code = "K73QXB"
+        self.claim_expires = "2026-08-08T11:00:00"
+        self.reason = "the code is not legible"
+        self.after_url = "https://ipfs.io/ipfs/" + CID
+        self.before_url = "https://ipfs.io/ipfs/" + CID
+        self.code_visible = False
+        self.same_place = True
+        self.test_passed = True
+        self.graded_at = "2026-08-08T10:30:00"
+
+
+def test_return_to_pool():
+    """An abandoned task must carry nothing of the attempt that failed on it.
+
+    The bug this guards: only the claim fields were cleared, so a task that was
+    rejected and then abandoned went back into the pool still holding the
+    previous worker's after photograph, their three judgements and a graded_at
+    stamp. The site reads exactly those fields, so an open task advertised
+    somebody else's failed evidence and a verdict on work that had nothing to do
+    with it.
+    """
+    print("\nreturning an abandoned task to the pool")
+    t = FakeSettledTask()
+    _return_to_pool(t)
+
+    check(t.status == "open", "status is open again")
+    check(t.claimed_by == ZERO_ADDRESS, "the worker is cleared")
+    check(t.challenge_code == "", "the code is cleared")
+    check(t.claim_expires == "", "the clock is cleared")
+    check(t.reason == "", "the rejection reason is cleared")
+    check(t.after_url == "", "the previous worker's photograph is dropped")
+    check(t.graded_at == "", "the task no longer claims to have been graded")
+    check(
+        t.code_visible is False and t.same_place is False and t.test_passed is False,
+        "all three judgements are cleared",
+    )
+    # The poster's own frame belongs to the task, not to the attempt, and a
+    # task without one is unwinnable.
+    check(t.before_url != "", "the poster's before photograph survives")
+
+
+def test_claim_windows():
+    """The poster picks the window, and the contract bounds it at both ends."""
+    print("\nclaim windows")
+    check(_clean_claim_minutes(0) == CLAIM_MINUTES, "zero means the default")
+    check(_clean_claim_minutes(30) == 30, "a chosen window is kept")
+    check(
+        _clean_claim_minutes(MIN_CLAIM_MINUTES) == MIN_CLAIM_MINUTES,
+        "the lower bound itself is allowed",
+    )
+    check(
+        _clean_claim_minutes(MAX_CLAIM_MINUTES) == MAX_CLAIM_MINUTES,
+        "the upper bound itself is allowed",
+    )
+    refuses(
+        lambda: _clean_claim_minutes(MIN_CLAIM_MINUTES - 1),
+        "leaves no time",
+        "a window nobody could reach the place in is refused",
+    )
+    refuses(
+        lambda: _clean_claim_minutes(MAX_CLAIM_MINUTES + 1),
+        "away from everyone else",
+        "a window long enough to sit on a task is refused",
+    )
+
+
+def test_published_codes():
+    """A poster-chosen code has to be one a grader could read off paper."""
+    print("\npublished codes")
+    check(_clean_fixed_code("") == "", "empty means the issued code")
+    check(_clean_fixed_code("  ") == "", "whitespace only means the issued code")
+    check(_clean_fixed_code("test42") == "TEST42", "normalised to upper case")
+    refuses(
+        lambda: _clean_fixed_code("ABC"),
+        "exactly six",
+        "a short code is refused rather than padded",
+    )
+    # I, L, O, U, 0 and 1 are out of the alphabet because they are misread in
+    # handwriting, which is the only way this code is ever transmitted.
+    for bad in ("TEST4O", "TEST4I", "TEST41", "TEST4L"):
+        refuses(
+            lambda bad=bad: _clean_fixed_code(bad),
+            "misread by hand",
+            f"{bad} is refused as ambiguous handwriting",
+        )
+
+
 def test_flag():
     print("\nreading a boolean out of a model")
     check(_flag({"a": True}, "a") is True, "real bool")
@@ -248,6 +371,9 @@ def main():
     test_codes()
     test_datetimes()
     test_abandoned()
+    test_return_to_pool()
+    test_claim_windows()
+    test_published_codes()
     test_flag()
     print("\n" + ("all contract logic checks passed" if failures == 0 else f"{failures} FAILURES"))
     return 1 if failures else 0

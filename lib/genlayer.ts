@@ -232,13 +232,32 @@ async function settle(
   return true;
 }
 
-/** Read one view, tolerating the network rather than failing the whole write. */
-async function readView(functionName: string, args: unknown[] = []): Promise<any> {
-  return (readClient() as any).readContract({
-    address: FIELDWORK_CONTRACT,
-    functionName,
-    args,
-  });
+/**
+ * Read one view, retrying the network rather than failing the whole write.
+ *
+ * A single dropped socket here used to decide a verdict: the read after a
+ * submission threw, and the fallback below it reported "rejected" for work the
+ * chain had already paid for. Reads are free and idempotent, so retry them.
+ */
+async function readView(
+  functionName: string,
+  args: unknown[] = [],
+  attempts = 4
+): Promise<any> {
+  let wait = 1200;
+  for (let i = 1; ; i++) {
+    try {
+      return await (readClient() as any).readContract({
+        address: FIELDWORK_CONTRACT,
+        functionName,
+        args,
+      });
+    } catch (e) {
+      if (i >= attempts || !isTransientRpc(e)) throw e;
+      await new Promise((r) => setTimeout(r, wait));
+      wait = Math.min(Math.round(wait * 1.8), 10000);
+    }
+  }
 }
 
 /**
@@ -402,7 +421,15 @@ export const ESTIMATE_MS: Record<string, number> = {
 export const HOLD_MS = 30_000;
 
 export type SubmitResult = {
-  status: "paid" | "rejected";
+  /**
+   * "unknown" is a real answer and the interface has to be able to say it.
+   *
+   * The verdict is read back off the chain after finality. When that read will
+   * not complete, the old code fell back to "rejected", so a worker whose task
+   * had been paid was told their work failed because a socket dropped. There is
+   * no defensible default here: either the chain said, or it did not.
+   */
+  status: "paid" | "rejected" | "unknown";
   reason: string;
   hash: string;
   /**
@@ -458,16 +485,18 @@ export async function submitPhotographs(opts: {
   // finality, hold, and then ask the chain what the task actually says.
   const settled = await settle(client, hash, onStage);
 
-  let status: "paid" | "rejected" = "rejected";
+  let status: SubmitResult["status"] = "unknown";
   let reason = "";
   try {
-    status = String(await readView("status_of", [taskId])) === "paid" ? "paid" : "rejected";
+    const onChain = String(await readView("status_of", [taskId]));
+    // Only the two settled states are a verdict. "claimed" means the grading
+    // has not landed in state yet, and calling that a rejection is exactly the
+    // false negative this whole path exists to avoid.
+    if (onChain === "paid" || onChain === "rejected") status = onChain;
     reason = String((await readView("reason_of", [taskId])) ?? "");
   } catch {
-    // The chain would not answer. Fall back to the receipt rather than
-    // inventing a verdict, and say so through `settled`.
-    status = accepted?.result?.status === "paid" ? "paid" : "rejected";
-    reason = accepted?.result?.reason ?? "";
+    // The chain would not answer, so there is no verdict to report. Saying
+    // nothing is the honest outcome, and the receipt page will have it.
   }
 
   return { status, reason, hash, settled };
@@ -478,7 +507,8 @@ export async function submitPhotographs(opts: {
  *
  * The deployer becomes the contract `owner`, and the owner is the only account
  * that can withdraw fees or hand ownership on. Deploying from a CLI keystore or
- * from Studio's own account selector makes one of those the owner instead - * which is fine for a throwaway and wrong for a deployment you intend to keep.
+ * from Studio's own account selector makes one of those the owner instead,
+ * which is fine for a throwaway and wrong for a deployment you intend to keep.
  * This is the only path that ends with your wallet holding it.
  */
 export async function deployFieldwork(
@@ -531,6 +561,8 @@ export type PostTaskInput = {
   minReputation: number;
   /** Six characters to publish with the task, or "" for the issued one. */
   fixedCode?: string;
+  /** Minutes a claim lasts. 0 uses the contract's default of 90. */
+  claimMinutes?: number;
 };
 
 /**
@@ -583,6 +615,7 @@ export async function postTask(
       rewardWei,
       input.minReputation,
       (input.fixedCode ?? "").trim().toUpperCase(),
+      Math.max(0, Math.round(input.claimMinutes ?? 0)),
     ],
     value,
   });
@@ -593,16 +626,41 @@ export async function postTask(
   onStage?.("accepted");
   assertExecuted(accepted, "posting this task");
 
-  const taskId =
-    accepted?.result === undefined || accepted?.result === null
-      ? null
-      : Number(accepted.result);
-
   // The task exists on acceptance and its money is only committed on finality,
   // so the poster hears nothing until then.
   const settled = await settle(client, hash, onStage);
 
+  const taskId = await resolveTaskId(beforeUrl);
+
   return { hash, taskId, settled };
+}
+
+/**
+ * Which task id this post became.
+ *
+ * It used to be `Number(receipt.result)`. That field is the contract's return
+ * value in GenVM's own encoding rather than a decimal number, so the conversion
+ * produced NaN and the confirmation read "It is live as task NaN" - and NaN is
+ * not null, so the guard written for a missing id never fired.
+ *
+ * The chain has the answer without any decoding. The before photograph was
+ * uploaded seconds ago to content addressed storage, so its url belongs to
+ * exactly one task; walk back from the newest until it turns up. Bounded,
+ * because a miss must cost a handful of reads rather than a scan of the ledger,
+ * and a null id only costs the confirmation one sentence.
+ */
+async function resolveTaskId(beforeUrl: string): Promise<number | null> {
+  try {
+    const total = Number(await readView("total_tasks"));
+    if (!Number.isFinite(total) || total <= 0) return null;
+    const floor = Math.max(0, total - 12);
+    for (let id = total - 1; id >= floor; id--) {
+      if (String(await readView("before_url_of", [id])) === beforeUrl) return id;
+    }
+  } catch {
+    // A task that posted successfully is not worth failing over an id.
+  }
+  return null;
 }
 
 /**
@@ -632,14 +690,17 @@ export async function claimTask(
 
   const settled = await settle(client, hash, onStage);
 
-  // Read the code back rather than trusting the first receipt: the claim is
-  // only really this worker's once it is final.
-  let code = String(accepted?.result ?? "");
+  // Read the code back rather than reading it off the receipt. The claim is
+  // only really this worker's once it is final, and `receipt.result` is the
+  // return value in GenVM's own encoding, so using it as a fallback printed a
+  // base64 blob in the place where a six character code belongs. An empty
+  // string is better than a wrong one: the submit screen reads the same field
+  // from the chain on the server and will show it there.
+  let code = "";
   try {
-    const onChain = String(await readView("challenge_code_of", [taskId]));
-    if (onChain) code = onChain;
+    code = String((await readView("challenge_code_of", [taskId])) ?? "");
   } catch {
-    // keep the receipt's copy
+    // left empty on purpose
   }
 
   return { hash, code, settled };
@@ -656,7 +717,11 @@ export async function putToCAS(blob: Blob): Promise<string> {
   const res = await fetch("/api/cas", { method: "POST", body });
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail?.message || "upload_failed");
+    // `error` as well as `message`. The route answers some failures with a code
+    // only - `too_large`, `no_file` - and reading `message` alone collapsed
+    // every one of those into a flat "upload_failed", including the one case
+    // humanError has a written explanation for.
+    throw new Error(detail?.message || detail?.error || "upload_failed");
   }
   const json = await res.json();
   return json.url as string;

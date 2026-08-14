@@ -74,9 +74,14 @@ export default function LimitsPage() {
           <Para>
             What it does instead - the before photograph comes from the poster
             rather than the worker, a challenge code issued at claim time that
-            must be legible in the worker&apos;s frame, a same place check
-            against the poster&apos;s frame, and a second worker sent to a random
-            sample of paid tasks
+            must be legible in the worker&apos;s frame, and a same place check
+            against the poster&apos;s frame
+          </Para>
+          <Para>
+            All three are in the contract and run on every submission. None of
+            them is a location proof, and stacking them does not add up to one -
+            a worker standing somewhere that looks the same, holding the right
+            code, passes
           </Para>
         </Limit>
 
@@ -179,43 +184,63 @@ export default function LimitsPage() {
           </Para>
         </Limit>
 
-        <Limit n={next()} title="The model can be wrong">
+        <Limit n={next()} title="The model can be wrong, and there is no appeal">
           <Para>
             Several validators grade the same two images against the same written
             test and all of them must agree on three judgements before anything
             is paid - agreement is not the same as being right
           </Para>
           <Para>
-            Every rejection can be escalated to a person, the grading criteria are
-            published and a weekly sample audit compares verdicts against human
-            review
+            There is no appeal in the contract. Nothing can overturn a verdict
+            once it is final, no account has the power to, and no human review
+            step exists. What a rejected worker has instead is a window: the
+            claim stays theirs, so a verdict they think is wrong can be answered
+            with a better photograph rather than with a complaint
+          </Para>
+          <Para>
+            What is offered in place of an appeal is that the whole judgement is
+            public. Both photographs, the exact text they were graded against,
+            the three judgements and the reason given are all on the receipt, so
+            anyone can check the verdict against the evidence themselves. That is
+            a weaker guarantee than review by a person and it is the one that
+            actually exists
           </Para>
         </Limit>
 
-        <Limit n={next()} title="It is not for every kind of work">
+        <Limit n={next()} title="It does not know whether a task is safe to do">
           <Para>
-            Tasks that involve private property, confrontation, hazardous material
-            or anything a person should not do alone are refused at posting time -
-            a reported task is frozen pending review
+            The only thing checked when a task is posted is whether its
+            acceptance test could be graded from a photograph at all. Nothing
+            reads it for private property, confrontation, hazardous material or
+            work nobody should do alone
+          </Para>
+          <Para>
+            So a task that is dangerous but precisely written passes the gate,
+            and the judgement about whether to walk into it is the
+            worker&apos;s. Do not read a posted task as a vetted one
           </Para>
         </Limit>
 
         <Limit n={next()} title="Small tasks do not pay for themselves">
           <Para>
             A vision call with two images runs once per validator, which is the
-            most expensive thing this contract does - below roughly ten GEN a task
-            costs more to settle than it is worth, so small jobs are batched into
-            routes
+            most expensive thing this contract does - below roughly ten GEN a
+            task costs more to settle than it is worth
+          </Para>
+          <Para>
+            There is no batching. Every task is settled on its own, so that floor
+            is a real one rather than something a route builder works around
+            later
           </Para>
         </Limit>
       </div>
 
       <p style={{ color: "var(--muted)", marginTop: 24, fontSize: 14 }}>
-        Found something this page does not cover?{" "}
-        <Link href="/map" style={{ color: "var(--accent)", fontWeight: 700 }}>
-          Tell us on any receipt page
-        </Link>{" "}
-        and it gets added here rather than argued with
+        Every settled task leaves the evidence it was judged on, so a verdict you
+        think is wrong can be checked rather than taken on trust -{" "}
+        <Link href="/receipts" style={{ color: "var(--accent)", fontWeight: 700 }}>
+          read the receipts
+        </Link>
       </p>
     </div>
   );

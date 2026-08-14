@@ -14,7 +14,47 @@ export const runtime = "nodejs";
 const PINATA_JWT = process.env.PINATA_JWT || "";
 const GATEWAY = process.env.CAS_GATEWAY || "https://gateway.pinata.cloud";
 
+/**
+ * The contract's own allow list, mirrored.
+ *
+ * A `CAS_GATEWAY` pointing anywhere else is a deployment that uploads fine and
+ * then has every single submission refused on chain with "photograph must sit
+ * in content addressed storage" - a failure that looks like the contract is
+ * broken and is really one environment variable. Catch it at the upload, where
+ * the message can name the actual cause.
+ */
+const ALLOWED_HOSTS = [
+  "ipfs.io",
+  "w3s.link",
+  "dweb.link",
+  "cf-ipfs.com",
+  "gateway.pinata.cloud",
+];
+
+function gatewayIsAllowed(): boolean {
+  try {
+    const host = new URL(GATEWAY).hostname.toLowerCase();
+    return ALLOWED_HOSTS.some((h) => host === h || host.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
+  if (!gatewayIsAllowed()) {
+    return NextResponse.json(
+      {
+        error: "gateway_not_allowed",
+        message:
+          `CAS_GATEWAY is set to ${GATEWAY}, which the contract will not accept. ` +
+          `It only reads photographs from ${ALLOWED_HOSTS.join(", ")}, because a ` +
+          `mutable url would let the leader and the validators grade two ` +
+          `different photographs.`,
+      },
+      { status: 500 }
+    );
+  }
+
   if (!PINATA_JWT) {
     return NextResponse.json(
       {

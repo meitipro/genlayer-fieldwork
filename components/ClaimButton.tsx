@@ -12,6 +12,7 @@ import {
   reputationOf,
   txUrl,
 } from "@/lib/genlayer";
+import { formatWindowLength } from "@/lib/tasks";
 import { StillSettling, TxProgress } from "./TxProgress";
 import type { Stage } from "@/lib/genlayer";
 
@@ -25,10 +26,13 @@ type Phase = "idle" | "wallet" | "sent" | "accepted" | "confirming" | "done" | "
 export function ClaimButton({
   taskId,
   minReputation = 0,
+  claimMinutes = 90,
 }: {
   taskId: number;
   minReputation?: number;
+  claimMinutes?: number;
 }) {
+  const windowLabel = formatWindowLength(claimMinutes);
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [code, setCode] = useState("");
@@ -121,7 +125,7 @@ export function ClaimButton({
     return (
       <div className="panel stack">
         <div className="eyebrow" style={{ color: "var(--accent)" }}>
-          Claimed - the task is yours for 90 minutes
+          Claimed - the task is yours for {windowLabel}
         </div>
         {code ? (
           <div
@@ -137,8 +141,12 @@ export function ClaimButton({
           </div>
         ) : null}
         <p className="muted" style={{ margin: 0 }}>
-          Write that code on paper and keep it in frame in the photograph you
-          take.
+          {code
+            ? "Write that code on paper and keep it in frame in the photograph you take."
+            : // The claim landed; only the read that fetches the code back did
+              // not. The next screen asks the chain again on the server, so send
+              // them there rather than printing whatever the receipt held.
+              "The claim is yours. Your code would not read back just now - it is on the next screen, which asks the chain again."}
         </p>
         {settled ? null : <StillSettling what="Your claim" />}
         <a className="btn btn-primary btn-block" href={`/submit/${taskId}`}>

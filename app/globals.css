@@ -315,6 +315,58 @@ img {
   box-shadow: none;
 }
 
+/* Buttons are anchors about half the time on this site, and `a:hover` above
+   sets `color: var(--accent)`. A bare `.btn-primary` is one class, `a:hover` is
+   a type plus a pseudo-class, so the hover wins on specificity and every
+   `<Link className="btn btn-primary">` turned its label green on a green fill -
+   an invisible primary action on eight screens.
+
+   This was found twice before and patched twice at the symptom, once for
+   `.nav-cta` and once for `.pin-open`. Fixed at the source here; those two
+   local rules are now redundant and harmless.
+
+   Every hover pair below is the resting pair, so nothing changes contrast on
+   the way through. */
+.btn:hover {
+  color: var(--ink);
+  border-color: var(--accent-line);
+}
+
+.btn-primary:hover {
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.btn-mono:hover,
+.btn-ghost-sm:hover {
+  border-color: var(--accent-line);
+}
+
+.btn:disabled:hover {
+  border-color: var(--line2);
+}
+
+.btn-primary:disabled:hover {
+  border-color: transparent;
+}
+
+/* Keyboard focus. `outline: none` on the inputs below removed the only visible
+   focus indicator the site had, and buttons and links never had one at all, so
+   tabbing through a task page showed nothing moving. The ring is drawn outside
+   the border so it reads on a filled button as well as an outlined one. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn:focus-visible,
+.nav-cta:focus-visible,
+.card:focus-visible,
+.pin:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .btn-mono {
   font: 500 11px var(--mono);
   letter-spacing: 0.12em;
@@ -386,10 +438,21 @@ input[type="number"] {
   padding: 0 12px;
 }
 
+/* A pointer click should not draw the ring, but a focused field still has to
+   look focused. `--accent-line` alone is a very dark green against a dark
+   border and reads as no change at all, so this is the accent itself. */
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent-line);
+  border-color: var(--accent);
+}
+
+/* Second, not first: these carry the same specificity as the rule above, so
+   the later one wins and the keyboard ring survives. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 input[type="checkbox"] {

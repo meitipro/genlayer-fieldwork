@@ -42,6 +42,7 @@ type RawTask = {
   content_hash: string;
   phash: string;
   fixed_code: string;
+  claim_minutes: number;
   code_visible: boolean;
   same_place: boolean;
   test_passed: boolean;
@@ -75,6 +76,7 @@ function toTask(raw: RawTask): Task {
     lngE6: raw.lng_e6,
     reward: weiToWhole(raw.reward),
     minReputation: raw.min_reputation,
+    claimMinutes: Number(raw.claim_minutes) || 90,
     status: (raw.status as TaskStatus) || "open",
     // Distance is a viewer-relative idea, so it is not on chain.
     distanceM: 0,
@@ -128,7 +130,17 @@ export type LiveStats = {
   settled: number;
   paid: number;
   rejected: number;
-  firstAttemptPassRate: number | null;
+  /**
+   * The share of settled tasks that ended paid.
+   *
+   * This was labelled "first attempt pass", which it is not and never was: a
+   * worker who is rejected for framing and retakes inside the same window ends
+   * up counted here as a pass. The contract does not record attempts, so a real
+   * first-attempt figure is not derivable from this state at all - and naming a
+   * number after something you did not measure is the exact failure this whole
+   * function was written to remove.
+   */
+  paidShare: number | null;
   openNow: number;
   committedGen: number;
 };
@@ -141,7 +153,7 @@ export function statsFrom(tasks: Task[]): LiveStats {
     settled,
     paid,
     rejected,
-    firstAttemptPassRate: settled > 0 ? Math.round((paid / settled) * 100) : null,
+    paidShare: settled > 0 ? Math.round((paid / settled) * 100) : null,
     openNow: tasks.filter((t) => t.status === "open").length,
     committedGen: tasks
       .filter((t) => t.status === "open" || t.status === "claimed")

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaptureFlow } from "@/components/CaptureFlow";
 import { fetchTask, lookupTask } from "@/lib/onchain";
+import { formatWindowLength } from "@/lib/tasks";
 import { Unavailable } from "@/components/Unavailable";
 import type { Task } from "@/lib/types";
 
@@ -131,7 +132,7 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     return (
       <Blocked
         task={task}
-        title="Your ninety minutes are up"
+        title={`Your ${formatWindowLength(task.claimMinutes)} are up`}
         action={{ href: `/task/${task.id}`, label: "Claim it again if it is open" }}
       >
         The claim has run out, so the task goes back to the pool and anyone can

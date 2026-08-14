@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TaskMap } from "@/components/TaskMap";
-import { formatDistance, formatWindow } from "@/lib/tasks";
+import { formatDistance, formatWindow, shortWindow } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
 
 export const revalidate = 5;
@@ -25,8 +25,8 @@ export default async function MapPage() {
         <div className="eyebrow eyebrow-accent">Find work</div>
         <h1 style={{ fontSize: 42, marginTop: 14 }}>Tasks near you</h1>
         <p className="lede" style={{ marginTop: 14 }}>
-          Read the acceptance test before you claim - a claim is yours for ninety
-          minutes and can be retaken inside that window
+          Read the acceptance test before you claim - each task says how long a
+          claim lasts, and a rejection can be retaken inside that same window
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export default async function MapPage() {
                   textTransform: "uppercase",
                 }}
               >
-                90m on claim - rep {t.minReputation}
+                {shortWindow(t.claimMinutes)} on claim - rep {t.minReputation}
                 {t.fixedCode ? " - test task" : ""}
               </div>
             </Link>
@@ -75,9 +75,12 @@ export default async function MapPage() {
               lineHeight: 1.6,
             }}
           >
+            {/* This used to offer alerts. There is no alerting anywhere in the
+                product, and a control that does nothing is worse than an empty
+                slot. */}
             {open.length === 0
-              ? "Nothing is open within reach right now - this list fills as posters fund new work"
-              : "Nothing else is open within reach - turn on alerts and this list fills as posters fund new work"}
+              ? "Nothing is open right now - this list fills as posters fund new work"
+              : "That is everything open - the list reads the contract directly, so a task appears here as soon as it is funded"}
           </div>
         </div>
       </div>

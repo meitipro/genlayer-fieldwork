@@ -118,7 +118,7 @@ def graded(vm, *, saw=True, code=True, place=True, passed=True, reason="looks cl
     )
 
 
-def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, code="", **over):
+def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, code="", window=0, **over):
     """Post a task. The before photograph belongs to the poster, so it is
     fetched and vetted here rather than at submission time."""
     body = {**GOOD, **over}
@@ -137,6 +137,7 @@ def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=N
         reward * GEN,
         rep,
         code,
+        window,
     )
 
 
@@ -175,7 +176,7 @@ def test_refuses_when_underfunded(contract, direct_vm, direct_alice):
     with pytest.raises(Exception) as err:
         contract.post_task(
             GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-            URL_A, 51505100, -122600, 18 * GEN, 0, "",
+            URL_A, 51505100, -122600, 18 * GEN, 0, "", 0,
         )
     assert "reward plus the fee" in str(err.value)
 
@@ -255,6 +256,27 @@ def test_no_published_code_still_issues_one_at_claim(
     code = contract.claim(task_id)
     assert len(code) == 6
     assert all(c in "23456789ABCDEFGHJKMNPQRSTVWXYZ" for c in code)
+
+
+def test_the_poster_chooses_the_claim_window(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """Ninety minutes is right for a bin area and wrong for a job with a van."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, window=240)
+    assert int(contract.claim_minutes_of(task_id)) == 240
+
+    gradeable(direct_vm, True)
+    default_id = post(contract, direct_vm, direct_alice)
+    assert int(contract.claim_minutes_of(default_id)) == 90
+
+
+def test_an_unusable_claim_window_is_refused(contract, direct_vm, direct_alice):
+    for window, expect in ((5, "leaves no time"), (60 * 24 * 30, "away from everyone")):
+        gradeable(direct_vm, True)
+        with pytest.raises(Exception) as err:
+            post(contract, direct_vm, direct_alice, window=window)
+        assert expect in str(err.value)
 
 
 # ---------------------------------------------------------------- claiming
@@ -602,7 +624,7 @@ def test_overpaying_is_banked_rather_than_lost(contract, direct_vm, direct_alice
     direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
     contract.post_task(
         GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-        URL_A, 51505100, -122600, reward * GEN, 0, "",
+        URL_A, 51505100, -122600, reward * GEN, 0, "", 0,
     )
 
     # The fee for this task, plus every wei of the overpayment.

@@ -26,7 +26,13 @@ CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 ZERO_ADDRESS = Address("0x0000000000000000000000000000000000000000")
 
+# The claim window, when the poster does not choose one. Ninety minutes is
+# enough to walk somewhere, do a small job and photograph it.
 CLAIM_MINUTES = 90
+# Bounds on a poster-chosen window. Below ten minutes nobody can get anywhere,
+# and above a week a task can be sat on indefinitely to keep others off it.
+MIN_CLAIM_MINUTES = 10
+MAX_CLAIM_MINUTES = 7 * 24 * 60
 BPS = 10000
 
 # Error classes, so validators know how to compare a failure rather than
@@ -101,14 +107,19 @@ class Task:
     before_url: str
     after_url: str
     content_hash: str
-    # Recorded for human reviewers and the repeat verification sample. Never
-    # used to accept or reject anything. See the note at the top of this file.
+    # Recorded so a person reading a receipt can compare one photograph with
+    # another. Never used to accept or reject anything, and there is no repeat
+    # verification pass behind it. See the note at the top of this file.
     phash: str
     # A code the poster published with the task, or "" for the normal one issued
     # at claim time. Set means the code is knowable before anyone claims, which
     # is what makes the product testable and what makes it weaker. See
     # _clean_fixed_code.
     fixed_code: str
+    # How long a claim on this task lasts, in minutes. Chosen by the poster,
+    # because ninety minutes is right for a bin area and wrong for a job that
+    # needs a van, a ladder or daylight in a different season.
+    claim_minutes: u256
     # The three judgements the graders agreed on, kept so a receipt can show
     # them rather than the site inferring them.
     #
@@ -186,6 +197,31 @@ class Contract(gl.Contract):
             out = out + CODE_ALPHABET[digest[i] % len(CODE_ALPHABET)]
         return out
 
+    def _clean_claim_minutes(self, raw: u256) -> u256:
+        """The poster's claim window, or the default when they did not choose.
+
+        Bounded on both sides. A window under ten minutes is not a task, it is a
+        trap: the worker cannot reach the place before it expires and the reward
+        goes back to the pool. A window over a week lets someone claim a task
+        purely to keep everyone else off it, which is the same denial of service
+        with better manners.
+        """
+        minutes = int(raw)
+        if minutes == 0:
+            return u256(CLAIM_MINUTES)
+        if minutes < MIN_CLAIM_MINUTES:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " a claim window under "
+                + str(MIN_CLAIM_MINUTES)
+                + " minutes leaves no time to reach the place"
+            )
+        if minutes > MAX_CLAIM_MINUTES:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " a claim window over a week lets one worker "
+                "hold a task away from everyone else"
+            )
+        return u256(minutes)
+
     def _clean_fixed_code(self, raw: str) -> str:
         """Validate a poster-chosen code, or "" for the normal issued one.
 
@@ -234,11 +270,30 @@ class Contract(gl.Contract):
         return t.status in ("claimed", "rejected") and t.claim_expires != "" and now > t.claim_expires
 
     def _return_to_pool(self, t: Task) -> None:
+        """Hand an abandoned task back to the pool, with nothing of the last
+        attempt still attached to it.
+
+        The claim fields are the obvious half. The submission fields matter just
+        as much: a task that was rejected and then abandoned kept the previous
+        worker's after photograph, their three judgements and their graded_at
+        stamp. Once it was open again the site read those and showed an
+        available task carrying someone else's failed evidence and a verdict on
+        work that no longer had anything to do with it.
+
+        The attempt is not lost - every grading emitted an event, and the
+        transaction that made it is on chain. What is dropped here is only the
+        contract's claim that *this open task* has been graded.
+        """
         t.status = "open"
         t.claimed_by = ZERO_ADDRESS
         t.challenge_code = ""
         t.claim_expires = ""
         t.reason = ""
+        t.after_url = ""
+        t.code_visible = False
+        t.same_place = False
+        t.test_passed = False
+        t.graded_at = ""
 
     def _pay(self, to: Address, amount: u256) -> None:
         # emit_transfer raises a bare ValueError on zero, which would crash the
@@ -265,6 +320,7 @@ class Contract(gl.Contract):
         reward: u256,
         min_reputation: u256,
         fixed_code: str,
+        claim_minutes: u256,
     ) -> u256:
         """Post a task. The poster supplies the photograph of how it looks now.
 
@@ -284,6 +340,11 @@ class Contract(gl.Contract):
         so it can be known before anyone claims, which makes the product
         testable by one person and weakens the anti-fraud property. See
         _clean_fixed_code.
+
+        `claim_minutes` is how long a worker gets once they claim. Zero means
+        the default. The poster picks it because they are the only one who knows
+        whether the job is a five minute look at a noticeboard or an afternoon
+        with a van.
         """
         if title.strip() == "":
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a title")
@@ -295,8 +356,9 @@ class Contract(gl.Contract):
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a reward")
 
         # Validated before any money moves or any node fetches anything, so a
-        # typo in the code costs nothing.
+        # typo costs nothing.
         chosen_code = self._clean_fixed_code(fixed_code)
+        window = self._clean_claim_minutes(claim_minutes)
 
         fee = u256(int(reward) * int(self.fee_bps) // BPS)
         owed = int(reward) + int(fee)
@@ -417,6 +479,7 @@ class Contract(gl.Contract):
                 content_hash="",
                 phash="",
                 fixed_code=chosen_code,
+                claim_minutes=window,
                 code_visible=False,
                 same_place=False,
                 test_passed=False,
@@ -457,7 +520,7 @@ class Contract(gl.Contract):
         else:
             t.challenge_code = self._code_from(str(task_id) + str(sender) + now)
         t.claimed_by = sender
-        t.claim_expires = self._plus_minutes(now, CLAIM_MINUTES)
+        t.claim_expires = self._plus_minutes(now, int(t.claim_minutes))
         t.status = "claimed"
         t.reason = ""
         TaskClaimed(task_id, sender, expires=t.claim_expires).emit()
@@ -689,11 +752,26 @@ class Contract(gl.Contract):
 
     @gl.public.write
     def cancel_task(self, task_id: u256) -> str:
+        """Withdraw an unpaid task and take the money back.
+
+        A `rejected` task is only cancellable once its claim window has run out.
+        A rejection deliberately leaves the claim with the worker so they can
+        retake - most failures are lighting and framing, not fraud - and letting
+        the poster cancel during that window would mean a worker who has already
+        made the trip is told to retake and then finds the task gone. Waiting
+        for the window costs the poster minutes and is the difference between a
+        promise and a suggestion.
+        """
         t = self._require_task(task_id)
         if gl.message.sender_address != t.poster:
             raise gl.vm.UserError(ERROR_EXPECTED + " only the poster can cancel this task")
         if t.status not in ("open", "rejected"):
             raise gl.vm.UserError(ERROR_EXPECTED + " a task can only be cancelled while it is unpaid")
+        if t.status == "rejected" and not self._abandoned(t, self._now()):
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this worker still has time to retake, you can "
+                "cancel once their claim window has run out"
+            )
         t.status = "cancelled"
         self._pay(t.poster, u256(int(t.reward) + int(t.fee)))
         return t.status
@@ -754,6 +832,7 @@ class Contract(gl.Contract):
                 "content_hash": t.content_hash,
                 "phash": t.phash,
                 "fixed_code": t.fixed_code,
+                "claim_minutes": int(t.claim_minutes),
                 "code_visible": t.code_visible,
                 "same_place": t.same_place,
                 "test_passed": t.test_passed,
@@ -837,6 +916,10 @@ class Contract(gl.Contract):
             },
             sort_keys=True,
         )
+
+    @gl.public.view
+    def claim_minutes_of(self, task_id: u256) -> u256:
+        return self._require_task(task_id).claim_minutes
 
     @gl.public.view
     def fixed_code_of(self, task_id: u256) -> str:
@@ -1059,8 +1142,8 @@ def _preflight(data: bytes, which: str) -> str:
 def _dhash(data: bytes) -> str:
     """A 64 bit difference hash, computed with integers only.
 
-    Recorded on the task for human reviewers and the repeat verification
-    sample. It decides nothing: see the note at the top of this file for the
+    Recorded on the task so a person reading a receipt can compare it with
+    another. It decides nothing: see the note at the top of this file for the
     measurements showing it cannot separate honest repeat work from reuse.
 
     Undecodable bytes return an empty string rather than raising, because

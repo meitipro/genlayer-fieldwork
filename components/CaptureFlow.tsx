@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/types";
+import { formatRemaining } from "@/lib/tasks";
 import { ChallengeCode } from "./ChallengeCode";
 import { SettlementNotice } from "./SettlementNotice";
 import {
@@ -182,12 +183,18 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
     };
   }, [after]);
 
-  const minutesLeft = Math.max(0, Math.round(remaining / 60000));
+  // Words, not a minute count. The poster picks the window now, and a three day
+  // task was reading "claim expires in 4320 minutes".
+  const timeLeft = formatRemaining(Date.now() + remaining, Date.now());
   const expired = remaining <= 0;
 
   const checksLeft = CHECKS.filter((c) => !ticked[c.key]).length;
   const allTicked = checksLeft === 0;
-  const ready = !!after && allTicked && !expired;
+  // `mine === false` means the connected wallet is provably not the claimant,
+  // and the contract refuses those. Warning and then letting the button through
+  // spends a transaction to learn what the page already knew. `undefined` is
+  // not the same thing: no wallet is connected yet, so nothing is blocked.
+  const ready = !!after && allTicked && !expired && mine !== false;
 
   const busy =
     stage === "uploading" ||
@@ -231,7 +238,9 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
         onStage: setStage,
       });
       setResult({ status: res.status, reason: res.reason, settled: res.settled });
-      if (res.status === "rejected") setStage("idle");
+      // Anything short of a payment leaves the flow usable: a rejection can be
+      // retaken, and an unreadable verdict must not look like a dead screen.
+      if (res.status !== "paid") setStage("idle");
     } catch (e: unknown) {
       setStage("failed");
       // Contract error strings are written for humans; humanError only drops
@@ -376,9 +385,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
         }}
       >
         <span style={{ color: "var(--muted)" }}>
-          {expired
-            ? "this claim has expired"
-            : `claim expires in ${minutesLeft} minutes`}
+          {expired ? "this claim has expired" : `claim expires in ${timeLeft}`}
         </span>
         <span style={{ color: "var(--accent)" }}>
           {stageCopy
@@ -417,9 +424,29 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
           </div>
           <p style={{ margin: "6px 0 0" }}>{result.reason}</p>
           <p className="muted" style={{ margin: "8px 0 0", fontSize: 13.5 }}>
-            Retake and submit again - the claim is still yours for {minutesLeft}{" "}
-            minutes
+            Retake and submit again - the claim is still yours for {timeLeft}
           </p>
+        </div>
+      ) : null}
+
+      {/* The submission is on chain and the verdict could not be read back.
+          Guessing at one is how a paid task gets reported as a rejection, so
+          this says exactly what is and is not known. */}
+      {result?.status === "unknown" ? (
+        <div className="panel">
+          <div className="eyebrow">Sent, and we could not read the verdict</div>
+          <p style={{ margin: "8px 0 0", lineHeight: 1.6 }}>
+            Your photograph is on chain and the graders have it. The network
+            would not answer when we asked what they decided, so rather than
+            guess: nothing here is a rejection.
+          </p>
+          <a
+            className="btn btn-primary btn-block"
+            href={`/proof/${task.id}`}
+            style={{ marginTop: 14 }}
+          >
+            Open the receipt for the answer
+          </a>
         </div>
       ) : null}
 
