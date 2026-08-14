@@ -2,8 +2,7 @@
 
 Bounties for physical work, settled by photograph against a written standard.
 
-Built by **InferNode**. Project 09 of 10 in the InferNode GenLayer build brief
-series.
+Built by **InferNode**.
 
 This document is the whole product in one place: what it is, what it refuses to
 claim, how the contract behaves in every state, how the site is wired to it, how
