@@ -42,6 +42,10 @@ type RawTask = {
   content_hash: string;
   phash: string;
   fixed_code: string;
+  code_visible: boolean;
+  same_place: boolean;
+  test_passed: boolean;
+  graded_at: string;
 };
 
 const ZERO = "0x0000000000000000000000000000000000000000";
@@ -52,11 +56,6 @@ function weiToWhole(wei: string): number {
   } catch {
     return 0;
   }
-}
-
-function short(addr: string): string {
-  if (!addr || addr === ZERO) return "";
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
 function toTask(raw: RawTask): Task {
@@ -80,7 +79,9 @@ function toTask(raw: RawTask): Task {
     // Distance is a viewer-relative idea, so it is not on chain.
     distanceM: 0,
     expiresAt: expires,
-    poster: short(raw.poster),
+    // Full, like claimedBy: the task page has to know whether the visitor is
+    // the poster before it can offer them a cancel.
+    poster: raw.poster && raw.poster !== ZERO ? raw.poster : "",
     // Full, not shortened: the task page compares this against the visitor's
     // wallet to tell "yours" from "someone else's".
     claimedBy:
@@ -92,15 +93,60 @@ function toTask(raw: RawTask): Task {
     contentHash: raw.content_hash || undefined,
     phash: raw.phash || undefined,
     fixedCode: raw.fixed_code || undefined,
-    verdict:
-      raw.status === "paid"
-        ? { codeVisible: true, samePlace: true, testPassed: true }
-        : undefined,
+    // Read, never inferred. This used to hard-code three green ticks for any
+    // paid task, which happened to be true (the contract only pays when all
+    // three pass) and was still the site making up data it had not been given.
+    // A rejected task got nothing at all, which is the case where the three
+    // actually matter.
+    verdict: raw.graded_at
+      ? {
+          codeVisible: !!raw.code_visible,
+          samePlace: !!raw.same_place,
+          testPassed: !!raw.test_passed,
+        }
+      : undefined,
+    gradedAt: raw.graded_at ? Date.parse(raw.graded_at + "Z") || undefined : undefined,
   };
 }
 
 function client() {
   return createClient({ chain });
+}
+
+/**
+ * The headline numbers, counted off the chain rather than written down.
+ *
+ * These were hard-coded: 1,204 settled, 83% first attempt pass, 4m median. On a
+ * product whose entire argument is that it does not overclaim, three invented
+ * numbers at the top of the front page were the least defensible thing on the
+ * site. The real figures are small, and small and true beats large and made up.
+ *
+ * `medianMinutes` is null until the contract records enough to compute one, and
+ * the interface shows a dash rather than a plausible number.
+ */
+export type LiveStats = {
+  settled: number;
+  paid: number;
+  rejected: number;
+  firstAttemptPassRate: number | null;
+  openNow: number;
+  committedGen: number;
+};
+
+export function statsFrom(tasks: Task[]): LiveStats {
+  const paid = tasks.filter((t) => t.status === "paid").length;
+  const rejected = tasks.filter((t) => t.status === "rejected").length;
+  const settled = paid + rejected;
+  return {
+    settled,
+    paid,
+    rejected,
+    firstAttemptPassRate: settled > 0 ? Math.round((paid / settled) * 100) : null,
+    openNow: tasks.filter((t) => t.status === "open").length,
+    committedGen: tasks
+      .filter((t) => t.status === "open" || t.status === "claimed")
+      .reduce((sum, t) => sum + t.reward, 0),
+  };
 }
 
 /**

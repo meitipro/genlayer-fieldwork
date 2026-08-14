@@ -138,6 +138,97 @@ function assertExecuted(receipt: any, what: string): void {
 }
 
 /**
+ * Withdraw a task the poster no longer wants, and get the money back.
+ *
+ * The contract has always supported this and the site never offered it, so a
+ * poster who funded a task nobody wanted had no way to recover the reward
+ * except by writing their own transaction. `cancel_task` refunds the reward and
+ * the fee together, and only works while the task is unpaid.
+ */
+export async function cancelTask(
+  address: `0x${string}`,
+  taskId: number,
+  onStage?: (s: Stage) => void
+): Promise<{ hash: string }> {
+  const client = writeClient(address, getProvider());
+  const hash = await client.writeContract({
+    address: FIELDWORK_CONTRACT,
+    functionName: "cancel_task",
+    args: [taskId],
+    value: BigInt(0),
+  });
+  onStage?.("sent");
+
+  const accepted: any = await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.ACCEPTED,
+  });
+  assertExecuted(accepted, "cancelling this task");
+  onStage?.("accepted");
+
+  // The refund is a value movement, so it only really happens on finality.
+  await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.FINALIZED,
+  });
+  onStage?.("finalized");
+  return { hash };
+}
+
+/**
+ * Who owns the contract, and how much fee is sitting in it.
+ *
+ * Only the owner can withdraw, and the site never showed either number, so a
+ * deployment with a non-zero fee quietly accumulated money nobody could see or
+ * collect. Returns null when the chain will not say.
+ */
+export async function ownerAndFees(): Promise<{
+  owner: string;
+  feesWei: bigint;
+  feeBps: number;
+} | null> {
+  try {
+    const c = readClient() as any;
+    const [owner, fees, bps] = await Promise.all([
+      c.readContract({ address: FIELDWORK_CONTRACT, functionName: "owner_address", args: [] }),
+      c.readContract({ address: FIELDWORK_CONTRACT, functionName: "fees_accrued_value", args: [] }),
+      c.readContract({ address: FIELDWORK_CONTRACT, functionName: "fee_bps_value", args: [] }),
+    ]);
+    return {
+      owner: String(owner),
+      feesWei: BigInt(String(fees ?? 0)),
+      feeBps: Number(bps ?? 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Collect the accrued fee. Owner only, and the contract enforces that. */
+export async function withdrawFees(
+  address: `0x${string}`,
+  to: `0x${string}`
+): Promise<{ hash: string }> {
+  const client = writeClient(address, getProvider());
+  const hash = await client.writeContract({
+    address: FIELDWORK_CONTRACT,
+    functionName: "withdraw_fees",
+    args: [to],
+    value: BigInt(0),
+  });
+  const accepted: any = await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.ACCEPTED,
+  });
+  assertExecuted(accepted, "withdrawing fees");
+  await client.waitForTransactionReceipt({
+    hash,
+    status: TransactionStatus.FINALIZED,
+  });
+  return { hash };
+}
+
+/**
  * How many tasks this address has been paid for.
  *
  * Read before claiming so the worker is told they are not eligible *before*

@@ -109,6 +109,20 @@ class Task:
     # is what makes the product testable and what makes it weaker. See
     # _clean_fixed_code.
     fixed_code: str
+    # The three judgements the graders agreed on, kept so a receipt can show
+    # them rather than the site inferring them.
+    #
+    # For a paid task they are all true by construction, so a frontend could
+    # guess. For a REJECTED one it could not: the difference between "the code
+    # was not legible" and "the work did not meet the test" is the difference
+    # between a retake and a wasted trip, and losing it was making rejected
+    # receipts say nothing a worker could act on.
+    code_visible: bool
+    same_place: bool
+    test_passed: bool
+    # "" until a submission has been graded at all, so a receipt can tell a
+    # verdict from an absence of one.
+    graded_at: str
 
 
 class Contract(gl.Contract):
@@ -403,6 +417,10 @@ class Contract(gl.Contract):
                 content_hash="",
                 phash="",
                 fixed_code=chosen_code,
+                code_visible=False,
+                same_place=False,
+                test_passed=False,
+                graded_at="",
             )
         )
         # The poster's frame is spent. Reusing it as a worker's after frame,
@@ -469,6 +487,11 @@ class Contract(gl.Contract):
         # Cheap checks first, so obvious reuse never pays for a vision call.
         after_cid = self._cid_of(after_url)
         if after_cid in self.seen_cids:
+            # The url is recorded even though this is a refusal. Every other
+            # rejection stores it, and a receipt that has a verdict but no
+            # photograph to show for it renders a broken image and tells the
+            # worker nothing about what was actually judged.
+            t.after_url = after_url
             t.reason = "this photograph was already used on another task"
             t.status = "rejected"
             SubmissionGraded(task_id, sender, status=t.status, reason=t.reason).emit()
@@ -614,6 +637,13 @@ class Contract(gl.Contract):
             SubmissionRefused(task_id, sender, reason=refused).emit()
             return t.status
 
+        # Written before the branch, so a rejected receipt says which judgement
+        # failed rather than only that something did.
+        t.code_visible = bool(v["code_visible"])
+        t.same_place = bool(v["same_place"])
+        t.test_passed = bool(v["test_passed"])
+        t.graded_at = self._now()
+
         if content_hash in self.seen_hashes:
             t.status = "rejected"
             t.reason = "this photograph was already used on another task"
@@ -724,6 +754,10 @@ class Contract(gl.Contract):
                 "content_hash": t.content_hash,
                 "phash": t.phash,
                 "fixed_code": t.fixed_code,
+                "code_visible": t.code_visible,
+                "same_place": t.same_place,
+                "test_passed": t.test_passed,
+                "graded_at": t.graded_at,
             },
             sort_keys=True,
         )
@@ -787,6 +821,22 @@ class Contract(gl.Contract):
     @gl.public.view
     def lng_e6_of(self, task_id: u256) -> i64:
         return self._require_task(task_id).lng_e6
+
+    @gl.public.view
+    def judgements_of(self, task_id: u256) -> str:
+        """The three agreed judgements, or "" if nothing has been graded yet."""
+        t = self._require_task(task_id)
+        if t.graded_at == "":
+            return ""
+        return json.dumps(
+            {
+                "code_visible": t.code_visible,
+                "same_place": t.same_place,
+                "test_passed": t.test_passed,
+                "graded_at": t.graded_at,
+            },
+            sort_keys=True,
+        )
 
     @gl.public.view
     def fixed_code_of(self, task_id: u256) -> str:

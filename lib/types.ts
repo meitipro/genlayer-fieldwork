@@ -43,18 +43,22 @@ export type Task = {
   contentHash?: string;
   /** Recorded for human reviewers. Never decides a verdict - see /limits. */
   phash?: string;
-  /** Consensus record, shown on the receipt. */
-  agreement?: { agreed: number; of: number };
-  paidAt?: number;
+  /**
+   * When the graders reached a verdict, from the contract.
+   *
+   * There is deliberately no `agreement` count here. How many validators agreed
+   * is consensus metadata on the transaction, not something the contract can
+   * see from inside itself, so the receipt cannot honestly print it. It used to
+   * be in this type, never populated, behind a condition that therefore never
+   * rendered - a promise the page could not keep.
+   */
+  /** Present only once a submission has actually been graded on chain. */
   verdict?: {
     codeVisible: boolean;
     samePlace: boolean;
     testPassed: boolean;
   };
+  /** Unix ms of the grading, from the contract. */
+  gradedAt?: number;
 };
 
-export type NetworkStats = {
-  tasksPaid: number;
-  firstTryPassRate: number;
-  medianMinutesToPayment: number;
-};

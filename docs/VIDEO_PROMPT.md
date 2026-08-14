@@ -92,7 +92,7 @@ poster, not one model, not one node.
 
 **7. The receipt.** Verdict and payment are one transaction. A public page is
 left behind carrying both photographs, the exact text they were graded against,
-the three judgements, and how many validators agreed. A link you can send
+the three judgements, and the reason given to the worker. A link you can send
 someone, not a row in a dashboard.
 
 ## Three details worth a beat each if there is room

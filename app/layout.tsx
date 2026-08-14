@@ -58,9 +58,15 @@ export default function RootLayout({
             </Link>
             <nav className="site-nav">
               <NavLink href="/map">Map</NavLink>
-              <NavLink href="/console">Console</NavLink>
-              <NavLink href="/receipts">Receipts</NavLink>
-              <NavLink href="/limits">Limits</NavLink>
+              <span className="nav-secondary">
+                <NavLink href="/console">Console</NavLink>
+              </span>
+              <span className="nav-secondary">
+                <NavLink href="/receipts">Receipts</NavLink>
+              </span>
+              <span className="nav-secondary">
+                <NavLink href="/limits">Limits</NavLink>
+              </span>
               <ThemeToggle />
               <Link href="/console" className="nav-cta">
                 Post a task

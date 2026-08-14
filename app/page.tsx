@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { EvidenceStack } from "@/components/EvidenceStack";
 import { SettlementNotice } from "@/components/SettlementNotice";
-import { STATS, formatDistance } from "@/lib/tasks";
-import { fetchTasks } from "@/lib/onchain";
+import { formatDistance } from "@/lib/tasks";
+import { fetchTasks, statsFrom } from "@/lib/onchain";
 import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
 export const revalidate = 5;
@@ -59,6 +59,7 @@ export default async function HomePage() {
   const all = await fetchTasks();
   const open = all.filter((t) => t.status === "open");
   const settled = all.filter((t) => t.status === "paid");
+  const stats = statsFrom(all);
 
   // The design shows three receipt slots, filling left to right.
   const slots = [0, 1, 2];
@@ -112,17 +113,21 @@ export default async function HomePage() {
             <div style={{ display: "flex", gap: 36, marginTop: 42, flexWrap: "wrap" }}>
               <div>
                 <div className="stat" style={{ color: "var(--accent)" }}>
-                  {STATS.tasksPaid.toLocaleString("en-GB")}
+                  {stats.settled.toLocaleString("en-GB")}
                 </div>
                 <div className="stat-label">Tasks settled</div>
               </div>
               <div>
-                <div className="stat">{STATS.firstTryPassRate}%</div>
+                <div className="stat">
+                  {stats.firstAttemptPassRate === null
+                    ? "-"
+                    : `${stats.firstAttemptPassRate}%`}
+                </div>
                 <div className="stat-label">First attempt pass</div>
               </div>
               <div>
-                <div className="stat">{STATS.medianMinutesToPayment}m</div>
-                <div className="stat-label">Median to settlement</div>
+                <div className="stat">{stats.openNow.toLocaleString("en-GB")}</div>
+                <div className="stat-label">Open right now</div>
               </div>
             </div>
           </div>
@@ -188,16 +193,18 @@ export default async function HomePage() {
             }
             return (
               <Link key={t.id} href={`/proof/${t.id}`} className="card card-media">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={t.afterUrl}
-                  alt="After the work"
-                  style={{
-                    width: "100%",
-                    display: "block",
-                    borderBottom: "1px solid var(--line)",
-                  }}
-                />
+                {t.afterUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={t.afterUrl}
+                    alt="After the work"
+                    style={{
+                      width: "100%",
+                      display: "block",
+                      borderBottom: "1px solid var(--line)",
+                    }}
+                  />
+                ) : null}
                 <div style={{ padding: "16px 18px" }}>
                   <span className="pill pill-accent">Paid</span>
                   <div style={{ fontWeight: 700, fontSize: 15.5, marginTop: 12 }}>

@@ -305,6 +305,12 @@ So it is **raised** as `[TRANSIENT]` instead, which routes it into
 The rule this encodes: **which model a node happens to be given is not a
 property of the bytes, so it must never be compared as though it were.**
 
+**Every rejection stores the photograph it rejected.** `t.after_url` is written
+before any branch in the deterministic half, and the early reuse check writes it
+too. Without that, a task refused for reuse had a verdict, a reason and no
+`after_url`, so its public receipt rendered a broken image next to the sentence
+explaining what was wrong with a photograph nobody could see.
+
 **2. Exact reuse, deterministic.** The CID is parsed out of the url before
 anything is fetched, and `sha256` of the after image is computed in the
 consensus block. Both are exact matches against everything already paid for.
@@ -459,6 +465,25 @@ Views are one per field (`status_of`, `reason_of`, `challenge_code_of`,
 `acceptance_test_of`, `reward_of`, `before_url_of`, `after_url_of`,
 `content_hash_of`, `reputation_of`, `total_tasks`, …). Run
 `genlayer schema <address>` for the full list.
+
+### The three judgements are stored, not inferred
+
+`Task` carries `code_visible`, `same_place`, `test_passed` and `graded_at`, and
+`submit` writes all four the moment the graders agree, **before** it branches
+into paid or rejected.
+
+They look redundant on a paid task, because `paid` already means all three were
+true. They are not redundant on a rejected one, and that is the case that
+matters: "the code was not legible" tells a worker to retake the photograph,
+"the test did not pass" tells them the work is not finished, and a bare
+`rejected` tells them to guess. The frontend used to hard-code three green ticks
+for any paid task and show nothing at all for a rejection, which was both made
+up and useless in the same breath.
+
+`graded_at` is `""` until something has actually been graded, so a receipt can
+tell an absent verdict from a negative one. A submission refused before the
+model ran - an unreadable file, a photograph already used - leaves it empty, and
+the receipt says so rather than printing three noes.
 
 ### Who supplies the before photograph
 

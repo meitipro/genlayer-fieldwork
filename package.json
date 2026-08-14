@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check": "node scripts/check.mjs"
   },
   "dependencies": {
     "genlayer-js": "^1.2.0",

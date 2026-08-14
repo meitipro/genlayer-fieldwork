@@ -535,7 +535,7 @@ def build():
             "7 - Settle",
             "Verdict and payment are one transaction. A public receipt is left behind: "
             "both photographs, the text they were graded against, the three judgements, "
-            "and how many validators agreed.",
+            "and the reason given to the worker.",
         ),
     ]
     for title, text in steps:

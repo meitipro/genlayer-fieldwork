@@ -27,7 +27,7 @@ const nextConfig = {
     /**
      * /api/contract-source reads contracts/fieldwork.py off disk at request
      * time. Next only bundles files it can trace statically from an import, and
-     * a runtime readFile is invisible to that — so on a serverless host the file
+     * a runtime readFile is invisible to that, so on a serverless host the file
      * is simply absent and the route 500s. This says: ship it anyway.
      *
      * That route is what /deploy hands to the chain, so without this the deploy

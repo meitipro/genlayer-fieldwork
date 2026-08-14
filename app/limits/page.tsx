@@ -83,15 +83,18 @@ export default function LimitsPage() {
         {IS_STUDIO ? (
           <Limit n={next()} title="On the Studio network the money does not move">
             <Para>
-              Funding a task moves GEN in correctly and paying out debits the
-              contract by exactly the right amount while the payee&apos;s balance
-              does not change - the contract is doing its part and Studio&apos;s
-              ledger does not apply the transfer
+              Funding a task moves GEN in correctly. Paying out does not: the
+              payout is delivered to the worker as a contract call, and a wallet
+              is not a contract, so it fails with <strong style={{ color: "var(--ink)" }}>not
+              found</strong> and no balance moves. Read off a real transaction,
+              not assumed
             </Para>
             <Para>
-              So a task here can read{" "}
-              <strong style={{ color: "var(--ink)" }}>paid</strong> without anyone
-              being richer - on a live network the same transaction pays
+              The verdict is finalised before the payment is even attempted, so
+              the failure cannot undo it. That is why a task here can read{" "}
+              <strong style={{ color: "var(--ink)" }}>paid</strong> off a real,
+              recorded, agreed verdict and still leave nobody richer. On a live
+              network the same transaction pays
             </Para>
           </Limit>
         ) : null}

@@ -70,6 +70,8 @@ CID_A = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzda"
 CID_B = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdb"
 URL_A = f"https://ipfs.io/ipfs/{CID_A}"
 URL_B = f"https://ipfs.io/ipfs/{CID_B}"
+CID_C = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdc"
+URL_C = f"https://ipfs.io/ipfs/{CID_C}"
 
 
 def photo(seed: int = 1, w: int = 1200, h: int = 900, shade: int = 150) -> bytes:
@@ -443,6 +445,82 @@ def test_http_urls_are_refused(contract, direct_vm, direct_alice, direct_bob):
     with pytest.raises(Exception) as err:
         contract.submit(task_id, f"http://ipfs.io/ipfs/{CID_B}")
     assert "https" in str(err.value)
+
+
+def test_a_rejection_records_which_judgement_failed(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The point of storing them: a rejected receipt has to say WHAT failed.
+
+    "The code was not legible" means retake it. "The test did not pass" means
+    the work is not done. Collapsing both into "rejected" wastes a trip."""
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm, code=True, place=True, passed=False, reason="bags still there")
+
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.submit(task_id, URL_B) == "rejected"
+
+    judged = json.loads(contract.judgements_of(task_id))
+    assert judged["code_visible"] is True
+    assert judged["same_place"] is True
+    assert judged["test_passed"] is False
+    assert judged["graded_at"] != ""
+
+
+def test_nothing_is_recorded_before_a_grading(contract, direct_vm, direct_alice):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice)
+    assert contract.judgements_of(task_id) == ""
+
+
+def test_a_paid_task_records_all_three(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.submit(task_id, URL_B) == "paid"
+
+    judged = json.loads(contract.judgements_of(task_id))
+    assert all(judged[k] for k in ("code_visible", "same_place", "test_passed"))
+
+
+def test_a_reuse_rejection_still_records_the_photograph(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    """A receipt with a verdict and no photograph is a broken image.
+
+    This path refuses before the vision call, so it used to return without
+    storing after_url at all - unlike every other rejection."""
+    # First task: pay it, so its CID lands in seen_cids.
+    first = _claimed(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.submit(first, URL_B) == "paid"
+
+    # Second task: submit the same photograph.
+    gradeable(direct_vm, True)
+    second = post(contract, direct_vm, direct_alice, before=URL_C)
+    direct_vm.sender = direct_charlie
+    contract.claim(second)
+    direct_vm.value = 0
+    assert contract.submit(second, URL_B) == "rejected"
+
+    assert "already used" in contract.reason_of(second)
+    assert contract.after_url_of(second) == URL_B, (
+        "the rejected photograph must be on the task, or its receipt has "
+        "a verdict and nothing to show for it"
+    )
 
 
 # ---------------------------------------------------------------- abandonment

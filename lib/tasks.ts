@@ -1,4 +1,4 @@
-import type { NetworkStats, Task } from "./types";
+import type { Task } from "./types";
 
 /* Seed records.
    The launch checklist asks for ten real records before any announcement;
@@ -30,7 +30,7 @@ export const TASKS: Task[] = [
     status: "paid",
     distanceM: 800,
     expiresAt: T0 + 2 * HOUR,
-    poster: "0x91c4…7a2f",
+    poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
     challengeCode: "K73QXB",
     reason: "Wall and ground clear in the after frame, code legible in both.",
@@ -39,8 +39,7 @@ export const TASKS: Task[] = [
     contentHash:
       "b31a9c0e5f74d2688a1c47f0e9d3b6521c8ae4f7920d5b3ce16a8f4d27b90cc3",
     phash: "3c1e0f0f87c3e1f0",
-    agreement: { agreed: 4, of: 5 },
-    paidAt: T0,
+    gradedAt: T0,
     verdict: { codeVisible: true, samePlace: true, testPassed: true },
   },
   {
@@ -60,7 +59,7 @@ export const TASKS: Task[] = [
     status: "open",
     distanceM: 1400,
     expiresAt: T0 + 5 * HOUR,
-    poster: "0x77ab…31c9",
+    poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
   {
     id: 4473,
@@ -79,7 +78,7 @@ export const TASKS: Task[] = [
     status: "open",
     distanceM: 2100,
     expiresAt: T0 + 24 * HOUR,
-    poster: "0x77ab…31c9",
+    poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
   {
     id: 4474,
@@ -98,7 +97,7 @@ export const TASKS: Task[] = [
     status: "claimed",
     distanceM: 3200,
     expiresAt: T0 + 40 * MIN,
-    poster: "0x91c4…7a2f",
+    poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x8ee1F70B3c92Ad48e5136Ba7c0498fE2dD104d72",
     challengeCode: "M2P9WD",
   },
@@ -118,22 +117,12 @@ export const TASKS: Task[] = [
     status: "rejected",
     distanceM: 4100,
     expiresAt: T0 + 90 * MIN,
-    poster: "0x2b60…ff18",
+    poster: "0x2b60D9e4Ac71fB3506d2856c9fA0e83bC5D2ff18",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
     challengeCode: "R4TJ8N",
     reason: "The code is not legible in the after photo, retake it closer.",
   },
 ];
-
-export const STATS: NetworkStats = {
-  tasksPaid: 1204,
-  firstTryPassRate: 83,
-  medianMinutesToPayment: 4,
-};
-
-export function listTasks(): Task[] {
-  return TASKS;
-}
 
 export function openTasks(): Task[] {
   return TASKS.filter((t) => t.status === "open");
@@ -192,4 +181,3 @@ export function formatStamp(ms: number): string {
 }
 
 /** The epoch the seed records are written against. */
-export const SEED_NOW = T0;

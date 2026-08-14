@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TaskMap } from "@/components/TaskMap";
 import { PostTaskForm } from "@/components/PostTaskForm";
-import { STATS } from "@/lib/tasks";
-import { fetchTasks } from "@/lib/onchain";
+import { fetchTasks, statsFrom } from "@/lib/onchain";
 
 export const revalidate = 5;
 
@@ -33,11 +32,11 @@ function Assurance({ title, children }: { title: string; children: React.ReactNo
 
 export default async function ConsolePage() {
   const tasks = await fetchTasks();
-  const funded = tasks.reduce((sum, t) => sum + t.reward, 0);
-  const paid = tasks.filter((t) => t.status === "paid");
-  const rejected = tasks.filter((t) => t.status === "rejected");
-  const settled = paid.length + rejected.length;
-  const passRate = settled ? Math.round((paid.length / settled) * 100) : 0;
+  const stats = statsFrom(tasks);
+  // Money still locked in the contract, not everything ever spent. A settled
+  // task's reward has left, so counting it as "committed" overstated what the
+  // poster still has at stake.
+  const committed = stats.committedGen;
 
   return (
     <>
@@ -68,21 +67,21 @@ export default async function ConsolePage() {
                 color: "var(--accent)",
               }}
             >
-              {funded} GEN
+              {committed} GEN
             </div>
-            <div className="stat-label">Budget committed</div>
+            <div className="stat-label">Locked in tasks</div>
           </div>
           <div>
             <div style={{ font: "700 28px var(--mono)", letterSpacing: "-0.02em" }}>
-              {passRate}%
+              {stats.firstAttemptPassRate === null ? "-" : `${stats.firstAttemptPassRate}%`}
             </div>
-            <div className="stat-label">Pass rate</div>
+            <div className="stat-label">First attempt pass</div>
           </div>
           <div>
             <div style={{ font: "700 28px var(--mono)", letterSpacing: "-0.02em" }}>
-              {STATS.medianMinutesToPayment}m
+              {stats.rejected}
             </div>
-            <div className="stat-label">Median to settlement</div>
+            <div className="stat-label">Rejected</div>
           </div>
         </div>
       </div>

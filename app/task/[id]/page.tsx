@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ClaimButton } from "@/components/ClaimButton";
 import { ClaimState } from "@/components/ClaimState";
+import { CancelTask } from "@/components/CancelTask";
 import { formatDistance, formatWindow } from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
 import { Unavailable } from "@/components/Unavailable";
@@ -30,8 +31,24 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
   if (found.status === "missing") notFound();
   const task = found.task;
 
-  const claimable = task.status === "open";
   const now = Date.now();
+
+  /* The contract's own rule, mirrored so the button matches what will happen.
+     `claim` calls `_abandoned` first and returns an expired task to the pool
+     before checking whether it is open, so a `claimed` or `rejected` task whose
+     window has run out is claimable by anyone - including the person whose
+     claim it was. Showing "claimed by someone else" there was wrong: it hid a
+     task that is genuinely available. */
+  const stale =
+    (task.status === "claimed" || task.status === "rejected") &&
+    task.expiresAt > 0 &&
+    now > task.expiresAt;
+  const claimable = task.status === "open" || stale;
+  /* A rejection leaves the claim with its owner so they can retake inside the
+     same window, so a live `rejected` task belongs to its claimant exactly as a
+     `claimed` one does. */
+  const heldByClaimant =
+    !stale && (task.status === "claimed" || task.status === "rejected");
 
   return (
     <div style={{ maxWidth: 820, margin: "0 auto", padding: "34px 30px 0" }}>
@@ -239,7 +256,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       <div style={{ marginTop: 20 }}>
         {claimable ? (
           <ClaimButton taskId={task.id} minReputation={task.minReputation} />
-        ) : task.status === "claimed" ? (
+        ) : heldByClaimant ? (
           // Whether this is "yours" or "someone else's" depends on who is
           // looking, which the server cannot know.
           <ClaimState
@@ -247,10 +264,16 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
             claimedBy={task.claimedBy}
             challengeCode={task.challengeCode}
             expiresAt={task.expiresAt}
+            rejected={task.status === "rejected"}
+            reason={task.reason}
           />
         ) : (
           <button className="btn btn-primary btn-lg" disabled>
-            {task.status === "paid" ? "Already paid" : "Not open"}
+            {task.status === "paid"
+              ? "Already settled"
+              : task.status === "cancelled"
+                ? "The poster cancelled this task"
+                : "Not open"}
           </button>
         )}
       </div>
@@ -268,6 +291,14 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
           to this moment
         </p>
       ) : null}
+
+      {/* The contract allows a cancel while the task is open or rejected. */}
+      <CancelTask
+        taskId={task.id}
+        poster={task.poster}
+        reward={task.reward}
+        cancellable={task.status === "open" || task.status === "rejected"}
+      />
 
       {task.status === "paid" ? (
         <p style={{ marginTop: 14 }}>

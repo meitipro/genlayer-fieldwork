@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DeployPanel } from "@/components/DeployPanel";
+import { OwnerPanel } from "@/components/OwnerPanel";
 import { CHAIN_NAME, EXPLORER, IS_STUDIO, NETWORK } from "@/lib/chain";
 
 export const metadata: Metadata = {
@@ -28,6 +29,10 @@ export default function DeployPage() {
       <div style={{ marginTop: 22 }}>
         <DeployPanel />
       </div>
+
+      {/* Only renders against a live contract, and the withdrawal only for the
+          address that owns it. */}
+      <OwnerPanel />
 
       <h2 style={{ marginTop: 36, fontSize: 22 }}>
         Before you press it

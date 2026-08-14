@@ -97,12 +97,22 @@ export default async function MapPage() {
                 <Link href={`/task/${t.id}`} style={{ fontWeight: 700 }}>
                   {t.title}
                 </Link>
-                <span style={{ fontSize: 13.5, color: "var(--muted)" }}>{t.place}</span>
-                <span style={{ font: "500 12.5px var(--mono)", color: "var(--dim)" }}>
+                <span data-label="Where" style={{ fontSize: 13.5, color: "var(--muted)" }}>
+                  {t.place}
+                </span>
+                <span
+                  data-label="Distance"
+                  style={{ font: "500 12.5px var(--mono)", color: "var(--dim)" }}
+                >
                   {t.distanceM > 0 ? formatDistance(t.distanceM) : "-"}
                 </span>
-                <span style={{ font: "700 15px var(--mono)" }}>{t.reward} GEN</span>
-                <span style={{ font: "500 12px var(--mono)", color: "var(--muted)" }}>
+                <span data-label="Reward" style={{ font: "700 15px var(--mono)" }}>
+                  {t.reward} GEN
+                </span>
+                <span
+                  data-label="Window"
+                  style={{ font: "500 12px var(--mono)", color: "var(--muted)" }}
+                >
                   {formatWindow(t, now)}
                 </span>
               </div>

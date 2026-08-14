@@ -70,7 +70,10 @@ export function PostTaskForm() {
     form.examplePass.trim() !== "" &&
     form.exampleFail.trim() !== "" &&
     form.reward > 0 &&
-    !!before;
+    !!before &&
+    // The contract wants exactly six or nothing at all. Half a code is the one
+    // way to fill this field in and still be refused, so it is caught here.
+    (form.fixedCode.length === 0 || form.fixedCode.length === 6);
 
   async function onSubmit() {
     setError("");
@@ -313,6 +316,20 @@ export function PostTaskForm() {
               letterSpacing: "0.18em",
             }}
           />
+          {form.fixedCode.length > 0 && form.fixedCode.length < 6 ? (
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 12.5,
+                lineHeight: 1.6,
+                color: "var(--danger)",
+              }}
+            >
+              {6 - form.fixedCode.length} more character
+              {6 - form.fixedCode.length === 1 ? "" : "s"} needed, or clear the
+              field to have the contract issue one.
+            </p>
+          ) : null}
           <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
             Normally the contract issues the code when someone claims, so nobody
             can know it in advance. That is what proves the photograph was taken

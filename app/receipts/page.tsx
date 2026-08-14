@@ -28,8 +28,8 @@ export default async function ReceiptsPage() {
       <h1 style={{ fontSize: 42, marginTop: 14 }}>Everything that settled</h1>
       <p className="lede" style={{ marginTop: 14, maxWidth: "62ch" }}>
         Each one carries both photographs, the text it was graded against, the
-        three judgements and how many validators agreed - rejections are here
-        too, because a wall of only successes proves nothing
+        three judgements and the reason the worker was given - rejections are
+        here too, because a wall of only successes proves nothing
       </p>
 
       {settled.length > 0 ? (
@@ -93,9 +93,7 @@ export default async function ReceiptsPage() {
                     }}
                   >
                     {t.reward} GEN - task {t.id}
-                    {t.status === "paid" && t.paidAt
-                      ? ` - ${formatStamp(t.paidAt)}`
-                      : ""}
+                    {t.gradedAt ? ` - ${formatStamp(t.gradedAt)}` : ""}
                   </div>
                 </div>
               </Link>

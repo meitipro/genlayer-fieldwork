@@ -63,11 +63,16 @@ export function ClaimState({
   claimedBy,
   challengeCode,
   expiresAt,
+  rejected = false,
+  reason,
 }: {
   taskId: number;
   claimedBy?: string;
   challengeCode?: string;
   expiresAt: number;
+  /** A rejection keeps the claim, so the holder can retake inside the window. */
+  rejected?: boolean;
+  reason?: string;
 }) {
   const owned = useOwnership(claimedBy);
 
@@ -119,7 +124,9 @@ export function ClaimState({
   return (
     <div className="panel panel-2">
       <div className="spread">
-        <div className="eyebrow eyebrow-accent">This task is yours</div>
+        <div className="eyebrow eyebrow-accent">
+          {rejected ? "Still yours, and worth another go" : "This task is yours"}
+        </div>
         {minutesLeft !== null ? (
           <span
             style={{
@@ -147,8 +154,23 @@ export function ClaimState({
         </div>
       ) : null}
 
+      {rejected && reason ? (
+        <p
+          style={{
+            margin: "10px 0 0",
+            color: "var(--danger)",
+            lineHeight: 1.6,
+            fontSize: 14.5,
+          }}
+        >
+          {reason}
+        </p>
+      ) : null}
+
       <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
-        Write that code on paper and keep it in frame in the photograph you take.
+        {rejected
+          ? "A rejection does not cost you the claim. Fix that one thing, keep the code in frame, and submit again inside the window."
+          : "Write that code on paper and keep it in frame in the photograph you take."}
       </p>
 
       <Link
@@ -156,7 +178,7 @@ export function ClaimState({
         href={`/submit/${taskId}`}
         style={{ marginTop: 14 }}
       >
-        Take the photograph
+        {rejected ? "Retake the photograph" : "Take the photograph"}
       </Link>
     </div>
   );
