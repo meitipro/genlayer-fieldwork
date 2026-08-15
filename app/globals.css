@@ -271,6 +271,47 @@ img {
   color: var(--muted);
 }
 
+/* Wallet and faucet, in the header. Relative so the confirmation can hang
+   under it without moving the row. */
+.wallet-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.wallet-note {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  white-space: nowrap;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 10px 24px var(--shadow);
+}
+
+/* On a phone the header keeps the faucet and drops the address button, because
+   funding is the thing a visitor cannot do any other way. The wallet still
+   connects from the first action that needs it. */
+@media (max-width: 760px) {
+  .wallet-bar {
+    gap: 6px;
+  }
+  .wallet-bar button:last-of-type {
+    display: none;
+  }
+  .wallet-note {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 /* The signature. Its own row under a hairline, centred, quiet. */
 .site-foot-credit {
   max-width: var(--wrap);

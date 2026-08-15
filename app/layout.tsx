@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Mark } from "@/components/Logo";
 import { NavLink } from "@/components/NavLink";
 import { ThemeToggle, THEME_BOOT } from "@/components/Theme";
+import { WalletBar } from "@/components/WalletBar";
 import { CHAIN_LABEL, NETWORK } from "@/lib/chain";
 import "./globals.css";
 
@@ -67,6 +68,7 @@ export default function RootLayout({
               <span className="nav-secondary">
                 <NavLink href="/how-it-works">How it works</NavLink>
               </span>
+              <WalletBar />
               <ThemeToggle />
               <Link href="/console" className="nav-cta">
                 Post a task
