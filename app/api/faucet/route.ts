@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 /** Whole GEN handed out per request. Not exported: a route file may only
  *  export the handler names Next recognises, and anything else fails the
  *  build with a constraint error on the generated route types. */
-const FAUCET_GEN = 30;
+const FAUCET_GEN = 100;
 
 /**
  * The amount goes as a decimal STRING, and that is not a style choice.

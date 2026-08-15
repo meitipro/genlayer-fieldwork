@@ -76,8 +76,32 @@ export function PostTaskForm() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function fillExample() {
-    setForm((f) => ({ ...f, ...EXAMPLE }));
+  /**
+   * One press fills the whole form, photograph included, as a labelled test
+   * task.
+   *
+   * This used to fill the text and leave the photograph empty, which stranded
+   * exactly the person it exists for: someone trying the product for the first
+   * time has no "before" photograph of anything, so the example was a form
+   * they still could not send. The sample frame ships with the site, and the
+   * code is set to TEST42 because that is the code drawn inside the matching
+   * sample "after" frame the submit screen offers.
+   */
+  async function fillExample() {
+    setForm((f) => ({ ...f, ...EXAMPLE, fixedCode: "TEST42", claimMinutes: 1440 }));
+    try {
+      const res = await fetch("/samples/bins-before.jpg");
+      if (res.ok) {
+        const blob = await res.blob();
+        setBefore((old) => {
+          if (old) URL.revokeObjectURL(old.url);
+          return { blob, url: URL.createObjectURL(blob) };
+        });
+      }
+    } catch {
+      // The text is still filled; the photograph field simply stays theirs to
+      // provide, exactly as before.
+    }
   }
 
   const ready =
@@ -192,7 +216,7 @@ export function PostTaskForm() {
       <div className="spread">
         <div className="eyebrow">New task</div>
         <button className="btn-ghost-sm" type="button" onClick={fillExample}>
-          Use the example
+          Fill with the example task
         </button>
       </div>
 

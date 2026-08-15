@@ -57,17 +57,21 @@ export default function RootLayout({
               <Mark size={20} />
               <span className="brand-word">fieldwork</span>
             </Link>
+            {/* Two groups, not one long row. The links are one job and the
+                wallet is another, and running them together is what pushed the
+                call to action onto a second line once the faucet arrived.
+                "How it works" moved to the footer to buy the space back. */}
             <nav className="site-nav">
-              <NavLink href="/map">Map</NavLink>
-              <span className="nav-secondary">
-                <NavLink href="/console">Console</NavLink>
+              <span className="nav-links">
+                <NavLink href="/map">Map</NavLink>
+                <span className="nav-secondary">
+                  <NavLink href="/console">Console</NavLink>
+                </span>
+                <span className="nav-secondary">
+                  <NavLink href="/receipts">Receipts</NavLink>
+                </span>
               </span>
-              <span className="nav-secondary">
-                <NavLink href="/receipts">Receipts</NavLink>
-              </span>
-              <span className="nav-secondary">
-                <NavLink href="/how-it-works">How it works</NavLink>
-              </span>
+              <span className="nav-rule" aria-hidden="true" />
               <WalletBar />
               <ThemeToggle />
               <Link href="/console" className="nav-cta">

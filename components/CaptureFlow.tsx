@@ -320,6 +320,31 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
           <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--muted)" }}>
             Keep the code in frame - only this one is yours to take
           </p>
+          {/* Only on the shipped example. The sample frame has TEST42 drawn
+              inside it, so offering it on any other task would hand the grader
+              a photograph carrying the wrong code - and the wrong scene. */}
+          {task.fixedCode === "TEST42" ? (
+            <button
+              type="button"
+              className="btn-ghost-sm"
+              style={{ marginTop: 8 }}
+              onClick={async () => {
+                try {
+                  const res = await fetch("/samples/bins-after.jpg");
+                  if (!res.ok) return;
+                  const blob = await res.blob();
+                  setAfter((old) => {
+                    if (old) URL.revokeObjectURL(old.url);
+                    return { blob, url: URL.createObjectURL(blob) };
+                  });
+                } catch {
+                  // the tile stays empty and the camera path still works
+                }
+              }}
+            >
+              Use the sample photograph
+            </button>
+          ) : null}
         </div>
       </div>
 

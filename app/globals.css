@@ -228,14 +228,40 @@ img {
   letter-spacing: -0.02em;
 }
 
+/* One row, always. Every child holds its size and nothing wraps: the header is
+   on every screen, so a second line there moves the whole page down.
+   `min-width: 0` on the flex parent lets the link group shrink first if the
+   viewport ever gets tight, rather than the buttons being pushed out. */
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 14px;
+  min-width: 0;
   font: 500 12.5px var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.site-nav > * {
+  flex: 0 0 auto;
+}
+
+/* The navigation half, grouped so the gap between links can be wider than the
+   gap between the controls. */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* A hairline between the two jobs. It is what makes the row read as
+   "navigation, then wallet" instead of one undifferentiated queue. */
+.nav-rule {
+  width: 1px;
+  height: 20px;
+  background: var(--line2);
 }
 
 .site-nav a[data-active="true"] {
@@ -477,6 +503,9 @@ img {
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
+  /* The one thing in the header that must never break in half. It did, the
+     moment the wallet buttons joined the row. */
+  white-space: nowrap;
 }
 
 .nav-cta:hover {
@@ -938,13 +967,18 @@ input[type="checkbox"] {
     gap: 10px;
   }
   .site-nav {
+    gap: 9px;
+  }
+  .nav-links {
     gap: 12px;
   }
-  .site-nav .nav-secondary {
+  .site-nav .nav-secondary,
+  .nav-rule {
     display: none;
   }
-  .nav-cta {
-    padding: 0 12px;
+  .nav-cta,
+  .btn-mono {
+    padding: 0 11px;
     height: 34px;
   }
   .site-foot-inner {
@@ -954,11 +988,19 @@ input[type="checkbox"] {
 
 @media (max-width: 380px) {
   .site-nav {
-    gap: 10px;
+    gap: 7px;
     font-size: 11px;
+  }
+  .nav-links {
+    gap: 9px;
   }
   .brand-word {
     display: none;
+  }
+  .nav-cta,
+  .btn-mono {
+    padding: 0 9px;
+    font-size: 10.5px;
   }
 }
 

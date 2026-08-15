@@ -10,7 +10,7 @@ import { IS_STUDIO, connectWallet, humanError } from "@/lib/genlayer";
    which is only true of gas: posting a task is payable, so a fresh wallet could
    read the whole site and fund nothing. */
 
-const FAUCET_GEN = 30;
+const FAUCET_GEN = 100;
 
 function short(a: string): string {
   return `${a.slice(0, 6)}...${a.slice(-4)}`;
