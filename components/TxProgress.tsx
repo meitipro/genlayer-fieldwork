@@ -10,14 +10,14 @@ import { type Stage } from "@/lib/genlayer";
    done. So the site announced verdicts it did not have yet, and a slow chain
    read as a hang.
 
-   This says the same three things everywhere: which step we are on, how long it
-   has taken, and roughly how long it should take. The estimate is a real
-   measurement, not a guess, and it is stated as "usually" because a chain does
-   not make promises. */
+   This says the same three things everywhere: which step we are on, why that
+   step exists, and how long it has actually been running. Nothing here predicts
+   how long is left, because nothing here knows. */
 
 const LABEL: Record<Stage, string> = {
   idle: "",
   uploading: "Uploading your photograph",
+  verifying: "Storage was not ready, trying again",
   sent: "Sent to the network, waiting for a validator",
   accepted: "Executed, waiting for the network to agree",
   confirming: "Agreed, confirming before we answer",
@@ -28,6 +28,8 @@ const LABEL: Record<Stage, string> = {
 const DETAIL: Record<Stage, string> = {
   idle: "",
   uploading: "It goes to content addressed storage, so every validator reads the same bytes.",
+  verifying:
+    "The graders could not fetch your photograph yet, which happens for a short while after it is stored. Nothing is wrong with it and nothing is lost - this is the same transaction being sent again.",
   sent: "Nothing has been decided yet.",
   accepted:
     "A result exists but consensus can still rotate to another validator, so it is not an answer yet.",

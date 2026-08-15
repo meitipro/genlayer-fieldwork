@@ -93,5 +93,42 @@ export async function POST(req: Request) {
 
   const json = await res.json();
   const cid = json.IpfsHash as string;
-  return NextResponse.json({ cid, url: `${GATEWAY}/ipfs/${cid}` });
+  const url = `${GATEWAY}/ipfs/${cid}`;
+
+  // Warm the gateway from here, not from the browser.
+  //
+  // A pin returns as soon as the content id exists, which is before the CDN
+  // will answer for it. The browser used to do this check, and it proved the
+  // wrong thing: it showed that the edge nearest the *user* had the file, while
+  // the validators fetch through the edge nearest *them*. A submission that
+  // looked verified in the browser still came back
+  // "the after photograph is not readable from storage yet (404)".
+  //
+  // Asking from the server does two useful things: it is the machine that just
+  // pinned the file, and each request pulls the object from origin into another
+  // edge, which is what actually makes it fetchable elsewhere. It is still not
+  // a guarantee for every region, which is why the client also retries a
+  // transient refusal rather than trusting this alone.
+  // Twenty attempts rather than six. Cloudflare sits in front of Pinata and
+  // caches per edge, so the first fetch that misses is the one that makes the
+  // origin materialise the object - and a fresh pin can answer 404 at the
+  // origin for a while. This keeps asking until it stops.
+  let served = false;
+  for (let i = 0; i < 20; i++) {
+    try {
+      const probe = await fetch(url, { method: "GET", cache: "no-store" });
+      if (probe.ok && (probe.headers.get("content-type") || "").startsWith("image/")) {
+        // Drain it. An unread body can leave the object half pulled through
+        // the edge, which defeats the point of asking.
+        await probe.arrayBuffer();
+        served = true;
+        break;
+      }
+    } catch {
+      // keep trying
+    }
+    await new Promise((r) => setTimeout(r, 900));
+  }
+
+  return NextResponse.json({ cid, url, served });
 }

@@ -25,6 +25,49 @@ export type Normalised = {
   bytes: number;
 };
 
+/**
+ * Give a shipped sample photograph bytes of its own, so it can be submitted
+ * more than once across the life of a contract.
+ *
+ * The contract records the content id of every accepted photograph and refuses
+ * a repeat, which is the reuse defence working exactly as intended. But the
+ * sample frame is one fixed file, so the second person ever to run the demo
+ * would submit byte-identical content and be told their photograph had already
+ * been used - a correct refusal that reads as a broken product.
+ *
+ * Stamping a patch of random colour in the far corner makes each run a
+ * genuinely different photograph, which is also what reality does: two shots of
+ * the same bins are never identical. A full 16px block rather than a pixel,
+ * because anything smaller can be quantised away when the canvas re-encodes to
+ * JPEG, and the corner rather than the centre so it can never sit near the
+ * paper the code is written on.
+ */
+export async function uniquifySample(file: Blob): Promise<Blob> {
+  const bitmap = await loadBitmap(file);
+  const w = bitmap.width;
+  const h = bitmap.height;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+
+  ctx.drawImage(bitmap as CanvasImageSource, 0, 0, w, h);
+  if ("close" in bitmap && typeof bitmap.close === "function") bitmap.close();
+
+  const n = 16;
+  ctx.fillStyle = `rgb(${Math.floor(Math.random() * 90)},${Math.floor(
+    Math.random() * 90
+  )},${Math.floor(Math.random() * 90)})`;
+  ctx.fillRect(0, h - n, n, n);
+
+  const out = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY)
+  );
+  return out ?? file;
+}
+
 export async function normalisePhoto(file: Blob): Promise<Normalised> {
   const bitmap = await loadBitmap(file);
 

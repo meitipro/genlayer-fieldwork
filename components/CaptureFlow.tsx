@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/types";
 import { formatRemaining } from "@/lib/tasks";
+import { uniquifySample } from "@/lib/image";
 import { ChallengeCode } from "./ChallengeCode";
 import { SettlementNotice } from "./SettlementNotice";
 import {
@@ -197,6 +198,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
 
   const busy =
     stage === "uploading" ||
+    stage === "verifying" ||
     stage === "sent" ||
     stage === "accepted" ||
     stage === "confirming";
@@ -205,6 +207,8 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
     switch (stage) {
       case "uploading":
         return "uploading your photograph";
+      case "verifying":
+        return "storage was not ready, trying again";
       case "sent":
         return "graders are reading the evidence";
       case "accepted":
@@ -332,7 +336,11 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
                 try {
                   const res = await fetch("/samples/bins-after.jpg");
                   if (!res.ok) return;
-                  const blob = await res.blob();
+                  // Stamped unique per run. The contract refuses a content id
+                  // it has already paid for, so the fixed sample file would
+                  // work exactly once per deployment and every visitor after
+                  // the first would be told their photograph was reused.
+                  const blob = await uniquifySample(await res.blob());
                   setAfter((old) => {
                     if (old) URL.revokeObjectURL(old.url);
                     return { blob, url: URL.createObjectURL(blob) };

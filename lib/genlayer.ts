@@ -366,6 +366,15 @@ export function humanError(raw: unknown): string {
 export type Stage =
   | "idle"
   | "uploading"
+  /**
+   * Waiting for storage to actually serve the photograph back.
+   *
+   * Its own stage because it is slow and it is not uploading. The gateway takes
+   * four to seven seconds to answer even for content pinned months ago, so
+   * folding it into "uploading" left the interface sitting on a finished step
+   * with nothing to show for the wait.
+   */
+  | "verifying"
   | "sent"
   | "accepted"
   | "confirming"
@@ -438,21 +447,39 @@ export async function submitPhotographs(opts: {
   // Only the finished state is uploaded here - the before frame belongs to the
   // poster and was fixed when the task was funded.
   const ready = await normalisePhoto(after);
-  const afterUrl = await putToCAS(ready.blob);
+  const afterUrl = await putToCAS(ready.blob, onStage);
 
   const client = writeClient(address, getProvider());
-  const hash = await client.writeContract({
-    address: FIELDWORK_CONTRACT,
-    functionName: "submit",
-    args: [taskId, afterUrl],
-    value: BigInt(0),
-  });
 
-  onStage?.("sent");
+  // Send, and send again if the only thing wrong was that storage had not
+  // caught up. The contract labels that refusal `[TRANSIENT]` precisely because
+  // it is worth another go, the photograph is already pinned, and the claim is
+  // still the worker's - so a retry costs a wait rather than anything real.
+  // Anything else is a genuine verdict and is raised immediately.
+  let hash = "";
+  let accepted: any;
+  for (let attempt = 1; ; attempt++) {
+    hash = await client.writeContract({
+      address: FIELDWORK_CONTRACT,
+      functionName: "submit",
+      args: [taskId, afterUrl],
+      value: BigInt(0),
+    });
 
-  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
+    onStage?.("sent");
+    accepted = await waitFor(client, hash, TransactionStatus.ACCEPTED);
+
+    try {
+      assertExecuted(accepted, "your submission");
+      break;
+    } catch (e) {
+      if (attempt >= STORAGE_RETRIES.length + 1 || !isStorageNotReadyYet(e)) throw e;
+      onStage?.("verifying");
+      await new Promise((r) => setTimeout(r, STORAGE_RETRIES[attempt - 1]));
+    }
+  }
+
   onStage?.("accepted");
-  assertExecuted(accepted, "your submission");
 
   // Nothing is said here, deliberately. The verdict is readable off this
   // receipt and it is not final: consensus can still rotate. So wait for
@@ -557,48 +584,68 @@ export async function postTask(
   // any url that is not content addressed.
   onStage?.("uploading");
   const beforeReady = await normalisePhoto(input.before);
-  const beforeUrl = await putToCAS(beforeReady.blob);
-
-  let feeBps = 600;
-  try {
-    const raw: any = await readClient().readContract({
+  // The fee read runs alongside the upload rather than after it. Both are
+  // network round trips against different hosts, and the gateway probe alone
+  // costs several seconds, so serialising them was adding a wait for nothing.
+  const feePromise = readClient()
+    .readContract({
       address: FIELDWORK_CONTRACT,
       functionName: "fee_bps_value",
       args: [],
-    });
-    feeBps = Number(raw);
-  } catch {
-    // fall back to the deployed default rather than blocking the post
-  }
+    })
+    .then((raw: any) => Number(raw))
+    // Fall back to the deployed default rather than blocking the post.
+    .catch(() => 600);
+
+  const beforeUrl = await putToCAS(beforeReady.blob, onStage);
+  const feeRaw = await feePromise;
+  const feeBps = Number.isFinite(feeRaw) ? feeRaw : 600;
 
   const rewardWei = toWei(input.reward);
   const value = rewardWei + (rewardWei * BigInt(feeBps)) / BigInt(10000);
 
-  const hash = await client.writeContract({
-    address: FIELDWORK_CONTRACT,
-    functionName: "post_task",
-    args: [
-      input.title,
-      input.place,
-      input.acceptanceTest,
-      input.examplePass,
-      input.exampleFail,
-      beforeUrl,
-      input.latE6,
-      input.lngE6,
-      rewardWei,
-      input.minReputation,
-      (input.fixedCode ?? "").trim().toUpperCase(),
-      Math.max(0, Math.round(input.claimMinutes ?? 0)),
-    ],
-    value,
-  });
+  // Same retry as a submission, for the same reason: the poster's photograph is
+  // pinned but the gateway may not answer for it yet from wherever a validator
+  // sits, and the contract calls that `[TRANSIENT]` because it is worth another
+  // go. A refusal about the acceptance test or the photograph itself is a real
+  // answer and is raised on the first attempt.
+  let hash = "";
+  let accepted: any;
+  for (let attempt = 1; ; attempt++) {
+    hash = await client.writeContract({
+      address: FIELDWORK_CONTRACT,
+      functionName: "post_task",
+      args: [
+        input.title,
+        input.place,
+        input.acceptanceTest,
+        input.examplePass,
+        input.exampleFail,
+        beforeUrl,
+        input.latE6,
+        input.lngE6,
+        rewardWei,
+        input.minReputation,
+        (input.fixedCode ?? "").trim().toUpperCase(),
+        Math.max(0, Math.round(input.claimMinutes ?? 0)),
+      ],
+      value,
+    });
 
-  onStage?.("sent");
+    onStage?.("sent");
+    accepted = await waitFor(client, hash, TransactionStatus.ACCEPTED);
 
-  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
+    try {
+      assertExecuted(accepted, "posting this task");
+      break;
+    } catch (e) {
+      if (attempt >= STORAGE_RETRIES.length + 1 || !isStorageNotReadyYet(e)) throw e;
+      onStage?.("verifying");
+      await new Promise((r) => setTimeout(r, STORAGE_RETRIES[attempt - 1]));
+    }
+  }
+
   onStage?.("accepted");
-  assertExecuted(accepted, "posting this task");
 
   // The task exists on acceptance and its money is only committed on finality,
   // so the poster hears nothing until then.
@@ -685,7 +732,10 @@ export async function claimTask(
  * Routed through our own endpoint so the storage credential never reaches the
  * browser. The contract refuses any host that is not on its allow list.
  */
-export async function putToCAS(blob: Blob): Promise<string> {
+export async function putToCAS(
+  blob: Blob,
+  onStage?: (s: Stage) => void
+): Promise<string> {
   const body = new FormData();
   body.append("file", blob);
   const res = await fetch("/api/cas", { method: "POST", body });
@@ -698,9 +748,7 @@ export async function putToCAS(blob: Blob): Promise<string> {
     throw new Error(detail?.message || detail?.error || "upload_failed");
   }
   const json = await res.json();
-  const url = json.url as string;
-  await waitUntilServed(url);
-  return url;
+  return json.url as string;
 }
 
 /**
@@ -716,34 +764,34 @@ export async function putToCAS(blob: Blob): Promise<string> {
  * readable before a single transaction is signed. If it never becomes
  * readable, this throws *before* anything is spent rather than after.
  */
-async function waitUntilServed(url: string, attempts = 8): Promise<void> {
-  let wait = 700;
-  let last = "";
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      // no-cors is not usable here: an opaque response hides the status, which
-      // is the only thing being asked. Gateways on the allow list all send
-      // permissive CORS headers.
-      const probe = await fetch(url, { method: "GET", cache: "no-store" });
-      if (probe.ok) {
-        const type = probe.headers.get("content-type") || "";
-        // A gateway can answer 200 with an HTML holding page. That is not the
-        // photograph, and the contract will refuse it.
-        if (type.startsWith("image/")) return;
-        last = `storage answered with ${type || "no content type"}`;
-      } else {
-        last = `storage answered ${probe.status}`;
-      }
-    } catch {
-      last = "storage could not be reached";
-    }
-    if (i < attempts) {
-      await new Promise((r) => setTimeout(r, wait));
-      wait = Math.min(Math.round(wait * 1.6), 6000);
-    }
-  }
-  throw new Error(
-    `Your photograph uploaded, but storage is not serving it yet (${last}). ` +
-      `Nothing was sent and nothing was spent. Wait a moment and try again.`
+/**
+ * Is this failure the gateway not serving the photograph yet?
+ *
+ * The contract classes that as `[TRANSIENT]` on purpose: a content id pinned
+ * moments ago is often not yet fetchable from wherever a given validator sits,
+ * and it will be shortly. The label exists so a client can act on it, and
+ * surfacing it to the worker as a dead end wastes the label.
+ */
+/**
+ * How long to wait between attempts when storage is not serving yet.
+ *
+ * Measured, and the reason it is this patient: the photographs go through
+ * Cloudflare in front of Pinata, which caches per edge. Fetching the file from
+ * here only proves the edge nearest *this* browser has it - the validators come
+ * through the edge nearest *them*, get a miss, ask the origin, and the origin
+ * answers 404 for a while after a fresh pin. A query string does not force a
+ * miss either, Cloudflare ignores it, so there is no way to check the origin
+ * from the client at all.
+ *
+ * Since the state cannot be observed, it is waited out instead. On Studio a
+ * retry is free, the photograph is already pinned and the claim is still the
+ * worker's, so the only cost is time.
+ */
+const STORAGE_RETRIES = [15_000, 30_000, 60_000, 90_000];
+
+function isStorageNotReadyYet(e: unknown): boolean {
+  const msg = String((e as Error)?.message ?? e);
+  return /not readable from storage yet|still be propagating|storage returned a page/i.test(
+    msg
   );
 }

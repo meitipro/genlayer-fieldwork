@@ -62,6 +62,7 @@ export function PostTaskForm() {
 
   const busy =
     stage === "uploading" ||
+    stage === "verifying" ||
     stage === "sent" ||
     stage === "accepted" ||
     stage === "confirming";

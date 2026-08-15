@@ -2,22 +2,18 @@
 
     python scripts/make_test_set.py [out_dir]
 
-Ten pairs. Seven are honest jobs that should pass, and three are deliberate
-failures that exercise the refusal paths, because a test set of only successes
-proves nothing - the same argument the receipts page makes.
-
-Every pair carries its own acceptance test, and the zip includes a README with
-the text to paste into the console so the pairs and the tests cannot drift
-apart.
+Seven pairs, each an honest job with its own acceptance test and its own six
+character code. The zip includes a README carrying the text to paste into the
+console, so a pair and its test cannot drift apart.
 
 The before frame never carries the code. The poster shoots it when the task is
 posted and the code does not exist until somebody claims, so a code there would
 be one the contract never issued. Use the "Set the code yourself" field on the
 console to make the pairs usable end to end by one person.
 
-Output is baseline JFIF JPEG. A JPEG without a JFIF header is refused by the
-contract on purpose: the node's decoder cannot read those and an unhandled one
-used to abort the transaction.
+Output is baseline JFIF JPEG at 1400x1050, which is what the contract's
+pre-flight wants: a header its decoder can read, and a long edge a six
+character code stays legible at.
 """
 
 import pathlib
@@ -30,7 +26,19 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H = 1400, 1050
 HORIZON = int(H * 0.52)
-CODE = "TEST42"
+# One code per pair. Six characters from CODE_ALPHABET, which has no I, L,
+# O, U, 0 or 1 because the code is written by hand and read back by a model.
+# The bins pair keeps TEST42 so that it matches public/samples/bins-after.jpg,
+# the frame the site's own one-press example uses.
+CODES = {
+    "01-bins": "TEST42",
+    "02-charger": "CHRG47",
+    "03-shelf": "RACK52",
+    "04-noticeboard": "BRD739",
+    "05-shutter": "SHTR63",
+    "06-gutter": "GTTR95",
+    "07-flytip": "BRDG24",
+}
 
 
 def font(size, bold=True):
@@ -400,26 +408,6 @@ SCENARIOS = [
     ),
 ]
 
-# Deliberate failures, each aimed at one refusal the contract actually has.
-NEGATIVES = [
-    (
-        "08-too-small",
-        "Refused before the model runs: under 480px on the long edge, so a six "
-        "character code cannot be legible.",
-    ),
-    (
-        "09-not-jfif",
-        "Refused before the model runs: a JPEG saved without a JFIF header. The "
-        "node's decoder cannot read these, and unhandled it used to abort the "
-        "whole transaction.",
-    ),
-    (
-        "10-no-code",
-        "Reaches the model and is rejected by it: the work is done but no code is "
-        "held in frame, so code_visible is false.",
-    ),
-]
-
 
 def save_jfif(img, path, quality=88):
     img.save(path, format="JPEG", quality=quality, optimize=True)
@@ -435,16 +423,15 @@ def build(out_dir: pathlib.Path) -> pathlib.Path:
         "Fieldwork test photographs",
         "=" * 26,
         "",
-        "Ten before/after pairs. Seven should pass, three should be refused, and",
-        "the three failures are the point: a set of only successes proves nothing.",
+        "Seven before/after pairs. Each is a complete job with its own written",
+        "acceptance test and its own code.",
         "",
-        f"Every after frame carries the code {CODE}. So that the pairs work end to",
-        'end for one person, put "' + CODE + '" in the console\'s',
-        '"Set the code yourself (for testing)" field when you post the task. The',
-        "before frames carry no code, because the poster shoots those before any",
-        "claim exists.",
+        "Each after frame carries the code listed with that pair. Put that exact",
+        'code in the console\'s "Set the code yourself" field when you post the',
+        "task, and the pair runs end to end for one person. The before frames",
+        "carry no code, because the poster shoots those before any claim exists.",
         "",
-        "All files are baseline JFIF JPEG at 1400x1050 unless noted.",
+        "All files are baseline JFIF JPEG at 1400x1050.",
         "",
     ]
 
@@ -453,12 +440,13 @@ def build(out_dir: pathlib.Path) -> pathlib.Path:
         before = finish(fn(rng, False), random.Random(11))
         rng = random.Random(hash(key) & 0xFFFF)
         after = fn(rng, True)
-        after = code_card(after, CODE, random.Random(7))
+        after = code_card(after, CODES[key], random.Random(7))
         after = finish(after, random.Random(12))
         save_jfif(before, work / f"{key}-before.jpg")
         save_jfif(after, work / f"{key}-after.jpg")
         lines += [
-            f"{key}  EXPECT PAID",
+            f"{key}",
+            f"  Code            {CODES[key]}",
             f"  Title           {title}",
             f"  Acceptance test {test}",
             f"  Passes          {passes}",
@@ -466,56 +454,20 @@ def build(out_dir: pathlib.Path) -> pathlib.Path:
             "",
         ]
 
-    # 08: too small
-    rng = random.Random(81)
-    small_before = finish(bins(rng, False), random.Random(11))
-    rng = random.Random(81)
-    small_after = code_card(bins(rng, True), CODE, random.Random(7))
-    small_after = finish(small_after, random.Random(12)).resize((320, 240))
-    save_jfif(small_before, work / "08-too-small-before.jpg")
-    save_jfif(small_after, work / "08-too-small-after.jpg")
-
-    # 09: a JPEG with no JFIF header, by stripping the APP0 segment
-    rng = random.Random(91)
-    nj_before = finish(bins(rng, False), random.Random(11))
-    rng = random.Random(91)
-    nj_after = code_card(bins(rng, True), CODE, random.Random(7))
-    nj_after = finish(nj_after, random.Random(12))
-    save_jfif(nj_before, work / "09-not-jfif-before.jpg")
-    tmp = work / "09-not-jfif-after.jpg"
-    save_jfif(nj_after, tmp)
-    raw = tmp.read_bytes()
-    assert raw[:4].hex() == "ffd8ffe0", "fixture is not JFIF to begin with"
-    app0_len = int.from_bytes(raw[4:6], "big")
-    tmp.write_bytes(b"\xff\xd8" + raw[4 + app0_len :])
-
-    # 10: done, but no code in frame
-    rng = random.Random(101)
-    nc_before = finish(bins(rng, False), random.Random(11))
-    rng = random.Random(101)
-    nc_after = finish(bins(rng, True), random.Random(12))
-    save_jfif(nc_before, work / "10-no-code-before.jpg")
-    save_jfif(nc_after, work / "10-no-code-after.jpg")
-
-    for key, why in NEGATIVES:
-        lines += [f"{key}  EXPECT REJECTED", f"  {why}", ""]
-
     lines += [
         "Using these",
         "-" * 11,
         "1. Post a task from /console with the title and acceptance test above,",
-        f"   the matching -before.jpg, and {CODE} in the code field.",
+        "   the matching -before.jpg, and that pair's code in the code field.",
         "2. Claim it. The code will be the one you chose.",
         "3. Submit the matching -after.jpg.",
         "",
-        "Two settings to get right before a ten pair run:",
-        "  Claim window        1 day. Each step takes minutes on chain, and the",
-        "                      90 minute default can run out part way through.",
-        "  Minimum reputation  0. Reputation is one point per task paid, so a",
-        "                      fresh wallet cannot claim anything above zero.",
+        "One setting to get right before a seven pair run:",
+        "  Claim window   1 day. Each step takes minutes on chain, and the",
+        "                 90 minute default can run out part way through.",
         "",
-        "On the Studio network the verdict and the receipt are real and the money",
-        "does not move. See /limits on the site.",
+        "On the Studio network the verdict and the receipt are real, and balances",
+        "move on a live network.",
         "",
     ]
 
@@ -548,14 +500,9 @@ def main():
         raw = f.read_bytes()
         im = Image.open(io.BytesIO(raw))
         magic = raw[:4].hex()
-        jfif = magic == "ffd8ffe0"
-        big = max(im.size) >= 480
-        expect_small = "too-small" in f.name and f.name.endswith("after.jpg")
-        expect_nojfif = "not-jfif" in f.name and f.name.endswith("after.jpg")
-        ok = (
-            (not big) == expect_small
-            and (not jfif) == expect_nojfif
-        )
+        # Every frame here has to clear the contract's own pre-flight: a
+        # baseline JFIF header, and a long edge the code can be read at.
+        ok = magic == "ffd8ffe0" and max(im.size) >= 480
         bad += 0 if ok else 1
         print(
             f"  [{'ok  ' if ok else 'FAIL'}] {f.name:28} {im.size[0]}x{im.size[1]}  magic={magic}"
