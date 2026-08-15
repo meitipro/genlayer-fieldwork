@@ -396,19 +396,17 @@ export type Stage =
   | "finalized"
   | "failed";
 
-/**
- * How long each write usually takes end to end on Studio, measured across the
- * runs in scripts/e2e-full.mjs rather than guessed. Shown to the user as an
- * estimate, because a two minute wait with no number on it reads as a hang.
+/*
+ * There was an ESTIMATE_MS table here, and the interface printed it as
+ * "usually about 3m 30s".
+ *
+ * It is gone because it was a prediction, and predictions about consensus are
+ * not ours to make. The numbers were real medians, but a median is not a
+ * promise: a round that rotates to another leader takes as long as it takes,
+ * and a user watching a stated estimate run out concludes something is broken
+ * when nothing is. The elapsed clock is a fact and stays; the forecast does
+ * not.
  */
-export const ESTIMATE_MS: Record<string, number> = {
-  post: 3 * 60_000,
-  claim: 90_000,
-  submit: 4 * 60_000,
-  deploy: 2 * 60_000,
-  cancel: 90_000,
-  withdraw: 90_000,
-};
 
 /**
  * Held after finality before any verdict is shown.
@@ -724,5 +722,52 @@ export async function putToCAS(blob: Blob): Promise<string> {
     throw new Error(detail?.message || detail?.error || "upload_failed");
   }
   const json = await res.json();
-  return json.url as string;
+  const url = json.url as string;
+  await waitUntilServed(url);
+  return url;
+}
+
+/**
+ * Do not hand the contract a url storage will not serve yet.
+ *
+ * Pinning returns as soon as the content id exists, which is well before the
+ * gateway will answer for it. The transaction went out immediately, the
+ * contract fetched the url seconds later, and got a 404 - so the post was
+ * refused, the round was paid for, and the photograph was never the problem.
+ * Measured as "storage refused the before photograph (404)".
+ *
+ * A HEAD costs nothing next to a three minute write, so the url is proven
+ * readable before a single transaction is signed. If it never becomes
+ * readable, this throws *before* anything is spent rather than after.
+ */
+async function waitUntilServed(url: string, attempts = 8): Promise<void> {
+  let wait = 700;
+  let last = "";
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      // no-cors is not usable here: an opaque response hides the status, which
+      // is the only thing being asked. Gateways on the allow list all send
+      // permissive CORS headers.
+      const probe = await fetch(url, { method: "GET", cache: "no-store" });
+      if (probe.ok) {
+        const type = probe.headers.get("content-type") || "";
+        // A gateway can answer 200 with an HTML holding page. That is not the
+        // photograph, and the contract will refuse it.
+        if (type.startsWith("image/")) return;
+        last = `storage answered with ${type || "no content type"}`;
+      } else {
+        last = `storage answered ${probe.status}`;
+      }
+    } catch {
+      last = "storage could not be reached";
+    }
+    if (i < attempts) {
+      await new Promise((r) => setTimeout(r, wait));
+      wait = Math.min(Math.round(wait * 1.6), 6000);
+    }
+  }
+  throw new Error(
+    `Your photograph uploaded, but storage is not serving it yet (${last}). ` +
+      `Nothing was sent and nothing was spent. Wait a moment and try again.`
+  );
 }

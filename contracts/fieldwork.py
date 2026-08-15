@@ -990,12 +990,44 @@ def _handle_leader_error(leader_res, leader_fn) -> bool:
         return False
 
 
+def _looks_like_image(head: bytes) -> bool:
+    """Do these first bytes begin one of the formats a grader can read?
+
+    JPEG, PNG, GIF, WebP, BMP. Deliberately by magic number rather than by the
+    content type header, because a gateway serving an error page is perfectly
+    capable of labelling it image/jpeg.
+    """
+    return (
+        head[:2] == b"\xff\xd8"
+        or head[:8] == b"\x89PNG\r\n\x1a\n"
+        or head[:6] in (b"GIF87a", b"GIF89a")
+        or (head[:4] == b"RIFF" and head[8:12] == b"WEBP")
+        or head[:2] == b"BM"
+    )
+
+
 def _fetch_photo(url: str, which: str) -> bytes:
-    """Fetch one photograph, classifying failures for the validator."""
+    """Fetch one photograph, classifying failures for the validator.
+
+    A gateway that answers 403, 404 or 504 still returns a body, and it is a
+    text error page. Passing that on as a photograph fails deep inside the
+    model as INVALID_IMAGE with no usable reason, so every failure is caught
+    here and named.
+    """
     res = gl.nondet.web.request(url, method="GET")
-    # A gateway that answers 403, 404 or 504 still returns a body, and it is a
-    # text error page. Passing that on as a photograph fails deep inside the
-    # model as INVALID_IMAGE with no usable reason.
+
+    # 404 and 429 are NOT permanent, and calling them permanent was a real bug.
+    # A content id pinned seconds ago has often not reached the gateway that is
+    # being asked for it, and a shared gateway rate limits under load. Both
+    # answer 404 or 429 and both are fine a moment later. Classified as
+    # EXTERNAL they became a hard refusal: the task was rejected, the poster
+    # paid for the round, and nothing was wrong with the photograph.
+    if res.status in (404, 408, 425, 429):
+        raise gl.vm.UserError(
+            ERROR_TRANSIENT + " the " + which + " photograph is not readable "
+            "from storage yet (" + str(res.status) + "), it may still be "
+            "propagating"
+        )
     if 400 <= res.status < 500:
         raise gl.vm.UserError(
             ERROR_EXTERNAL + " storage refused the " + which + " photograph ("
@@ -1015,6 +1047,22 @@ def _fetch_photo(url: str, which: str) -> bytes:
     if body is None or len(body) < 128:
         raise gl.vm.UserError(
             ERROR_EXTERNAL + " the " + which + " url did not return a photograph"
+        )
+
+    # A 200 is not a promise that the bytes are an image. A gateway under load,
+    # or one that has been handed a content id it does not hold, answers 200
+    # with an HTML holding page or a JSON error. That body is longer than 128
+    # bytes, so it used to pass straight through to the vision call and come
+    # back as INVALID_IMAGE - which the worker was shown as "the grader could
+    # not read one of the photographs", when the truth was that storage never
+    # sent one.
+    #
+    # Checked by magic number, which is the only thing that cannot be spoofed
+    # by a content type header.
+    if not _looks_like_image(bytes(body[:12])):
+        raise gl.vm.UserError(
+            ERROR_TRANSIENT + " storage returned a page instead of the " + which
+            + " photograph, which usually means it is not being served yet"
         )
     return body
 

@@ -710,6 +710,44 @@ input[type="checkbox"] {
   color: var(--muted);
 }
 
+/* The write-in-progress bar. Indeterminate on purpose: it reports that
+   something is running, which is true, rather than a percentage of a total
+   nobody knows. */
+.tx-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+
+.tx-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: tx-sweep 1.6s ease-in-out infinite;
+}
+
+@keyframes tx-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(365%);
+  }
+}
+
+/* Motion off means the bar still has to read as active, so it holds still and
+   full width rather than disappearing. */
+@media (prefers-reduced-motion: reduce) {
+  .tx-bar span {
+    width: 100%;
+    opacity: 0.45;
+  }
+}
+
 /* Judgement rows on a receipt. */
 .verdict-row {
   display: flex;

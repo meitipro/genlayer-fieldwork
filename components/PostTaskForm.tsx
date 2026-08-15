@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  ESTIMATE_MS,
-  IS_LIVE,
+    IS_LIVE,
   IS_STUDIO,
   connectWallet,
   isOutOfGas,
@@ -419,7 +418,6 @@ export function PostTaskForm() {
         <div style={{ marginTop: 14 }}>
           <TxProgress
             stage={stage}
-            estimateMs={ESTIMATE_MS.post}
             startedAt={startedAt}
           />
         </div>

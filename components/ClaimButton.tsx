@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ESTIMATE_MS,
-  IS_LIVE,
+    IS_LIVE,
   claimTask,
   connectWallet,
   humanError,
@@ -181,7 +180,6 @@ export function ClaimButton({
       {busy ? (
         <TxProgress
           stage={stage === "idle" ? "sent" : stage}
-          estimateMs={ESTIMATE_MS.claim}
           startedAt={startedAt}
         />
       ) : null}

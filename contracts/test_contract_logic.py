@@ -63,7 +63,7 @@ def load():
         "MIN_CLAIM_MINUTES",
         "MAX_CLAIM_MINUTES",
     }
-    wanted_funcs = {"_flag"}
+    wanted_funcs = {"_flag", "_looks_like_image"}
     wanted_methods = {
         "_cid_of",
         "_code_from",
@@ -121,6 +121,7 @@ _cid_of = ENV["_cid_of"]
 _code_from = ENV["_code_from"]
 _normalise = ENV["_normalise"]
 _flag = ENV["_flag"]
+_looks_like_image = ENV["_looks_like_image"]
 _abandoned = ENV["_abandoned"]
 _return_to_pool = ENV["_return_to_pool"]
 _clean_claim_minutes = ENV["_clean_claim_minutes"]
@@ -351,6 +352,33 @@ def test_published_codes():
         )
 
 
+def test_looks_like_image():
+    """A 200 from a gateway is not a promise that the bytes are a photograph.
+
+    The bug this guards: a gateway under load answers 200 with an HTML holding
+    page. That body is well over the 128 byte floor, so it used to pass through
+    to the vision call and come back as INVALID_IMAGE, which the worker was
+    shown as "the grader could not read one of the photographs" - when storage
+    had simply never sent one.
+    """
+    print("\nis this actually an image")
+    check(_looks_like_image(b"\xff\xd8\xff\xe0" + b"\x00" * 8) is True, "JFIF jpeg")
+    # The variant with no JFIF header is still a JPEG here. It is refused later,
+    # in the pre-flight, with an instruction to re-save it.
+    check(_looks_like_image(b"\xff\xd8\xff\xdb" + b"\x00" * 8) is True, "jpeg without JFIF")
+    check(_looks_like_image(b"\x89PNG\r\n\x1a\n" + b"\x00" * 4) is True, "png")
+    check(_looks_like_image(b"GIF89a" + b"\x00" * 6) is True, "gif")
+    check(_looks_like_image(b"RIFF\x00\x00\x00\x00WEBP") is True, "webp")
+    check(_looks_like_image(b"BM" + b"\x00" * 10) is True, "bmp")
+
+    check(_looks_like_image(b"<!DOCTYPE html><html><h") is False, "an html error page")
+    check(_looks_like_image(b'{"error":"not found"}\n') is False, "a json error body")
+    check(_looks_like_image(b"<html>\n<head><title>50") is False, "a gateway 502 page")
+    check(_looks_like_image(b"") is False, "nothing at all")
+    # RIFF alone is not enough - a wav file starts the same way.
+    check(_looks_like_image(b"RIFF\x00\x00\x00\x00WAVE") is False, "a wav is not an image")
+
+
 def test_flag():
     print("\nreading a boolean out of a model")
     check(_flag({"a": True}, "a") is True, "real bool")
@@ -374,6 +402,7 @@ def main():
     test_return_to_pool()
     test_claim_windows()
     test_published_codes()
+    test_looks_like_image()
     test_flag()
     print("\n" + ("all contract logic checks passed" if failures == 0 else f"{failures} FAILURES"))
     return 1 if failures else 0

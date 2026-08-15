@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HOLD_MS, type Stage } from "@/lib/genlayer";
+import { type Stage } from "@/lib/genlayer";
 
 /* What a write looks like while it is happening.
 
@@ -43,14 +43,22 @@ function clock(ms: number): string {
   return m > 0 ? `${m}m ${String(s % 60).padStart(2, "0")}s` : `${s}s`;
 }
 
+/**
+ * No estimate, and no progress bar.
+ *
+ * Both were predictions. A percentage bar is an estimate wearing a different
+ * hat: it can only be drawn by guessing a total, and when the guess is wrong it
+ * sits at 97% while the chain carries on, which reads worse than no bar. A
+ * settlement takes as long as consensus takes.
+ *
+ * What is shown instead is only what is known: which step the write is on, why
+ * that step exists, and how long it has actually been running.
+ */
 export function TxProgress({
   stage,
-  estimateMs,
   startedAt,
 }: {
   stage: Stage;
-  /** Measured, not guessed. See ESTIMATE_MS in lib/genlayer.ts. */
-  estimateMs: number;
   /** Unix ms when the write began, so the clock survives a re-render. */
   startedAt: number;
 }) {
@@ -65,10 +73,6 @@ export function TxProgress({
   if (stage === "idle" || stage === "finalized" || stage === "failed") return null;
 
   const elapsed = Math.max(0, now - startedAt);
-  // The hold is real time the user will wait, so it belongs in the estimate.
-  const total = estimateMs + HOLD_MS;
-  const pct = Math.min(97, Math.round((elapsed / total) * 100));
-  const over = elapsed > total;
 
   return (
     <div className="panel panel-2" role="status" aria-live="polite">
@@ -86,23 +90,10 @@ export function TxProgress({
         </span>
       </div>
 
-      <div
-        style={{
-          height: 4,
-          borderRadius: 999,
-          background: "var(--line)",
-          marginTop: 12,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            background: "var(--accent)",
-            transition: "width 1s linear",
-          }}
-        />
+      {/* Indeterminate on purpose. It says "running", which is true, rather
+          than "62 percent", which would not be. */}
+      <div className="tx-bar" style={{ marginTop: 12 }}>
+        <span />
       </div>
 
       <p
@@ -124,11 +115,8 @@ export function TxProgress({
           color: "var(--muted)",
         }}
       >
-        {over
-          ? `This is taking longer than the usual ${clock(total)}. It is still
-             running, and nothing is lost by waiting. Leaving this page does not
-             cancel it.`
-          : `Usually about ${clock(total)} in total. Leave this page open.`}
+        This takes as long as the network takes, and nothing is lost by waiting.
+        Leaving this page does not cancel it.
       </p>
     </div>
   );

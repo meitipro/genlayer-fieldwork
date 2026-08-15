@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ESTIMATE_MS,
-  IS_LIVE,
+    IS_LIVE,
   IS_STUDIO,
   cancelTask,
   connectWallet,
@@ -183,7 +182,6 @@ export function CancelTask({
             <div style={{ marginTop: 14 }}>
               <TxProgress
                 stage={stage === "idle" ? "sent" : stage}
-                estimateMs={ESTIMATE_MS.cancel}
                 startedAt={startedAt}
               />
             </div>

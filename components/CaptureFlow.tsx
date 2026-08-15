@@ -6,8 +6,7 @@ import { formatRemaining } from "@/lib/tasks";
 import { ChallengeCode } from "./ChallengeCode";
 import { SettlementNotice } from "./SettlementNotice";
 import {
-  ESTIMATE_MS,
-  IS_LIVE,
+    IS_LIVE,
   connectWallet,
   humanError,
   submitPhotographs,
@@ -371,7 +370,6 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
       {busy ? (
         <TxProgress
           stage={stage}
-          estimateMs={ESTIMATE_MS.submit}
           startedAt={startedAt}
         />
       ) : null}

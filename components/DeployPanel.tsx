@@ -9,8 +9,7 @@ import {
   deployFieldwork,
   humanError,
   txUrl,
-  ESTIMATE_MS,
-  type Stage,
+    type Stage,
 } from "@/lib/genlayer";
 import { TxProgress } from "./TxProgress";
 
@@ -170,7 +169,6 @@ export function DeployPanel() {
       {busy ? (
         <TxProgress
           stage={stage}
-          estimateMs={ESTIMATE_MS.deploy}
           startedAt={startedAt}
         />
       ) : null}
