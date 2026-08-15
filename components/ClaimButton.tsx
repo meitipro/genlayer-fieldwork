@@ -8,7 +8,6 @@ import {
   connectWallet,
   humanError,
   isOutOfGas,
-  reputationOf,
   txUrl,
 } from "@/lib/genlayer";
 import { formatWindowLength } from "@/lib/tasks";
@@ -24,11 +23,9 @@ type Phase = "idle" | "wallet" | "sent" | "accepted" | "confirming" | "done" | "
 
 export function ClaimButton({
   taskId,
-  minReputation = 0,
   claimMinutes = 90,
 }: {
   taskId: number;
-  minReputation?: number;
   claimMinutes?: number;
 }) {
   const windowLabel = formatWindowLength(claimMinutes);
@@ -77,23 +74,6 @@ export function ClaimButton({
         setError("This wallet has no GEN to pay for the transaction.");
         setPhase("failed");
         return;
-      }
-
-      // The contract refuses a claim below the task's reputation bar, and that
-      // refusal costs a transaction and tells you two numbers you cannot see.
-      // Ask first, and say exactly where the wallet stands. A read that fails
-      // is not a reason to block: the contract stays the judge.
-      if (minReputation > 0) {
-        const rep = await reputationOf(address);
-        if (rep !== null && rep < minReputation) {
-          setError(
-            `This task needs reputation ${minReputation} and this wallet has ${rep}. ` +
-              `Reputation is one point per task paid, so start on a task that asks for ` +
-              `${rep === 0 ? "none" : rep} and work up to this one.`
-          );
-          setPhase("failed");
-          return;
-        }
       }
 
       setPhase("sent");

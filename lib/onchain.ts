@@ -73,7 +73,6 @@ function toTask(raw: RawTask): Task {
     examplePass: raw.example_pass,
     exampleFail: raw.example_fail,
     reward: weiToWhole(raw.reward),
-    minReputation: raw.min_reputation,
     claimMinutes: Number(raw.claim_minutes) || 90,
     status: (raw.status as TaskStatus) || "open",
     expiresAt: expires,

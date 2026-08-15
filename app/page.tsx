@@ -16,7 +16,6 @@ function TaskCard({
   title,
   place,
   reward,
-  minReputation,
   claimMinutes,
   fixedCode,
 }: {
@@ -24,7 +23,6 @@ function TaskCard({
   title: string;
   place: string;
   reward: number;
-  minReputation: number;
   claimMinutes: number;
   fixedCode?: string;
 }) {
@@ -47,7 +45,6 @@ function TaskCard({
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
         <span className="pill">{shortWindow(claimMinutes)} on claim</span>
-        <span className="pill">rep {minReputation}</span>
         {fixedCode ? <span className="pill pill-accent">test task</span> : null}
       </div>
     </Link>
@@ -152,7 +149,6 @@ export default async function HomePage() {
                 title={t.title}
                 place={t.place}
                 reward={t.reward}
-                minReputation={t.minReputation}
                 claimMinutes={t.claimMinutes}
                 fixedCode={t.fixedCode}
               />

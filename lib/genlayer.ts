@@ -308,30 +308,6 @@ export async function withdrawFees(
 }
 
 /**
- * How many tasks this address has been paid for.
- *
- * Read before claiming so the worker is told they are not eligible *before*
- * signing, rather than after a transaction that was always going to be refused.
- * Returns null when the chain will not say, and the caller then lets the
- * contract be the judge rather than blocking on a failed read.
- */
-export async function reputationOf(
-  address: `0x${string}`
-): Promise<number | null> {
-  try {
-    const raw: any = await readClient().readContract({
-      address: FIELDWORK_CONTRACT,
-      functionName: "reputation_of",
-      args: [address],
-    });
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Contract errors carry a class prefix so validators can compare failures, as
  * in "[EXPECTED] this task is not open". The class is for consensus, not for
  * the person holding the phone, so it is stripped before display. The sentence

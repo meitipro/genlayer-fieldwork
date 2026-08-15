@@ -76,7 +76,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
 
       <div
         className="facts"
-        style={{ gridTemplateColumns: "repeat(3,1fr)", marginTop: 26 }}
+        style={{ gridTemplateColumns: "repeat(2,1fr)", marginTop: 26 }}
       >
         <div>
           <div className="eyebrow" style={{ letterSpacing: "0.14em" }}>
@@ -91,12 +91,6 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
             Claim window
           </div>
           <div className="fact-value">{formatWindow(task, now)}</div>
-        </div>
-        <div>
-          <div className="eyebrow" style={{ letterSpacing: "0.14em" }}>
-            Reputation
-          </div>
-          <div className="fact-value">rep {task.minReputation}</div>
         </div>
       </div>
 
@@ -238,14 +232,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
             : "The contract issues a six character code that is yours alone - write it on paper, keep it in frame in the photograph you take and submit inside the window"}
         </p>
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-          <span className="pill">
-            rep {task.minReputation} -{" "}
-            {task.minReputation >= 5
-              ? "high value tasks"
-              : task.minReputation >= 1
-                ? "standard tasks"
-                : "starter tasks"}
-          </span>
+          <span className="pill">open to anyone</span>
           <span className="pill">{formatWindowLength(task.claimMinutes)} claim</span>
           <span className="pill">retry inside the window</span>
         </div>
@@ -268,11 +255,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
 
       <div style={{ marginTop: 20 }}>
         {claimable ? (
-          <ClaimButton
-            taskId={task.id}
-            minReputation={task.minReputation}
-            claimMinutes={task.claimMinutes}
-          />
+          <ClaimButton taskId={task.id} claimMinutes={task.claimMinutes} />
         ) : heldByClaimant ? (
           // Whether this is "yours" or "someone else's" depends on who is
           // looking, which the server cannot know.

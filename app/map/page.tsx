@@ -56,7 +56,7 @@ export default async function MapPage() {
                     textTransform: "uppercase",
                   }}
                 >
-                  {shortWindow(t.claimMinutes)} on claim - rep {t.minReputation}
+                  {shortWindow(t.claimMinutes)} on claim
                   {t.fixedCode ? " - test task" : ""}
                 </div>
               </Link>

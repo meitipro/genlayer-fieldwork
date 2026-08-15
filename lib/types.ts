@@ -15,7 +15,6 @@ export type Task = {
   exampleFail: string;
   /** Whole GEN. */
   reward: number;
-  minReputation: number;
   /** How long a claim lasts on this task, in minutes. Chosen by the poster. */
   claimMinutes: number;
   status: TaskStatus;

@@ -46,7 +46,6 @@ export function PostTaskForm() {
     examplePass: "",
     exampleFail: "",
     reward: 18,
-    minReputation: 1,
     claimMinutes: 90,
     fixedCode: "",
   });
@@ -130,7 +129,11 @@ export function PostTaskForm() {
           latE6: 0,
           lngE6: 0,
           reward: Number(form.reward),
-          minReputation: Number(form.minReputation),
+          // Reputation is out of the interface for now. The contract still
+          // takes the parameter and still keeps the score, so nothing on chain
+          // changed and putting the field back is a form change, not a
+          // redeploy. Zero means every task is open to anyone.
+          minReputation: 0,
           claimMinutes: Number(form.claimMinutes),
           fixedCode: form.fixedCode,
         },
@@ -318,18 +321,6 @@ export function PostTaskForm() {
             min={1}
             value={form.reward}
             onChange={(e) => set("reward", Number(e.target.value))}
-          />
-        </div>
-        <div>
-          <Hint htmlFor="rep" label="Minimum reputation">
-            One point per task paid
-          </Hint>
-          <input
-            id="rep"
-            type="number"
-            min={0}
-            value={form.minReputation}
-            onChange={(e) => set("minReputation", Number(e.target.value))}
           />
         </div>
         <div style={{ gridColumn: "1 / -1" }}>
