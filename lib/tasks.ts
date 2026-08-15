@@ -23,13 +23,10 @@ export const TASKS: Task[] = [
       "Wall and ground both visible and clear, bins upright, lids down, code legible on paper held in frame.",
     exampleFail:
       "Bags moved out of shot rather than removed, or the wall is not visible in the after photograph.",
-    latE6: 51_505_100,
-    lngE6: -122_600,
     reward: 18,
     claimMinutes: 90,
     minReputation: 1,
     status: "paid",
-    distanceM: 800,
     expiresAt: T0 + 2 * HOUR,
     poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
@@ -53,13 +50,10 @@ export const TASKS: Task[] = [
       "Screen readable without glare, unit number 41 visible, code held beside the screen.",
     exampleFail:
       "Screen washed out by sunlight, or the unit number cropped out of frame.",
-    latE6: 51_512_800,
-    lngE6: -131_900,
     reward: 12,
     claimMinutes: 90,
     minReputation: 0,
     status: "open",
-    distanceM: 1400,
     expiresAt: T0 + 5 * HOUR,
     poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
@@ -73,13 +67,10 @@ export const TASKS: Task[] = [
       "Aisle end shown wide enough to see the whole display, front row complete, header card straight.",
     exampleFail:
       "Close crop that hides gaps, or a photograph of a different aisle end.",
-    latE6: 51_498_400,
-    lngE6: -118_200,
     reward: 25,
     claimMinutes: 90,
     minReputation: 5,
     status: "open",
-    distanceM: 2100,
     expiresAt: T0 + 24 * HOUR,
     poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
@@ -93,13 +84,10 @@ export const TASKS: Task[] = [
       "Towpath visible along its length, bridge wall clear, code held in frame.",
     exampleFail:
       "Material pushed to the side rather than removed, or only a partial view of the towpath.",
-    latE6: 51_520_300,
-    lngE6: -140_500,
     reward: 30,
     claimMinutes: 90,
     minReputation: 2,
     status: "claimed",
-    distanceM: 3200,
     expiresAt: T0 + 40 * MIN,
     poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x8ee1F70B3c92Ad48e5136Ba7c0498fE2dD104d72",
@@ -114,13 +102,10 @@ export const TASKS: Task[] = [
     examplePass:
       "Whole board in frame, glass closed, current sheet visible top left.",
     exampleFail: "Angled shot that hides half the board, or glass left open.",
-    latE6: 51_489_900,
-    lngE6: -112_700,
     reward: 10,
     claimMinutes: 90,
     minReputation: 0,
     status: "rejected",
-    distanceM: 4100,
     expiresAt: T0 + 90 * MIN,
     poster: "0x2b60D9e4Ac71fB3506d2856c9fA0e83bC5D2ff18",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
@@ -129,27 +114,7 @@ export const TASKS: Task[] = [
   },
 ];
 
-export function openTasks(): Task[] {
-  return TASKS.filter((t) => t.status === "open");
-}
-
-export function paidTasks(): Task[] {
-  return TASKS.filter((t) => t.status === "paid");
-}
-
-export function getTask(id: number): Task | undefined {
-  return TASKS.find((t) => t.id === id);
-}
-
 /* ---------- display helpers ---------- */
-
-export function formatDistance(metres: number): string {
-  // Distance is viewer relative, so it is not on chain. An unknown distance
-  // says so rather than claiming the task is at your feet.
-  if (!metres || metres <= 0) return "-";
-  if (metres < 1000) return `${metres} m`;
-  return `${(metres / 1000).toFixed(1)} km`;
-}
 
 /**
  * What to put in the clock column.

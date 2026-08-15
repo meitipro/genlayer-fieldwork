@@ -34,9 +34,15 @@
   --line: #e3e6dd;
   --line2: #d6dacf;
   --ink: #14181a;
-  --muted: #6a7178;
+  /* Measured, not eyeballed. The design board's light values were #6a7178 and
+     #4a8b1c, and both failed WCAG AA against the surfaces they actually land
+     on: muted read 4.31 on the footer, and the accent read 4.20 both as text
+     and as the fill behind white button labels - the primary action on every
+     screen. Darkened until the worst pairing in the theme is 4.63. Dark mode
+     was measured too and passes untouched, 5.70 at its worst. */
+  --muted: #656c73;
   --dim: #4d545a;
-  --accent: #4a8b1c;
+  --accent: #427716;
   --accent-ink: #ffffff;
   --accent-line: #bad4a3;
   --accent-soft: rgba(74, 139, 28, 0.07);
@@ -265,6 +271,35 @@ img {
   color: var(--muted);
 }
 
+/* The signature. Its own row under a hairline, centred, quiet. */
+.site-foot-credit {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 18px 30px 30px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font: 500 11.5px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.credit-link {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.credit-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .site-foot-credit {
+    padding: 16px 20px 26px;
+    letter-spacing: 0.08em;
+  }
+}
+
 /* ---------------------------------------------------------------- controls */
 
 .btn {
@@ -321,9 +356,8 @@ img {
    `<Link className="btn btn-primary">` turned its label green on a green fill -
    an invisible primary action on eight screens.
 
-   This was found twice before and patched twice at the symptom, once for
-   `.nav-cta` and once for `.pin-open`. Fixed at the source here; those two
-   local rules are now redundant and harmless.
+   This was found twice before and patched twice at the symptom rather than
+   here. Fixed at the source now.
 
    Every hover pair below is the resting pair, so nothing changes contrast on
    the way through. */
@@ -361,8 +395,7 @@ img {
 
 .btn:focus-visible,
 .nav-cta:focus-visible,
-.card:focus-visible,
-.pin:focus-visible {
+.card:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -648,52 +681,6 @@ input[type="checkbox"] {
   pointer-events: none;
 }
 
-.plot {
-  position: relative;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--panel2);
-  overflow: hidden;
-}
-
-.plot::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 44px 44px;
-  pointer-events: none;
-}
-
-.pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: var(--panel);
-  border: 1px solid var(--line2);
-  color: var(--muted);
-  padding: 6px 11px;
-  font: 500 11.5px var(--mono);
-}
-
-.pin-open {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: transparent;
-  padding: 7px 13px;
-  font: 800 12px var(--mono);
-  box-shadow: 0 12px 26px var(--glow);
-}
-
-.pin-open:hover {
-  color: var(--accent-ink);
-}
-
 /* The table on /map. Five columns, the same on every row. */
 .ledger {
   border: 1px solid var(--line);
@@ -704,7 +691,7 @@ input[type="checkbox"] {
 
 .ledger-row {
   display: grid;
-  grid-template-columns: 1fr 190px 100px 110px 120px;
+  grid-template-columns: 1fr 220px 120px 130px;
   gap: 14px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--line);
@@ -736,17 +723,6 @@ input[type="checkbox"] {
   border-bottom: 0;
 }
 
-/* The plot and the shortlist, side by side. */
-.map-split {
-  max-width: var(--wrap);
-  margin: 0 auto;
-  padding: 26px 30px 0;
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 16px;
-  align-items: start;
-}
-
 .console-split {
   max-width: var(--wrap);
   margin: 0 auto;
@@ -758,7 +734,6 @@ input[type="checkbox"] {
 }
 
 @media (max-width: 900px) {
-  .map-split,
   .console-split {
     grid-template-columns: 1fr;
   }

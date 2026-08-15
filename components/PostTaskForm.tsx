@@ -13,6 +13,7 @@ import {
   type Stage,
 } from "@/lib/genlayer";
 import { StillSettling, TxProgress } from "./TxProgress";
+import { Hint } from "./Hint";
 
 /* Write the test as the worker will read it.
    The contract refuses a test too vague to grade from a photograph, so that
@@ -49,8 +50,6 @@ export function PostTaskForm() {
     minReputation: 1,
     claimMinutes: 90,
     fixedCode: "",
-    lat: "51.5051",
-    lng: "-0.1226",
   });
   const [before, setBefore] = useState<{ blob: Blob; url: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -126,8 +125,11 @@ export function PostTaskForm() {
           examplePass: form.examplePass.trim(),
           exampleFail: form.exampleFail.trim(),
           before: before!.blob,
-          latE6: Math.round(parseFloat(form.lat || "0") * 1e6),
-          lngE6: Math.round(parseFloat(form.lng || "0") * 1e6),
+          // The contract still takes a pair and stores it. Nothing reads it:
+          // "Where" in words is what actually gets a worker to a place, and
+          // every task posted with the old inputs kept the prefilled example.
+          latE6: 0,
+          lngE6: 0,
           reward: Number(form.reward),
           minReputation: Number(form.minReputation),
           claimMinutes: Number(form.claimMinutes),
@@ -213,7 +215,9 @@ export function PostTaskForm() {
       </div>
 
       <div style={{ marginTop: 14 }}>
-        <label htmlFor="test">Acceptance test</label>
+        <Hint htmlFor="test" label="Acceptance test">
+          Name only what a photograph shows
+        </Hint>
         <textarea
           id="test"
           rows={4}
@@ -221,14 +225,12 @@ export function PostTaskForm() {
           onChange={(e) => set("acceptanceTest", e.target.value)}
           placeholder={EXAMPLE.acceptanceTest}
         />
-        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13.5 }}>
-          Name the things a photograph can show. The contract refuses a test that
-          relies on words like clean or tidy without saying what those look like.
-        </p>
       </div>
 
       <div style={{ marginTop: 14 }}>
-        <label htmlFor="before">How it looks now</label>
+        <Hint htmlFor="before" label="How it looks now">
+          Yours to shoot, not the worker&apos;s
+        </Hint>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -267,11 +269,6 @@ export function PostTaskForm() {
             if (f) setBefore({ blob: f, url: URL.createObjectURL(f) });
           }}
         />
-        <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
-          Yours to take rather than the worker&apos;s - a worker who supplies
-          both frames can stage the first one. It is also what they are asked to
-          match, so shoot the whole area from where you would judge it.
-        </p>
       </div>
 
       <div
@@ -313,7 +310,9 @@ export function PostTaskForm() {
         }}
       >
         <div>
-          <label htmlFor="reward">Reward - GEN</label>
+          <Hint htmlFor="reward" label="Reward - GEN">
+            Reward plus fee, sent on posting
+          </Hint>
           <input
             id="reward"
             type="number"
@@ -323,7 +322,9 @@ export function PostTaskForm() {
           />
         </div>
         <div>
-          <label htmlFor="rep">Minimum reputation</label>
+          <Hint htmlFor="rep" label="Minimum reputation">
+            One point per task paid
+          </Hint>
           <input
             id="rep"
             type="number"
@@ -333,7 +334,9 @@ export function PostTaskForm() {
           />
         </div>
         <div style={{ gridColumn: "1 / -1" }}>
-          <label htmlFor="window">How long a worker gets, once they claim</label>
+          <Hint htmlFor="window" label="Claim window">
+            Minutes. Clock starts on claim
+          </Hint>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             {WINDOWS.map((w) => (
               <button
@@ -358,13 +361,6 @@ export function PostTaskForm() {
             onChange={(e) => set("claimMinutes", Number(e.target.value))}
             style={{ marginTop: 8 }}
           />
-          <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
-            Minutes. The clock starts when someone claims, not when you post. Pick
-            it for the job: a noticeboard is a ten minute look, a fly tipping
-            clearance needs a van and an afternoon. Too short and the worker
-            cannot reach the place before it expires; too long and one person can
-            sit on a task to keep others off it.
-          </p>
           {form.claimMinutes < 10 || form.claimMinutes > 10080 ? (
             <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--danger)" }}>
               The contract accepts 10 minutes to 7 days.
@@ -373,7 +369,9 @@ export function PostTaskForm() {
         </div>
 
         <div style={{ gridColumn: "1 / -1" }}>
-          <label htmlFor="fixedCode">Set the code yourself (for testing)</label>
+          <Hint htmlFor="fixedCode" label="Set the code yourself">
+            Published code. For testing only
+          </Hint>
           <input
             id="fixedCode"
             value={form.fixedCode}
@@ -405,48 +403,7 @@ export function PostTaskForm() {
               field to have the contract issue one.
             </p>
           ) : null}
-          <p style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
-            Normally the contract issues the code when someone claims, so nobody
-            can know it in advance. That is what proves the photograph was taken
-            after the claim, and it is also what makes the task impossible to
-            test on your own.
-          </p>
-          <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
-            Put six characters here and the code is published with the task, so
-            anyone can prepare the photograph before claiming. Use it to hand a
-            task to a colleague. Do not use it for work you are really paying
-            for. Letters and digits only, no I, L, O, U, 0 or 1.
-          </p>
         </div>
-
-        <div>
-          <label htmlFor="lat">Latitude</label>
-          <input
-            id="lat"
-            value={form.lat}
-            onChange={(e) => set("lat", e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="lng">Longitude</label>
-          <input
-            id="lng"
-            value={form.lng}
-            onChange={(e) => set("lng", e.target.value)}
-          />
-        </div>
-        {/* These are prefilled, and every task on the deployed contract had
-            kept the prefilled pair - so the plot drew each task on the same
-            point. The map handles that now, but a real coordinate is what
-            actually gets a worker there. */}
-        <p
-          className="muted"
-          style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12.5, lineHeight: 1.6 }}
-        >
-          These start on an example. Change them, or every task you post lands on
-          the same point of the plot and the distance a worker reads is not
-          yours. Nothing on chain treats them as proof of anything.
-        </p>
       </div>
 
       {/* `.panel` spaces nothing for its children, so these last three blocks

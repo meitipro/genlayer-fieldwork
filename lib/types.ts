@@ -13,16 +13,12 @@ export type Task = {
   acceptanceTest: string;
   examplePass: string;
   exampleFail: string;
-  latE6: number;
-  lngE6: number;
   /** Whole GEN. */
   reward: number;
   minReputation: number;
   /** How long a claim lasts on this task, in minutes. Chosen by the poster. */
   claimMinutes: number;
   status: TaskStatus;
-  /** Metres from the viewer. Computed off chain, display only. */
-  distanceM: number;
   /** Unix ms. */
   expiresAt: number;
   poster: string;

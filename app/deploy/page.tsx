@@ -84,8 +84,7 @@ export default function DeployPage() {
       ) : null}
 
       <p className="muted" style={{ marginTop: 20, fontSize: 13.5 }}>
-        Prefer a terminal? <span className="mono">DEPLOY.md</span> covers the CLI
-        route, and the explorer for this network is{" "}
+        The explorer for this network is{" "}
         <a href={EXPLORER} target="_blank" rel="noreferrer" className="mono">
           {EXPLORER.replace("https://", "")}
         </a>

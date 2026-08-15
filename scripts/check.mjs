@@ -18,7 +18,21 @@ const ROOT = process.cwd();
 const DASHES = new RegExp("[\\u2014\\u2013]", "g");
 const ENTITY = new RegExp("&" + "mdash;|&" + "ndash;", "g");
 
-const SOURCE_EXT = new Set([".ts", ".tsx", ".css", ".py", ".mjs", ".js", ".md"]);
+// `.example` is in here because it was not, and `.env.example` shipped with two
+// em dashes in it for weeks. Anything a person reads counts, whatever it is
+// named.
+const SOURCE_EXT = new Set([
+  ".ts",
+  ".tsx",
+  ".css",
+  ".py",
+  ".mjs",
+  ".js",
+  ".md",
+  ".txt",
+  ".json",
+  ".example",
+]);
 const SKIP_DIRS = new Set([
   "node_modules",
   ".next",
@@ -206,6 +220,66 @@ console.log("\nscripts");
     next.includes("setDefaultResultOrder"),
     "the Next server forces IPv4 first too"
   );
+}
+
+// -------------------------------------------------------------------- colour
+//
+// A theme that fails WCAG AA on its muted grey or on the accent is invisible
+// when you eyeball a mockup, and it has shipped that way before. This reads the
+// tokens straight out of globals.css and checks the pairings that carry text.
+console.log("\ncolour");
+{
+  const css = readFileSync(join(ROOT, "app", "globals.css"), "utf8");
+
+  const tokensFor = (selector) => {
+    const at = css.indexOf(selector);
+    const block = css.slice(at, css.indexOf("}", at));
+    const out = {};
+    for (const [, name, value] of block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})/gi)) {
+      out[name] = value;
+    }
+    return out;
+  };
+
+  const luminance = (hex) => {
+    const ch = [1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16) / 255);
+    const lin = ch.map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  const SURFACES = ["bg", "panel", "panel2", "foot"];
+  const FOREGROUNDS = ["ink", "dim", "muted", "accent", "danger"];
+  const AA = 4.5;
+
+  for (const [label, selector] of [
+    ["dark", ':root[data-fw="dark"]'],
+    ["light", ':root[data-fw="light"]'],
+  ]) {
+    const t = tokensFor(selector);
+    let worst = { pair: "none", value: Infinity };
+    for (const fg of FOREGROUNDS) {
+      for (const bg of SURFACES) {
+        if (!t[fg] || !t[bg]) continue;
+        const r = ratio(t[fg], t[bg]);
+        if (r < worst.value) worst = { pair: `${fg} on ${bg}`, value: r };
+      }
+    }
+    // The accent is a fill as well as a colour, with accent-ink written on it.
+    if (t.accent && t["accent-ink"]) {
+      const r = ratio(t["accent-ink"], t.accent);
+      if (r < worst.value) worst = { pair: "accent-ink on accent", value: r };
+    }
+
+    note(
+      worst.value >= AA,
+      `${label} theme clears WCAG AA`,
+      `worst is ${worst.pair} at ${worst.value.toFixed(2)}`
+    );
+  }
 }
 
 // ----------------------------------------------------------------- deployment

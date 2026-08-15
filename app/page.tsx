@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EvidenceStack } from "@/components/EvidenceStack";
 import { SettlementNotice } from "@/components/SettlementNotice";
-import { formatDistance, shortWindow } from "@/lib/tasks";
+import { shortWindow } from "@/lib/tasks";
 import { fetchTasks, statsFrom } from "@/lib/onchain";
 import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
@@ -15,7 +15,6 @@ function TaskCard({
   id,
   title,
   place,
-  distanceM,
   reward,
   minReputation,
   claimMinutes,
@@ -24,7 +23,6 @@ function TaskCard({
   id: number;
   title: string;
   place: string;
-  distanceM: number;
   reward: number;
   minReputation: number;
   claimMinutes: number;
@@ -46,7 +44,6 @@ function TaskCard({
       <div style={{ fontWeight: 700, fontSize: 17, marginTop: 12 }}>{title}</div>
       <div style={{ fontSize: 13.5, color: "var(--muted)", marginTop: 6 }}>
         {place}
-        {distanceM > 0 ? ` - ${formatDistance(distanceM)}` : ""}
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
         <span className="pill">{shortWindow(claimMinutes)} on claim</span>
@@ -154,7 +151,6 @@ export default async function HomePage() {
                 id={t.id}
                 title={t.title}
                 place={t.place}
-                distanceM={t.distanceM}
                 reward={t.reward}
                 minReputation={t.minReputation}
                 claimMinutes={t.claimMinutes}

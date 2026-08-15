@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { ClaimButton } from "@/components/ClaimButton";
 import { ClaimState } from "@/components/ClaimState";
 import { CancelTask } from "@/components/CancelTask";
-import { formatDistance, formatWindow, formatWindowLength } from "@/lib/tasks";
+import { formatWindow, formatWindowLength } from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
 import { Unavailable } from "@/components/Unavailable";
 
@@ -72,7 +72,6 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       <h1 style={{ fontSize: 36, marginTop: 14 }}>{task.title}</h1>
       <p style={{ color: "var(--muted)", marginTop: 10, fontSize: 15 }}>
         {task.place}
-        {task.distanceM > 0 ? ` - ${formatDistance(task.distanceM)} away` : ""}
       </p>
 
       <div

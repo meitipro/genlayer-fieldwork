@@ -72,14 +72,10 @@ function toTask(raw: RawTask): Task {
     acceptanceTest: raw.acceptance_test,
     examplePass: raw.example_pass,
     exampleFail: raw.example_fail,
-    latE6: raw.lat_e6,
-    lngE6: raw.lng_e6,
     reward: weiToWhole(raw.reward),
     minReputation: raw.min_reputation,
     claimMinutes: Number(raw.claim_minutes) || 90,
     status: (raw.status as TaskStatus) || "open",
-    // Distance is a viewer-relative idea, so it is not on chain.
-    distanceM: 0,
     expiresAt: expires,
     // Full, like claimedBy: the task page has to know whether the visitor is
     // the poster before it can offer them a cancel.

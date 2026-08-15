@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TaskMap } from "@/components/TaskMap";
 import { PostTaskForm } from "@/components/PostTaskForm";
 import { fetchTasks, statsFrom } from "@/lib/onchain";
 
@@ -88,16 +87,7 @@ export default async function ConsolePage() {
 
       <div className="console-split">
         <div>
-          <h2 style={{ fontSize: 24 }}>Coverage</h2>
-          <p style={{ color: "var(--dim)", fontSize: 14.5, marginTop: 8 }}>
-            Density in one neighbourhood is worth more than thin coverage
-            everywhere
-          </p>
-          <div style={{ marginTop: 14 }}>
-            <TaskMap tasks={tasks} height={300} legend={false} label="" />
-          </div>
-
-          <h2 style={{ fontSize: 24, marginTop: 34 }}>Assurance</h2>
+          <h2 style={{ fontSize: 24 }}>Assurance</h2>
           <div className="grid-2" style={{ marginTop: 14 }}>
             <Assurance title="You own the before frame">
               The starting state comes from you and not from the person being

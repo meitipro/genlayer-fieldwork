@@ -71,7 +71,7 @@ safe to let one party compute. That boundary is the whole architecture:
 
 - **The contract owns** the acceptance test, the challenge code, the grading,
   the reuse checks and the payout.
-- **The frontend owns** the camera, the checklist, the uploads and the map.
+- **The frontend owns** the camera, the checklist, the uploads and the copy.
 - **Storage owns** the photographs, content addressed so every validator
   provably grades identical bytes.
 
@@ -104,10 +104,10 @@ is deployed.
 
 ## The site
 
-Next.js 14, App Router. Eight screens, one job each: find work, read the
+Next.js 14, App Router. Nine screens, one job each: find work, read the
 standard, photograph the result, and a public receipt for every settled task -
-rejections listed beside payments, because a wall of only successes proves
-nothing.
+rejections published beside payments, so the record is one you can check rather
+than one you have to trust.
 
 ### Nothing is announced before the chain has settled
 

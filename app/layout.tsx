@@ -7,7 +7,7 @@ import { CHAIN_LABEL, NETWORK } from "@/lib/chain";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://fieldwork.app"),
+  metadataBase: new URL("https://field-works.xyz"),
   title: {
     default: "Fieldwork - evidence in, settlement out",
     template: "%s - Fieldwork",
@@ -90,7 +90,33 @@ export default function RootLayout({
               <Link href="/how-it-works">How it works</Link>
               <Link href="/receipts">Receipts</Link>
               <Link href="/map">Find work</Link>
+              <Link href="/deploy">Deploy</Link>
             </nav>
+          </div>
+
+          {/* The credit line. Its own row under the hairline, so it reads as a
+              signature rather than as another nav item. */}
+          <div className="site-foot-credit">
+            <span>
+              Built on{" "}
+              <a
+                href="https://x.com/GenLayer"
+                target="_blank"
+                rel="noreferrer"
+                className="credit-link"
+              >
+                GenLayer
+              </a>{" "}
+              by{" "}
+              <a
+                href="https://x.com/Infer_node"
+                target="_blank"
+                rel="noreferrer"
+                className="credit-link"
+              >
+                InferNode
+              </a>
+            </span>
           </div>
         </footer>
       </body>
