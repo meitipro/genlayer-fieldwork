@@ -1,7 +1,7 @@
 /* The hero object: an acceptance test, the two photographs and the verdict,
    stacked in depth in the order the contract sees them.
 
-   Straight from the redesign board. The plate underneath is the task, each
+   The plate underneath is the task, each
    card floats a little further off it, and the payment sits highest because it
    is the last thing to happen. On hover the whole stack eases up towards the
    viewer over .7s, which is the only place on the site depth is spent. */

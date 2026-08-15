@@ -33,3 +33,6 @@ docs/build_pdf.py
 # Working files
 skeleton.txt
 artifacts/
+
+# Editor and assistant config
+.claude/

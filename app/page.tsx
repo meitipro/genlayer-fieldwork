@@ -7,9 +7,8 @@ import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
 export const revalidate = 5;
 
-/* Direction 1c from the redesign board, applied in full: a dark instrument
-   panel, the accent kept to three jobs, and the evidence stack as the only
-   place depth is spent. */
+/* The design, applied in full: a dark instrument panel, the accent kept to
+   three jobs, and the evidence stack as the only place depth is spent. */
 
 function TaskCard({
   id,

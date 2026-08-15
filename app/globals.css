@@ -1,6 +1,6 @@
-/* Fieldwork - tokens and components taken from the redesign board.
-   Every value here is lifted from `Fieldwork Redesign.dc.html` rather than
-   approximated, so the built site and the design stay one artefact.
+/* Fieldwork - the design system, as tokens.
+   Every value here is the specified one rather than an approximation, so the
+   built site and the design stay a single artefact.
 
    House style: the hyphen is the connector, never the em dash. */
 
@@ -34,7 +34,7 @@
   --line: #e3e6dd;
   --line2: #d6dacf;
   --ink: #14181a;
-  /* Measured, not eyeballed. The design board's light values were #6a7178 and
+  /* Measured, not eyeballed. The original light values were #6a7178 and
      #4a8b1c, and both failed WCAG AA against the surfaces they actually land
      on: muted read 4.31 on the footer, and the accent read 4.20 both as text
      and as the fill behind white button labels - the primary action on every
