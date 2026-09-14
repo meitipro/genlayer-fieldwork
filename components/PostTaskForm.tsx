@@ -27,6 +27,21 @@ const WINDOWS = [
   { minutes: 4320, label: "3 days" },
 ] as const;
 
+/* How long the whole task stays up, which is a different question from how long
+   one worker gets once they take it.
+
+   Zero is first and is the default, because it is what every task posted before
+   this existed carries, and a deadline nobody chose is a deadline nobody
+   expects. The contract accepts an hour to a year, and refuses any value
+   shorter than the claim window the same task offers. */
+const OPEN_FOR = [
+  { minutes: 0, label: "No deadline" },
+  { minutes: 1440, label: "1 day" },
+  { minutes: 4320, label: "3 days" },
+  { minutes: 10080, label: "1 week" },
+  { minutes: 43200, label: "30 days" },
+] as const;
+
 const EXAMPLE = {
   title: "Clear the bin area behind 14 Mill St",
   place: "Mill St, behind the parade",
@@ -47,6 +62,7 @@ export function PostTaskForm() {
     exampleFail: "",
     reward: 18,
     claimMinutes: 90,
+    openMinutes: 0,
     fixedCode: "",
   });
   const [before, setBefore] = useState<{ blob: Blob; url: string } | null>(null);
@@ -116,7 +132,14 @@ export function PostTaskForm() {
     // way to fill this field in and still be refused, so it is caught here.
     (form.fixedCode.length === 0 || form.fixedCode.length === 6) &&
     form.claimMinutes >= 10 &&
-    form.claimMinutes <= 10080;
+    form.claimMinutes <= 10080 &&
+    // Zero is always fine. Anything else has to clear the contract's floor and
+    // ceiling, and has to be long enough to fit the window this task offers -
+    // a task that closes before its own claim window could never be finished.
+    (form.openMinutes === 0 ||
+      (form.openMinutes >= 60 &&
+        form.openMinutes <= 525600 &&
+        form.openMinutes >= form.claimMinutes));
 
   async function onSubmit() {
     setError("");
@@ -160,6 +183,7 @@ export function PostTaskForm() {
           // redeploy. Zero means every task is open to anyone.
           minReputation: 0,
           claimMinutes: Number(form.claimMinutes),
+          openMinutes: Number(form.openMinutes),
           fixedCode: form.fixedCode,
         },
         setStage
@@ -379,6 +403,54 @@ export function PostTaskForm() {
           {form.claimMinutes < 10 || form.claimMinutes > 10080 ? (
             <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--danger)" }}>
               The contract accepts 10 minutes to 7 days.
+            </p>
+          ) : null}
+        </div>
+
+        <div style={{ gridColumn: "1 / -1" }}>
+          <Hint htmlFor="openFor" label="Stays open for">
+            Minutes. Anyone can return the reward after this
+          </Hint>
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            {OPEN_FOR.map((w) => (
+              <button
+                key={w.minutes}
+                type="button"
+                className={
+                  form.openMinutes === w.minutes ? "pill pill-accent" : "pill"
+                }
+                style={{ cursor: "pointer", background: "none" }}
+                onClick={() => set("openMinutes", w.minutes)}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <input
+            id="openFor"
+            type="number"
+            min={0}
+            max={525600}
+            value={form.openMinutes}
+            onChange={(e) => set("openMinutes", Number(e.target.value))}
+            style={{ marginTop: 8 }}
+          />
+          <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--muted)" }}>
+            {form.openMinutes === 0
+              ? "With no deadline the task stays up until you withdraw it yourself, and the reward stays in the contract until you do."
+              : "Once it closes unclaimed, anyone can send the reward and the fee back to you in one transaction, without waiting for you to come back and do it."}
+          </p>
+          {form.openMinutes !== 0 &&
+          (form.openMinutes < 60 || form.openMinutes > 525600) ? (
+            <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--danger)" }}>
+              The contract accepts an hour to a year, or zero for no deadline.
+            </p>
+          ) : null}
+          {form.openMinutes !== 0 && form.openMinutes >= 60 &&
+          form.openMinutes < form.claimMinutes ? (
+            <p style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6, color: "var(--danger)" }}>
+              This closes sooner than the {form.claimMinutes} minute claim window
+              above, so nobody could finish it in time.
             </p>
           ) : null}
         </div>

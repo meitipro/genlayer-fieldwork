@@ -79,10 +79,15 @@ safe to let one party compute. That boundary is the whole architecture:
 
 ## The contract
 
-**36 methods, 29 view and 7 write**, `genvm-lint` clean. There is no build step
-between the source and the chain: what runs is the file as written, and the
-running site serves it at `/api/contract-source` so anyone can read exactly what
-is deployed.
+**38 methods, 30 view and 8 write**, `genvm-lint` clean. There is no build step
+between the source and the chain: what runs is the file as written, with line
+endings normalised to LF so a deployment compares byte for byte against any
+clone. The running site serves it at `/api/contract-source`, and
+`npm run verify-source` diffs a deployed address against this repository.
+
+Each method keeps a one paragraph summary of its rule. The reasoning behind each
+rule is in [`contracts/RATIONALE.md`](contracts/RATIONALE.md), method by method,
+because on-chain bytes are a cost.
 
 ### Behaviour worth knowing
 
@@ -96,6 +101,11 @@ is deployed.
   attempt** - not the photograph, not the judgements, not the graded stamp.
 - **A poster cannot cancel out from under a live claim.** A worker told to
   retake keeps the task until their window runs out.
+- **A task can carry its own deadline, and anyone can close it once it
+  passes.** An unclaimed task used to hold its reward until the poster came
+  back. `expire_task` now sends the reward and the fee back to the poster in
+  one transaction, and a claim is clamped so it can never outlive the deadline
+  it was taken under. With no deadline set, a task behaves exactly as before.
 - **Photographs are refused before a grader is paid for.** Anything unopenable,
   or too small for a six character code to be legible, costs a retake and
   nothing else.
@@ -121,6 +131,15 @@ So every write asserts that field, waits for finality, holds, and then **reads
 the answer back off the chain** rather than off the receipt that arrived first.
 Where an answer genuinely is not available, the interface says so instead of
 guessing at one.
+
+### The exposure check the contract cannot run
+
+The contract's pre-flight measures exposure and refuses a frame too dark or too
+washed out to grade, but the Pillow build inside GenVM has no JPEG decoder, so
+on the JPEGs this site uploads that measurement is skipped rather than failed.
+The submit screen runs the same measurement, on the same pixels the validators
+will fetch and against the contract's own thresholds, before anything is sent.
+It never blocks a submission: the graders decide, not the page.
 
 ---
 

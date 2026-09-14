@@ -139,6 +139,85 @@ console.log("\ncontract");
     "every Task field is exposed on task_json",
     unexposed.length ? `missing: ${unexposed.join(", ")}` : ""
   );
+
+  // ---- the deadline invariants ----
+  //
+  // Five ways to reintroduce a money bug that a review of this feature turned
+  // up independently, each cheap to check and expensive to find later.
+
+  // "" is the no-deadline sentinel and every real stamp sorts above it, so a
+  // bare comparison reads every deadline-free task as long expired and lets a
+  // stranger hand its reward back. Only _past_deadline may compare the field.
+  // Prose out, code only. Both of these invariants are explained in the very
+  // docstrings that describe the mistake, so a check that reads the comments
+  // fails on its own documentation.
+  const code = src
+    .replace(/"""[\s\S]*?"""/g, '""')
+    .split(/\r?\n/)
+    .filter((l) => !l.trimStart().startsWith("#"))
+    .join("\n");
+  const bareCompare = [...code.matchAll(/^(?!.*!= "").*[<>]=?\s*t\.open_until/gm)]
+    .map((m) => m[0].trim())
+    .filter((l) => !l.includes("_past_deadline"));
+  note(
+    bareCompare.length === 0,
+    "no deadline comparison skips the empty sentinel",
+    bareCompare.length ? `unguarded: ${bareCompare[0]}` : ""
+  );
+
+  const expireBody = (code.split("def expire_task")[1] || "").split("@gl.public")[0];
+  note(
+    expireBody.includes('if t.status != "open"'),
+    "expire_task guards on a positive allow-list, not a denylist"
+  );
+  note(
+    expireBody.indexOf('t.status = "expired"') > 0 &&
+      expireBody.indexOf('t.status = "expired"') < expireBody.indexOf("self._pay("),
+    "expire_task writes the terminal status before it pays"
+  );
+  // The fee is banked on a payout or handed back on a withdrawal, never both.
+  // Accruing it here too would leave the owner owed money the contract does
+  // not hold, and withdraw_fees has no balance check to catch it.
+  note(
+    !expireBody.includes("fees_accrued"),
+    "expire_task leaves the accrued fees alone"
+  );
+  // The fee floors to zero at fee_bps 0, which is the deployed configuration,
+  // and _pay refuses a zero transfer - so two calls would revert the whole
+  // transaction and lock the reward it had just released.
+  note(
+    (expireBody.match(/self\._pay\(/g) || []).length === 1,
+    "expire_task refunds in one summed transfer, not two"
+  );
+  // open_until belongs to the task, not to an attempt. Clearing it here reads
+  // like tidiness and puts the task back in the pool immortal.
+  const poolBody = (code.split("def _return_to_pool")[1] || "").split("\n    def ")[0];
+  note(
+    !poolBody.includes("open_until"),
+    "returning a task to the pool never clears its deadline"
+  );
+
+  // ---- the browser's copy of the pre-flight limits ----
+  //
+  // lib/precheck.ts runs the contract's exposure gate in the browser, because
+  // the contract cannot: the Pillow build inside GenVM has no JPEG decoder, so
+  // _preflight skips the measurement on every JPEG, and this site uploads
+  // nothing else. That only stays honest while the two sets of numbers agree.
+  // If they drift, the browser warns a worker about a photograph the chain
+  // would have accepted, which is the one failure this feature must not have.
+  const limits = readFileSync(join(ROOT, "lib", "limits.ts"), "utf8");
+  const drifted = [];
+  for (const name of ["MIN_EDGE", "DARK_MEAN", "BRIGHT_MEAN"]) {
+    const inPy = new RegExp(`^${name}\\s*=\\s*(\\d+)`, "m").exec(src);
+    const inTs = new RegExp(`${name}\\s*=\\s*(\\d+)`).exec(limits);
+    if (!inPy || !inTs) drifted.push(`${name} not found`);
+    else if (inPy[1] !== inTs[1]) drifted.push(`${name}: py ${inPy[1]} vs ts ${inTs[1]}`);
+  }
+  note(
+    drifted.length === 0,
+    "the browser's pre-flight limits match the contract's",
+    drifted.join(", ")
+  );
 }
 
 // ------------------------------------------------------------------ frontend

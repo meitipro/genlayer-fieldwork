@@ -118,7 +118,7 @@ def graded(vm, *, saw=True, code=True, place=True, passed=True, reason="looks cl
     )
 
 
-def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, code="", window=0, **over):
+def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=None, code="", window=0, open_for=0, **over):
     """Post a task. The before photograph belongs to the poster, so it is
     fetched and vetted here rather than at submission time."""
     body = {**GOOD, **over}
@@ -138,6 +138,7 @@ def post(contract, vm, sender, *, reward=18, rep=0, before=URL_A, before_bytes=N
         rep,
         code,
         window,
+        open_for,
     )
 
 
@@ -624,7 +625,7 @@ def test_overpaying_is_banked_rather_than_lost(contract, direct_vm, direct_alice
     direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
     contract.post_task(
         GOOD["title"], GOOD["place"], GOOD["test"], GOOD["pass"], GOOD["fail"],
-        URL_A, 51505100, -122600, reward * GEN, 0, "", 0,
+        URL_A, 51505100, -122600, reward * GEN, 0, "", 0, 0,
     )
 
     # The fee for this task, plus every wei of the overpayment.
@@ -678,3 +679,299 @@ def re_escape(url: str) -> str:
     import re
 
     return re.escape(url)
+
+
+# ---------------------------------------------------- deadlines and expiry
+#
+# A funded task used to have no deadline of its own. The reward sat in the
+# contract from the moment of posting until the poster personally cancelled,
+# and release_expired only ever recycled a *claim*, never the task, so a poster
+# who posted and walked away locked the money for good and left an undoable job
+# on the map beside it. Everything below is that hole, and the ways of getting
+# the fix wrong that a review of it turned up.
+
+
+DEADLINE_MINUTES = 24 * 60
+
+
+def _minus_minutes(stamp: str, minutes: int) -> str:
+    import datetime as _dt
+
+    base = _dt.datetime.fromisoformat(stamp)
+    return (base - _dt.timedelta(minutes=minutes)).isoformat()[:19]
+
+
+def test_a_task_with_no_deadline_can_never_be_expired(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The one that hands a task to a stranger for nothing.
+
+    "" is the no-deadline sentinel and every real timestamp sorts above "" in
+    Python, so a deadline check written the obvious way is True for every
+    deadline-free task the instant it is posted. Written that way, any passer by
+    could close a task nobody meant to close, across the whole contract at once.
+    """
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=0)
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "no deadline" in str(err.value)
+    assert contract.status_of(task_id) == "open"
+
+
+def test_anyone_can_close_a_task_whose_deadline_passed(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The milestone itself. Not the poster, anyone."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    assert contract.open_until_of(task_id) != ""
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.expire_task(task_id) == "expired"
+    assert contract.status_of(task_id) == "expired"
+
+
+def test_a_task_cannot_be_closed_before_its_deadline(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "open until" in str(err.value)
+    assert contract.status_of(task_id) == "open"
+
+
+def test_closing_a_task_twice_is_refused(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The double refund. The status is written before the payment and checked
+    against a positive allow-list, so a second call cannot reach the transfer."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    contract.expire_task(task_id)
+
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "open and unclaimed" in str(err.value)
+    assert contract.status_of(task_id) == "expired"
+
+
+def test_a_paid_task_can_never_be_expired(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    """Paying the reward to the worker and then again to the poster, the second
+    time out of another task's escrow. A denylist of statuses would let this
+    through, so the guard is an allow-list of exactly one."""
+    task_id = _claimed(contract, direct_vm, direct_alice, direct_bob)
+    direct_vm.mock_web(re_escape(URL_A), web_ok(photo(1)))
+    direct_vm.mock_web(re_escape(URL_B), web_ok(photo(2)))
+    graded(direct_vm)
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    assert contract.submit(task_id, URL_B) == "paid"
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_charlie
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "open and unclaimed" in str(err.value)
+    assert contract.status_of(task_id) == "paid"
+
+
+def test_a_cancelled_task_can_never_be_expired(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    direct_vm.sender = direct_alice
+    direct_vm.value = 0
+    assert contract.cancel_task(task_id) == "cancelled"
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "open and unclaimed" in str(err.value)
+
+
+def test_expiring_a_task_leaves_the_accrued_fees_alone(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The fee is banked on a payout and handed back on a withdrawal, never
+    both. Accruing it here as well would leave the owner owed money the contract
+    does not hold, and withdraw_fees has no balance check to catch it."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    before = int(contract.fees_accrued_value())
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    direct_vm.value = 0
+    contract.expire_task(task_id)
+
+    assert int(contract.fees_accrued_value()) == before
+
+
+def test_a_task_cannot_be_claimed_after_its_deadline(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_bob
+    with pytest.raises(Exception) as err:
+        contract.claim(task_id)
+    assert "closed to new claims" in str(err.value)
+    assert contract.status_of(task_id) == "open"
+
+
+def test_a_claim_window_never_outlives_the_deadline(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """The invariant every other method leans on.
+
+    Without it, a worker claiming one second before the deadline with the seven
+    day maximum window would hold the task for a week past its close, blocking
+    the refund the whole time, because submit checks only claim_expires and
+    knows nothing about the task's own deadline. Clamping here means a live
+    claim is always inside the deadline, so nothing downstream ever has to
+    decide whether to cut a worker off mid-job.
+    """
+    gradeable(direct_vm, True)
+    # A one day deadline against a three day claim window: the window loses.
+    task_id = post(
+        contract, direct_vm, direct_alice, window=3 * 24 * 60, open_for=DEADLINE_MINUTES
+    )
+    deadline = contract.open_until_of(task_id)
+
+    direct_vm.sender = direct_bob
+    contract.claim(task_id)
+
+    assert contract.claim_expires_of(task_id) == deadline
+
+
+def test_a_claim_is_refused_when_too_little_time_remains(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """A window of five minutes is not an offer, it is a trap, which is the same
+    reason _clean_claim_minutes has a floor at all."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, window=10, open_for=60)
+    deadline = contract.open_until_of(task_id)
+
+    direct_vm.datetime = _minus_minutes(deadline, 5)
+    direct_vm.sender = direct_bob
+    with pytest.raises(Exception) as err:
+        contract.claim(task_id)
+    assert "no longer time to reach the place" in str(err.value)
+
+
+def test_an_abandoned_claim_past_the_deadline_closes_in_one_call(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    """expire_task returns a dead claim to the pool itself before it judges the
+    task, so a stranger does not have to send release_expired first and then
+    this. Two transactions to recover somebody else's money is a fix nobody
+    would bother to use."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    direct_vm.sender = direct_bob
+    contract.claim(task_id)
+    assert contract.status_of(task_id) == "claimed"
+
+    direct_vm.datetime = "2099-01-01T00:00:00"
+    direct_vm.sender = direct_charlie
+    direct_vm.value = 0
+    assert contract.expire_task(task_id) == "expired"
+
+
+def test_a_live_claim_is_never_closed_out_from_under_the_worker(
+    contract, direct_vm, direct_alice, direct_bob, direct_charlie
+):
+    """A worker standing at the place with a valid code must not lose the job to
+    a stranger's transaction. They cannot: the claim is clamped inside the
+    deadline, so a live claim means the deadline has not passed."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    direct_vm.sender = direct_bob
+    contract.claim(task_id)
+
+    direct_vm.sender = direct_charlie
+    direct_vm.value = 0
+    with pytest.raises(Exception) as err:
+        contract.expire_task(task_id)
+    assert "open and unclaimed" in str(err.value)
+    assert contract.status_of(task_id) == "claimed"
+    assert contract.claimed_by(task_id) == direct_bob
+
+
+def test_a_deadline_shorter_than_its_own_claim_window_is_refused(
+    contract, direct_vm, direct_alice
+):
+    """Advertising a window the task cannot honour. Refused at posting, where
+    the poster can still fix it, rather than clamped quietly behind them."""
+    gradeable(direct_vm, True)
+    with pytest.raises(Exception) as err:
+        post(contract, direct_vm, direct_alice, window=4 * 60, open_for=2 * 60)
+    assert "closes sooner than the claim window" in str(err.value)
+
+
+def test_an_unusable_deadline_is_refused(contract, direct_vm, direct_alice):
+    gradeable(direct_vm, True)
+    with pytest.raises(Exception) as err:
+        post(contract, direct_vm, direct_alice, window=10, open_for=30)
+    assert "under an hour" in str(err.value)
+
+    gradeable(direct_vm, True)
+    with pytest.raises(Exception) as err:
+        post(contract, direct_vm, direct_alice, open_for=400 * 24 * 60)
+    assert "at most a year" in str(err.value)
+
+
+def test_a_deadline_survives_a_return_to_the_pool(
+    contract, direct_vm, direct_alice, direct_bob
+):
+    """Clearing open_until in _return_to_pool reads like tidiness and is the
+    whole bug back: the task would go into the pool immortal, unexpirable, its
+    reward locked exactly as it was before this existed."""
+    gradeable(direct_vm, True)
+    task_id = post(contract, direct_vm, direct_alice, window=10, open_for=DEADLINE_MINUTES)
+    deadline = contract.open_until_of(task_id)
+
+    direct_vm.sender = direct_bob
+    contract.claim(task_id)
+    # Past the claim window, still inside the task's own deadline.
+    direct_vm.datetime = _minus_minutes(deadline, 60)
+    direct_vm.value = 0
+    contract.release_expired(task_id)
+
+    assert contract.status_of(task_id) == "open"
+    assert contract.open_until_of(task_id) == deadline
+
+
+def test_task_json_carries_the_deadline(contract, direct_vm, direct_alice):
+    gradeable(direct_vm, True)
+    with_deadline = post(contract, direct_vm, direct_alice, open_for=DEADLINE_MINUTES)
+    gradeable(direct_vm, True)
+    without = post(contract, direct_vm, direct_alice, before=URL_C, open_for=0)
+
+    assert json.loads(contract.task_json(with_deadline))["open_until"] != ""
+    # Empty, never absent. A missing key becomes NaN on the site, and NaN loses
+    # every comparison it is in, so a closed task would read as open on screen.
+    assert json.loads(contract.task_json(without))["open_until"] == ""

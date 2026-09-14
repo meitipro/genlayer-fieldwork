@@ -12,6 +12,7 @@ code generation, datetime handling, and the defensive reading of LLM output.
 The model-dependent paths are covered on a real chain by scripts/e2e.mjs.
 """
 
+import datetime
 import hashlib
 import pathlib
 import re
@@ -40,6 +41,9 @@ def load():
     env = {
         "hashlib": hashlib,
         "urllib": urllib,
+        # _normalise parses what it is about to return, and _plus_minutes does
+        # the arithmetic every deadline depends on.
+        "datetime": datetime,
         "gl": types.SimpleNamespace(vm=types.SimpleNamespace(UserError=UserError)),
         "UserError": UserError,
         # The extracted methods keep their annotations, which name GenLayer
@@ -62,6 +66,8 @@ def load():
         "CLAIM_MINUTES",
         "MIN_CLAIM_MINUTES",
         "MAX_CLAIM_MINUTES",
+        "MIN_OPEN_MINUTES",
+        "MAX_OPEN_MINUTES",
     }
     wanted_funcs = {"_flag", "_looks_like_image"}
     wanted_methods = {
@@ -72,6 +78,9 @@ def load():
         "_return_to_pool",
         "_clean_claim_minutes",
         "_clean_fixed_code",
+        "_plus_minutes",
+        "_past_deadline",
+        "_clean_open_minutes",
     }
 
     found_consts, found_funcs, found_methods = set(), set(), set()
@@ -126,10 +135,15 @@ _abandoned = ENV["_abandoned"]
 _return_to_pool = ENV["_return_to_pool"]
 _clean_claim_minutes = ENV["_clean_claim_minutes"]
 _clean_fixed_code = ENV["_clean_fixed_code"]
+_plus_minutes = ENV["_plus_minutes"]
+_past_deadline = ENV["_past_deadline"]
+_clean_open_minutes = ENV["_clean_open_minutes"]
 CODE_ALPHABET = ENV["CODE_ALPHABET"]
 CLAIM_MINUTES = ENV["CLAIM_MINUTES"]
 MIN_CLAIM_MINUTES = ENV["MIN_CLAIM_MINUTES"]
 MAX_CLAIM_MINUTES = ENV["MAX_CLAIM_MINUTES"]
+MIN_OPEN_MINUTES = ENV["MIN_OPEN_MINUTES"]
+MAX_OPEN_MINUTES = ENV["MAX_OPEN_MINUTES"]
 ZERO_ADDRESS = ENV["ZERO_ADDRESS"]
 
 CID = "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
@@ -219,9 +233,12 @@ def test_datetimes():
 
 
 class FakeTask:
-    def __init__(self, status, claim_expires):
+    def __init__(self, status, claim_expires, open_until=""):
         self.status = status
         self.claim_expires = claim_expires
+        # Defaults to the no-deadline sentinel, which is what every task posted
+        # without one carries and the value the dangerous comparison is about.
+        self.open_until = open_until
 
 
 def test_abandoned():
@@ -270,6 +287,7 @@ class FakeSettledTask:
         self.reason = "the code is not legible"
         self.after_url = "https://ipfs.io/ipfs/" + CID
         self.before_url = "https://ipfs.io/ipfs/" + CID
+        self.open_until = "2026-08-09T09:00:00"
         self.code_visible = False
         self.same_place = True
         self.test_passed = True
@@ -304,6 +322,11 @@ def test_return_to_pool():
     # The poster's own frame belongs to the task, not to the attempt, and a
     # task without one is unwinnable.
     check(t.before_url != "", "the poster's before photograph survives")
+    # So does the deadline, for the same reason. Adding `t.open_until = ""` to
+    # the list in _return_to_pool reads like tidiness and would put the task
+    # back in the pool immortal, which is the whole bug the field closes: it
+    # could then never be expired and its reward would be locked for good.
+    check(t.open_until == "2026-08-09T09:00:00", "and so does the task's own deadline")
 
 
 def test_claim_windows():
@@ -394,10 +417,142 @@ def test_flag():
     check(_flag({"a": "maybe"}, "a") is False, "unparseable value is false")
 
 
+def test_past_deadline():
+    """A task's own deadline, and the sentinel that makes reading it dangerous.
+
+    The bug this guards is the one every reviewer of this feature found first:
+    "" means the poster set no deadline, and in Python every real stamp sorts
+    above "". A bare `now > t.open_until` is therefore True for every
+    deadline-free task the instant it is posted, which would let a stranger
+    close a task that was never meant to close and hand the reward back.
+    """
+    print("\ntask deadlines")
+    now = "2026-08-08T12:00:00"
+    past = "2026-08-08T11:00:00"
+    future = "2026-08-08T13:00:00"
+
+    # The property that makes the guard necessary, asserted rather than assumed.
+    check(now > "", "every real stamp sorts above the empty sentinel")
+
+    check(
+        _past_deadline(FakeTask("open", "", ""), now) is False,
+        "a task with no deadline is never past it",
+    )
+    check(
+        _past_deadline(FakeTask("open", "", past), now) is True,
+        "a deadline in the past has passed",
+    )
+    check(
+        _past_deadline(FakeTask("open", "", future), now) is False,
+        "a deadline in the future has not",
+    )
+    check(
+        _past_deadline(FakeTask("open", "", now), now) is False,
+        "the deadline itself is not yet past, the comparison is strict",
+    )
+    # Deliberately unlike _abandoned, which is status gated. A deadline belongs
+    # to the task, so it stays true once true and every caller checks status.
+    check(
+        _past_deadline(FakeTask("paid", "", past), now) is True,
+        "a deadline is time only, so callers must check the status themselves",
+    )
+
+
+def test_open_windows():
+    """How long a task stays open, and the bounds that keep it arithmetic."""
+    print("\nhow long a task stays open")
+    default_window = CLAIM_MINUTES
+
+    check(int(_clean_open_minutes(0, default_window)) == 0, "zero means no deadline")
+    # Two separate gates, and they are not the same rule. The floor is absolute:
+    # a task nobody could see and reach in an hour is not an offer. The window
+    # rule is relative to what this particular task promises. The floor is
+    # therefore only reachable with a claim window that fits inside it, which is
+    # why this pairs it with the shortest window the contract accepts.
+    check(
+        int(_clean_open_minutes(MIN_OPEN_MINUTES, MIN_CLAIM_MINUTES)) == MIN_OPEN_MINUTES,
+        "the floor is allowed when the claim window fits inside it",
+    )
+    refuses(
+        lambda: _clean_open_minutes(MIN_OPEN_MINUTES, default_window),
+        "closes sooner than the claim window",
+        "and refused when the default ninety minute window does not fit in an hour",
+    )
+    check(
+        int(_clean_open_minutes(MAX_OPEN_MINUTES, default_window)) == MAX_OPEN_MINUTES,
+        "the ceiling itself is allowed",
+    )
+    refuses(
+        lambda: _clean_open_minutes(MIN_OPEN_MINUTES - 1, MIN_CLAIM_MINUTES),
+        "under an hour",
+        "a task closing in under an hour is refused whatever its window",
+    )
+    refuses(
+        lambda: _clean_open_minutes(MAX_OPEN_MINUTES + 1, default_window),
+        "at most a year",
+        "a task open for over a year is refused",
+    )
+    # The one that would otherwise ship a task nobody could ever finish.
+    refuses(
+        lambda: _clean_open_minutes(120, 240),
+        "closes sooner than the claim window",
+        "a deadline shorter than the claim window it offers is refused",
+    )
+    check(
+        int(_clean_open_minutes(240, 240)) == 240,
+        "a deadline exactly as long as the window is allowed",
+    )
+
+    # The reason the ceiling exists at all. _plus_minutes hands the number to
+    # datetime.timedelta, which raises OverflowError rather than a UserError, so
+    # a value that got past the bounds would crash a node instead of refusing.
+    stamp = _plus_minutes("2026-08-08T12:00:00", MAX_OPEN_MINUTES)
+    check(len(stamp) == 19 and stamp > "2026-08-08T12:00:00", "the ceiling still computes")
+    overflowed = False
+    try:
+        _plus_minutes("2026-08-08T12:00:00", 2 ** 64)
+    except OverflowError:
+        overflowed = True
+    except Exception:
+        overflowed = True
+    check(overflowed, "an unbounded value really does blow up, so the bounds are load bearing")
+
+
+def test_normalise_proves_the_shape():
+    """Length is not shape, and a wrong shape sorts above every real stamp.
+
+    Every clock in this contract is a string comparison, which is only sound
+    while the string really is YYYY-MM-DDTHH:MM:SS. An RFC 1123 datetime is
+    nineteen characters after normalising and sorts above every real one,
+    because "M" beats "2" - so a deadline would read as never reached.
+    """
+    print("\ndatetime shape")
+    mangled = "Mon, 02 Sep 2026 12:00:00 GMT".replace(" ", "T")[:19]
+    check(len(mangled) >= 19, "the bad stamp is long enough to pass a length check")
+    check(mangled > "2026-10-02T12:00:00", "and it sorts above every real stamp")
+    refuses(
+        lambda: _normalise("Mon, 02 Sep 2026 12:00:00 GMT"),
+        "unreadable datetime",
+        "so it is refused rather than compared",
+    )
+    refuses(
+        lambda: _normalise("not-a-datetime-at-all"),
+        "unreadable datetime",
+        "and so is anything else that is not a date",
+    )
+    check(
+        _normalise("2026-07-27T14:03:11.884Z") == "2026-07-27T14:03:11",
+        "a real one still passes through unchanged",
+    )
+
+
 def main():
     test_urls()
     test_codes()
     test_datetimes()
+    test_normalise_proves_the_shape()
+    test_past_deadline()
+    test_open_windows()
     test_abandoned()
     test_return_to_pool()
     test_claim_windows()

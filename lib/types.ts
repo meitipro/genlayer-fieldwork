@@ -3,7 +3,16 @@ export type TaskStatus =
   | "claimed"
   | "paid"
   | "rejected"
-  | "cancelled";
+  | "cancelled"
+  /**
+   * The task's own deadline passed with nobody holding it, and the reward and
+   * the fee went back to the poster. Terminal, like paid and cancelled.
+   *
+   * Unlike cancelled, anyone can bring a task here, which is the point of it. A
+   * poster who funded a task and never came back used to leave the money in the
+   * contract for good and an undoable job on the map beside it.
+   */
+  | "expired";
 
 export type Task = {
   id: number;
@@ -20,6 +29,17 @@ export type Task = {
   status: TaskStatus;
   /** Unix ms. */
   expiresAt: number;
+  /**
+   * When the task closes to new claims, in unix ms, or 0 for a task the poster
+   * gave no deadline.
+   *
+   * Zero, not undefined, so that every read is a number comparison and a
+   * missing field cannot become NaN - NaN loses every comparison it is in, so a
+   * past-deadline task would silently read as still open. It mirrors the
+   * contract's empty string sentinel, which carries exactly the same danger in
+   * the other direction.
+   */
+  openUntil: number;
   poster: string;
   /**
    * The claimant's full address, not a shortened one. The task page has to be

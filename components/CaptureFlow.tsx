@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Task } from "@/lib/types";
 import { formatRemaining } from "@/lib/tasks";
-import { uniquifySample } from "@/lib/image";
+import { normalisePhoto, uniquifySample } from "@/lib/image";
+import { precheckCanvas } from "@/lib/precheck";
+import type { Precheck } from "@/lib/precheck";
 import { ChallengeCode } from "./ChallengeCode";
 import { SettlementNotice } from "./SettlementNotice";
 import {
@@ -25,10 +27,13 @@ function CaptureTile({
   label,
   shot,
   onPick,
+  disabled = false,
 }: {
   label: string;
   shot: Shot;
   onPick: (f: File) => void;
+  /** True while a submission is in flight. See the note at the call site. */
+  disabled?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -38,6 +43,7 @@ function CaptureTile({
       </div>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => ref.current?.click()}
         style={{
           width: "100%",
@@ -103,6 +109,7 @@ function CaptureTile({
         accept="image/*"
         capture="environment"
         hidden
+        disabled={disabled}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) onPick(f);
@@ -152,6 +159,39 @@ function useClaimIsMine(claimedBy?: string): boolean | undefined {
 export function CaptureFlow({ task, now }: { task: Task; now: number }) {
   const mine = useClaimIsMine(task.claimedBy);
   const [after, setAfter] = useState<Shot>(null);
+  const [look, setLook] = useState<Precheck>({ state: "unknown" });
+
+  /* Accept a photograph: normalise it, measure it, and forget the last attempt.
+     
+     Normalising here rather than at submit time is what makes the measurement
+     honest. What reaches the validators is a 1600px re-encode, so measuring the
+     camera original would report on bytes nobody ever sees - and it is also
+     what stops the worker learning to retake only after the wallet has opened
+     and the photograph is already public. */
+  const accept = useCallback(async (file: Blob) => {
+    setError("");
+    // A new photograph is a new attempt. Leaving the last verdict on screen
+    // describes a frame that is no longer loaded.
+    setResult(null);
+    setLook({ state: "unknown" });
+    try {
+      const ready = await normalisePhoto(file);
+      setAfter((old) => {
+        if (old) URL.revokeObjectURL(old.url);
+        return { blob: ready.blob, url: URL.createObjectURL(ready.blob) };
+      });
+      setLook(precheckCanvas(ready.canvas));
+    } catch {
+      // The normaliser is the upload path too, so a failure here would have
+      // failed at submit anyway. Keep the raw file so the flow still works and
+      // say nothing about it - a check that did not run is not a verdict.
+      setAfter((old) => {
+        if (old) URL.revokeObjectURL(old.url);
+        return { blob: file, url: URL.createObjectURL(file) };
+      });
+      setLook({ state: "unknown" });
+    }
+  }, []);
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [stage, setStage] = useState<Stage>("idle");
   const [result, setResult] = useState<{
@@ -319,11 +359,49 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
           <CaptureTile
             label="After - your work"
             shot={after}
-            onPick={(f) => setAfter({ blob: f, url: URL.createObjectURL(f) })}
+            /* Locked while a submission is in flight. submitPhotographs
+               captured this blob by value when it was called, and the storage
+               retry loop can keep it running for minutes, so a swap here would
+               leave the screen showing one photograph while the chain graded
+               another. */
+            disabled={busy}
+            onPick={(f) => void accept(f)}
           />
           <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--muted)" }}>
             Keep the code in frame - only this one is yours to take
           </p>
+
+          {/* An observation about the photograph, never a verdict on it.
+
+              Deliberately not the danger panel used for a rejection further
+              down: a red heading here reads as the contract having refused,
+              and a worker who believes that never presses submit at all. That
+              is the worst kind of false block - it costs them the job without
+              a transaction ever being sent, and the browser has no standing to
+              decide anything.
+
+              `ok` and `unknown` both render nothing. A photograph that is fine
+              gets silence, and so does a check that could not run, because a
+              check that failed to run must never be mistaken for one that
+              passed. Nothing here touches `ready` or the checklist below. */}
+          {look.state === "problem" ? (
+            <p
+              role="status"
+              style={{
+                margin: "8px 0 0",
+                padding: "10px 12px",
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                fontSize: 12.5,
+                lineHeight: 1.6,
+                color: "var(--dim)",
+                background: "var(--panel-2)",
+              }}
+            >
+              {look.message} You can still send it - the graders decide, not
+              this page.
+            </p>
+          ) : null}
           {/* Only on the shipped example. The sample frame has TEST42 drawn
               inside it, so offering it on any other task would hand the grader
               a photograph carrying the wrong code - and the wrong scene. */}
@@ -332,6 +410,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
               type="button"
               className="btn-ghost-sm"
               style={{ marginTop: 8 }}
+              disabled={busy}
               onClick={async () => {
                 try {
                   const res = await fetch("/samples/bins-after.jpg");
@@ -341,10 +420,7 @@ export function CaptureFlow({ task, now }: { task: Task; now: number }) {
                   // work exactly once per deployment and every visitor after
                   // the first would be told their photograph was reused.
                   const blob = await uniquifySample(await res.blob());
-                  setAfter((old) => {
-                    if (old) URL.revokeObjectURL(old.url);
-                    return { blob, url: URL.createObjectURL(blob) };
-                  });
+                  await accept(blob);
                 } catch {
                   // the tile stays empty and the camera path still works
                 }

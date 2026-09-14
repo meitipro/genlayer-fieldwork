@@ -295,6 +295,9 @@ const ph = await retry(
         0,
         CAN_UPLOAD ? "" : "TEST42",
         0,
+        // open_minutes: no deadline, so this run exercises the same lifecycle
+        // it always did. The deadline path has coverage of its own.
+        0,
       ],
       value: GEN(18),
     }),

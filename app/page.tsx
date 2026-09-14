@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EvidenceStack } from "@/components/EvidenceStack";
 import { SettlementNotice } from "@/components/SettlementNotice";
-import { shortWindow } from "@/lib/tasks";
+import { isClaimable, shortWindow } from "@/lib/tasks";
 import { fetchTasks, statsFrom } from "@/lib/onchain";
 import { CHAIN_ID, NETWORK } from "@/lib/chain";
 
@@ -52,9 +52,12 @@ function TaskCard({
 
 export default async function HomePage() {
   const all = await fetchTasks();
-  const open = all.filter((t) => t.status === "open");
+  const now = Date.now();
+  // Through the shared predicate, so the grid below and the "open right now"
+  // stat above it can never disagree about what counts as open.
+  const open = all.filter((t) => isClaimable(t, now));
   const settled = all.filter((t) => t.status === "paid");
-  const stats = statsFrom(all);
+  const stats = statsFrom(all, now);
 
   // The design shows three receipt slots, filling left to right.
   const slots = [0, 1, 2];

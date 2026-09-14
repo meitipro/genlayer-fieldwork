@@ -4,7 +4,14 @@ import type { Metadata } from "next";
 import { ClaimButton } from "@/components/ClaimButton";
 import { ClaimState } from "@/components/ClaimState";
 import { CancelTask } from "@/components/CancelTask";
-import { formatWindow, formatWindowLength } from "@/lib/tasks";
+import { ExpireTask } from "@/components/ExpireTask";
+import {
+  formatStamp,
+  formatWindow,
+  formatWindowLength,
+  isExpirable,
+  isPastDeadline,
+} from "@/lib/tasks";
 import { fetchTask, lookupTask } from "@/lib/onchain";
 import { Unavailable } from "@/components/Unavailable";
 
@@ -43,7 +50,16 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
     (task.status === "claimed" || task.status === "rejected") &&
     task.expiresAt > 0 &&
     now > task.expiresAt;
-  const claimable = task.status === "open" || stale;
+  /* The task's own deadline, which outranks everything above.
+
+     A task past its deadline is still `open` on chain until somebody sends the
+     transaction that closes it, so `status === "open"` is no longer the whole
+     answer. Offering a claim here would take a worker through a wallet prompt
+     and a paid transaction to reach a refusal the page already knew about. */
+  const closed = isPastDeadline(task, now);
+  const claimable = (task.status === "open" || stale) && !closed;
+  /* Anyone may close it, not just the poster - that is the point of it. */
+  const expirable = isExpirable(task, now);
   /* A rejection leaves the claim with its owner so they can retake inside the
      same window, so a live `rejected` task belongs to its claimant exactly as a
      `claimed` one does. */
@@ -63,7 +79,11 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
       <div className="spread" style={{ marginTop: 20 }}>
         <div className="eyebrow">Task {task.id}</div>
         <span
-          className={task.status === "open" || task.status === "paid" ? "pill pill-accent" : "pill"}
+          className={
+            (task.status === "open" && !closed) || task.status === "paid"
+              ? "pill pill-accent"
+              : "pill"
+          }
         >
           {task.status}
         </span>
@@ -242,7 +262,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
           that word is still "claimed". Rather than overwrite it, say what it
           means: the previous claim ran out and the contract returns the task to
           the pool on the next claim. */}
-      {stale ? (
+      {stale && !closed ? (
         <div className="panel panel-2" style={{ marginTop: 20 }}>
           <div className="eyebrow eyebrow-accent">Available again</div>
           <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
@@ -264,6 +284,7 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
             claimedBy={task.claimedBy}
             challengeCode={task.challengeCode}
             expiresAt={task.expiresAt}
+            openUntil={task.openUntil}
             claimMinutes={task.claimMinutes}
             rejected={task.status === "rejected"}
             reason={task.reason}
@@ -274,7 +295,11 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
               ? "Already settled"
               : task.status === "cancelled"
                 ? "The poster cancelled this task"
-                : "Not open"}
+                : task.status === "expired"
+                  ? "This task closed and the reward went back"
+                  : closed
+                    ? "This task has closed to new claims"
+                    : "Not open"}
           </button>
         )}
       </div>
@@ -297,6 +322,13 @@ export default async function TaskPage({ params }: { params: { id: string } }) {
           claim window has run out. A rejection leaves the claim with the worker
           so they can retake, and cancelling underneath them would take the task
           away from someone who has already made the trip. */}
+      <ExpireTask
+        taskId={task.id}
+        reward={task.reward}
+        closedAt={formatStamp(task.openUntil)}
+        expirable={expirable}
+      />
+
       <CancelTask
         taskId={task.id}
         poster={task.poster}

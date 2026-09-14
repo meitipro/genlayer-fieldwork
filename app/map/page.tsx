@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { formatWindow, shortWindow } from "@/lib/tasks";
+import { formatWindow, isClaimable, shortWindow } from "@/lib/tasks";
 import { fetchTasks } from "@/lib/onchain";
 
 export const revalidate = 5;
@@ -16,8 +16,11 @@ export const metadata: Metadata = { title: "Find work" };
 
 export default async function MapPage() {
   const all = await fetchTasks();
-  const open = all.filter((t) => t.status === "open");
   const now = Date.now();
+  // Not `status === "open"`. A task whose deadline has passed stays open on
+  // chain until somebody sends the transaction that closes it, so filtering on
+  // the status alone advertises work nobody is allowed to take.
+  const open = all.filter((t) => isClaimable(t, now));
 
   return (
     <div style={{ maxWidth: "var(--wrap)", margin: "0 auto", padding: "40px 30px 0" }}>

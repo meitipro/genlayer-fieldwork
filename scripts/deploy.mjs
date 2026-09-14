@@ -93,7 +93,13 @@ async function main() {
   log("     account for a deploy you intend to keep.\n");
 
   const client = createClient({ chain, account });
-  const code = readFileSync(join(ROOT, "contracts", "fieldwork.py"), "utf8");
+  // LF on every platform, the same normalisation /api/contract-source applies.
+  // A Windows checkout carries CRLF, and deploying those bytes puts carriage
+  // returns on chain that exist in no clone, so `npm run verify-source` could
+  // never report a match for anyone else.
+  const code = readFileSync(join(ROOT, "contracts", "fieldwork.py"), "utf8")
+    .split(String.fromCharCode(13) + String.fromCharCode(10))
+    .join(String.fromCharCode(10));
 
   log("deploying contracts/fieldwork.py ...");
   const hash = await retry(

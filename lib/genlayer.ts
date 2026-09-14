@@ -169,6 +169,42 @@ export async function cancelTask(
 }
 
 /**
+ * Close a task whose deadline has passed and send the reward back to its poster.
+ *
+ * Anyone may send this, which is the whole point of it. A poster who funded a
+ * task and never came back could only be rescued by themselves, so the reward
+ * stayed in the contract for good and an undoable job stayed on the map beside
+ * it. Whoever sends it gains nothing and cannot name a recipient - the contract
+ * reads the poster out of its own storage.
+ *
+ * Shaped exactly like cancelTask above, `assertExecuted` included. Without that
+ * line a refusal comes back as a FINALIZED receipt reporting MAJORITY_AGREE,
+ * because the validators agree perfectly well that the call was refused, and
+ * the interface would announce a refund that never happened.
+ */
+export async function expireTask(
+  address: `0x${string}`,
+  taskId: number,
+  onStage?: (s: Stage) => void
+): Promise<{ hash: string; settled: boolean }> {
+  const client = writeClient(address, getProvider());
+  const hash = await client.writeContract({
+    address: FIELDWORK_CONTRACT,
+    functionName: "expire_task",
+    args: [taskId],
+    value: BigInt(0),
+  });
+  onStage?.("sent");
+
+  const accepted: any = await waitFor(client, hash, TransactionStatus.ACCEPTED);
+  assertExecuted(accepted, "closing this task");
+  onStage?.("accepted");
+
+  const settled = await settle(client, hash, onStage);
+  return { hash, settled };
+}
+
+/**
  * A dropped connection is not a failed transaction.
  *
  * Studio drops TLS roughly one call in three, and genlayer-js also gives up on
@@ -442,12 +478,18 @@ export async function submitPhotographs(opts: {
   const { address, taskId, after, onStage } = opts;
 
   onStage?.("uploading");
-  // Normalise first. A JPEG without a JFIF header is rejected by the node as
-  // INVALID_IMAGE, and the worker would never learn why. See lib/image.ts.
-  // Only the finished state is uploaded here - the before frame belongs to the
-  // poster and was fixed when the task was funded.
-  const ready = await normalisePhoto(after);
-  const afterUrl = await putToCAS(ready.blob, onStage);
+  // `after` is already normalised, by normalisePhoto at the moment the worker
+  // chose the photograph. It is not re-encoded here, for two reasons. A second
+  // pass through toBlob("image/jpeg") would degrade the image for nothing, and
+  // more importantly the bytes uploaded here have to be the same bytes the
+  // capture screen measured and previewed - otherwise the browser reports on
+  // one photograph and the validators grade another.
+  //
+  // Normalising at all is not optional: a JPEG without a JFIF header is
+  // rejected by the node as INVALID_IMAGE and the worker would never learn why.
+  // See lib/image.ts. Only the finished state is uploaded - the before frame
+  // belongs to the poster and was fixed when the task was funded.
+  const afterUrl = await putToCAS(after, onStage);
 
   const client = writeClient(address, getProvider());
 
@@ -564,6 +606,16 @@ export type PostTaskInput = {
   fixedCode?: string;
   /** Minutes a claim lasts. 0 uses the contract's default of 90. */
   claimMinutes?: number;
+  /**
+   * How long the task stays open to new claims, in minutes. Zero, or omitted,
+   * means no deadline at all, which is what every task posted before this
+   * existed carries.
+   *
+   * A task with a deadline can be closed by anyone once it passes, which sends
+   * the reward and the fee back to the poster. Without one, the money sits in
+   * the contract until the poster returns to withdraw it themselves.
+   */
+  openMinutes?: number;
 };
 
 /**
@@ -628,6 +680,13 @@ export async function postTask(
         input.minReputation,
         (input.fixedCode ?? "").trim().toUpperCase(),
         Math.max(0, Math.round(input.claimMinutes ?? 0)),
+        // Appended at the end of the signature, never inserted beside
+        // claim_minutes where a duration would read more naturally. These two
+        // are both plain numbers, so a caller left on the old order would send
+        // a valid transaction with the two swapped - a task that closes in
+        // ninety minutes and offers a one day window. Appending makes a stale
+        // caller fail loudly on the argument count instead.
+        Math.max(0, Math.round(input.openMinutes ?? 0)),
       ],
       value,
     });

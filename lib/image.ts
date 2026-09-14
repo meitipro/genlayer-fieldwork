@@ -23,6 +23,15 @@ export type Normalised = {
   width: number;
   height: number;
   bytes: number;
+  /**
+   * The canvas the blob was encoded from, so a caller can measure the exact
+   * pixels that will be uploaded without decoding the image a second time.
+   *
+   * Measuring the camera original instead would grade bytes nobody ever sees:
+   * a biro stroke four pixels wide in a 12 megapixel frame is a pixel and a
+   * half once this has scaled it to MAX_EDGE.
+   */
+  canvas: HTMLCanvasElement;
 };
 
 /**
@@ -94,7 +103,7 @@ export async function normalisePhoto(file: Blob): Promise<Normalised> {
   );
   if (!blob) throw new Error("the photograph could not be prepared for upload");
 
-  return { blob, width, height, bytes: blob.size };
+  return { blob, width, height, bytes: blob.size, canvas };
 }
 
 async function loadBitmap(

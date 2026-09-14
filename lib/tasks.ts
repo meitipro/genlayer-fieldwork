@@ -27,6 +27,7 @@ export const TASKS: Task[] = [
     claimMinutes: 90,
     status: "paid",
     expiresAt: T0 + 2 * HOUR,
+    openUntil: 0,
     poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
     challengeCode: "K73QXB",
@@ -53,6 +54,7 @@ export const TASKS: Task[] = [
     claimMinutes: 90,
     status: "open",
     expiresAt: T0 + 5 * HOUR,
+    openUntil: 0,
     poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
   {
@@ -69,6 +71,7 @@ export const TASKS: Task[] = [
     claimMinutes: 90,
     status: "open",
     expiresAt: T0 + 24 * HOUR,
+    openUntil: 0,
     poster: "0x77ab5C9e0Fa1372d84b0eE93cD6f28a0B71c31c9",
   },
   {
@@ -85,6 +88,7 @@ export const TASKS: Task[] = [
     claimMinutes: 90,
     status: "claimed",
     expiresAt: T0 + 40 * MIN,
+    openUntil: 0,
     poster: "0x91c4B7a0Dd25E6f1930aC48b25E7c0f61bB77a2f",
     claimedBy: "0x8ee1F70B3c92Ad48e5136Ba7c0498fE2dD104d72",
     challengeCode: "M2P9WD",
@@ -102,12 +106,69 @@ export const TASKS: Task[] = [
     claimMinutes: 90,
     status: "rejected",
     expiresAt: T0 + 90 * MIN,
+    openUntil: 0,
     poster: "0x2b60D9e4Ac71fB3506d2856c9fA0e83bC5D2ff18",
     claimedBy: "0x3fd2A1c7B8e04F5a92Dc6B3e17aA845f0C29b41E",
     challengeCode: "R4TJ8N",
     reason: "The code is not legible in the after photo, retake it closer.",
   },
 ];
+
+/* ---------- state helpers ---------- */
+
+/**
+ * Has this task's own deadline passed?
+ *
+ * Zero means the poster set no deadline, and a task without one is never past
+ * it. That check is the whole reason this is a function rather than an inline
+ * comparison: `now > task.openUntil` is true for every deadline-free task,
+ * because zero is below every real timestamp. It is the mirror of the empty
+ * string sentinel the contract guards in _past_deadline, and the same mistake
+ * is available on both sides of the wire.
+ */
+export function isPastDeadline(
+  task: Pick<Task, "openUntil">,
+  now: number
+): boolean {
+  return task.openUntil > 0 && now > task.openUntil;
+}
+
+/**
+ * Can a worker still take this task on?
+ *
+ * Every list, count and claim button reads through here rather than testing the
+ * status string, because "open" stopped being the whole answer the moment a
+ * task could carry a deadline. A task whose deadline has passed is still `open`
+ * on chain until somebody sends the transaction that closes it, so a page that
+ * filters on the status alone offers a claim the contract will refuse - the
+ * worker connects a wallet, signs, pays for the transaction and gets an error.
+ */
+export function isClaimable(
+  task: Pick<Task, "status" | "openUntil">,
+  now: number
+): boolean {
+  return task.status === "open" && !isPastDeadline(task, now);
+}
+
+/**
+ * The deadline has passed and nobody is holding it, so anyone may close it and
+ * send the reward back to the poster.
+ *
+ * The claimed and rejected cases are deliberately included: the contract's
+ * expire_task returns an abandoned claim to the pool itself before it judges
+ * the task, so those close in one transaction rather than two. A claim that is
+ * still running is not here, and cannot be - claim clamps its expiry to the
+ * task's deadline, so a live claim is by construction still inside it.
+ */
+export function isExpirable(
+  task: Pick<Task, "status" | "openUntil" | "expiresAt">,
+  now: number
+): boolean {
+  if (!isPastDeadline(task, now)) return false;
+  if (task.status === "open") return true;
+  const heldClaim = task.status === "claimed" || task.status === "rejected";
+  return heldClaim && task.expiresAt > 0 && now > task.expiresAt;
+}
 
 /* ---------- display helpers ---------- */
 

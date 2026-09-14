@@ -31,7 +31,7 @@ function Assurance({ title, children }: { title: string; children: React.ReactNo
 
 export default async function ConsolePage() {
   const tasks = await fetchTasks();
-  const stats = statsFrom(tasks);
+  const stats = statsFrom(tasks, Date.now());
   // Money still locked in the contract, not everything ever spent. A settled
   // task's reward has left, so counting it as "committed" overstated what the
   // poster still has at stake.

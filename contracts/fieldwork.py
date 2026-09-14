@@ -33,6 +33,14 @@ CLAIM_MINUTES = 90
 # and above a week a task can be sat on indefinitely to keep others off it.
 MIN_CLAIM_MINUTES = 10
 MAX_CLAIM_MINUTES = 7 * 24 * 60
+# Bounds on how long a task stays open to new claims, when the poster sets a
+# deadline at all. An hour is the floor because a task nobody could reach in
+# time is not an offer. A year is the ceiling because _plus_minutes hands the
+# number to datetime.timedelta, and a large enough one raises OverflowError,
+# which is not a UserError and would surface as a crashed node rather than as a
+# refusal the poster could read and act on.
+MIN_OPEN_MINUTES = 60
+MAX_OPEN_MINUTES = 365 * 24 * 60
 BPS = 10000
 
 # Error classes, so validators know how to compare a failure rather than
@@ -120,6 +128,19 @@ class Task:
     # because ninety minutes is right for a bin area and wrong for a job that
     # needs a van, a ladder or daylight in a different season.
     claim_minutes: u256
+    # When this task closes to new claims, as a normalised stamp, or "" for a
+    # task the poster gave no deadline.
+    #
+    # It belongs to the task, not to an attempt, exactly as before_url does, so
+    # _return_to_pool must never clear it. Clearing it there would put a task
+    # back in the pool immortal again, which is the whole bug this field exists
+    # to close.
+    #
+    # The empty sentinel is load bearing and dangerous in the same breath: every
+    # real stamp sorts above "", so a bare `now > t.open_until` reads every
+    # deadline-free task as long expired. Nothing compares this field directly.
+    # _past_deadline is the only reader.
+    open_until: str
     # The three judgements the graders agreed on, kept so a receipt can show
     # them rather than the site inferring them.
     #
@@ -165,7 +186,19 @@ class Contract(gl.Contract):
             text = text[:-1]
         if len(text) < 19:
             raise gl.vm.UserError(ERROR_EXPECTED + " node supplied an unreadable datetime")
-        return text[:19]
+        text = text[:19]
+        # Length alone is not the shape. Every clock in this contract is a plain
+        # string comparison, which is only sound while what comes back really is
+        # YYYY-MM-DDTHH:MM:SS, and a stamp in another format can be nineteen
+        # characters long and still sort wrongly: "Mon, 02 Sep 2026 12:00:00 GMT"
+        # arrives here as "Mon,T02TSepT2026T12", passes the length check, and
+        # sorts above every real stamp because "M" beats "2". Every deadline and
+        # every claim window would then read as never reached.
+        try:
+            datetime.datetime.fromisoformat(text)
+        except ValueError:
+            raise gl.vm.UserError(ERROR_EXPECTED + " node supplied an unreadable datetime")
+        return text
 
     def _plus_minutes(self, stamp: str, minutes: int) -> str:
         base = datetime.datetime.fromisoformat(stamp)
@@ -198,14 +231,7 @@ class Contract(gl.Contract):
         return out
 
     def _clean_claim_minutes(self, raw: u256) -> u256:
-        """The poster's claim window, or the default when they did not choose.
-
-        Bounded on both sides. A window under ten minutes is not a task, it is a
-        trap: the worker cannot reach the place before it expires and the reward
-        goes back to the pool. A window over a week lets someone claim a task
-        purely to keep everyone else off it, which is the same denial of service
-        with better manners.
-        """
+        """The poster's claim window, or the default when they did not choose."""
         minutes = int(raw)
         if minutes == 0:
             return u256(CLAIM_MINUTES)
@@ -222,21 +248,32 @@ class Contract(gl.Contract):
             )
         return u256(minutes)
 
+    def _clean_open_minutes(self, raw: u256, window: u256) -> u256:
+        """How long the task stays open to new claims, or zero for no deadline."""
+        minutes = int(raw)
+        if minutes == 0:
+            return u256(0)
+        if minutes < MIN_OPEN_MINUTES:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " a task that closes in under an hour leaves "
+                "nobody time to see it and reach the place, send zero to leave "
+                "it open with no deadline"
+            )
+        if minutes > MAX_OPEN_MINUTES:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " a task can stay open for at most a year, "
+                "send zero to leave it open with no deadline"
+            )
+        if minutes < int(window):
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this task closes sooner than the claim "
+                "window it offers, so nobody could finish it in time - give it "
+                "at least " + str(int(window)) + " minutes"
+            )
+        return u256(minutes)
+
     def _clean_fixed_code(self, raw: str) -> str:
-        """Validate a poster-chosen code, or "" for the normal issued one.
-
-        Exists so a task can be handed to someone who needs the code *before*
-        they set out: a tester preparing a photograph, or a team running the
-        product end to end without two people and a walk. The normal code is
-        issued at claim time and cannot be known in advance, which is exactly
-        what makes that impossible.
-
-        It is a real weakening and the site says so. An issued code proves the
-        photograph was taken after the claim, because nobody could have known
-        it before. A published one proves only that the photographer knew a
-        published string, so it can be staged ahead of time. Fine for a demo,
-        wrong for paid work, and never the default.
-        """
+        """Validate a poster-chosen code, or "" for the normal issued one."""
         code = raw.strip().upper()
         if code == "":
             return ""
@@ -259,30 +296,16 @@ class Contract(gl.Contract):
         return self.tasks[task_id]
 
     def _abandoned(self, t: Task, now: str) -> bool:
-        """Has the claim on this task run out?
-
-        Both `claimed` and `rejected` count. A rejection leaves the claim with
-        its owner so they can retake inside the window, which means a worker who
-        is rejected and then walks away leaves the task sitting in `rejected`
-        with a dead clock. Without this that task never returns to the pool: no
-        one can claim it and the reward stays locked until the poster notices.
-        """
+        """Has the claim on this task run out?"""
         return t.status in ("claimed", "rejected") and t.claim_expires != "" and now > t.claim_expires
+
+    def _past_deadline(self, t: Task, now: str) -> bool:
+        """Has this task's own deadline passed?"""
+        return t.open_until != "" and now > t.open_until
 
     def _return_to_pool(self, t: Task) -> None:
         """Hand an abandoned task back to the pool, with nothing of the last
         attempt still attached to it.
-
-        The claim fields are the obvious half. The submission fields matter just
-        as much: a task that was rejected and then abandoned kept the previous
-        worker's after photograph, their three judgements and their graded_at
-        stamp. Once it was open again the site read those and showed an
-        available task carrying someone else's failed evidence and a verdict on
-        work that no longer had anything to do with it.
-
-        The attempt is not lost - every grading emitted an event, and the
-        transaction that made it is on chain. What is dropped here is only the
-        contract's claim that *this open task* has been graded.
         """
         t.status = "open"
         t.claimed_by = ZERO_ADDRESS
@@ -321,31 +344,9 @@ class Contract(gl.Contract):
         min_reputation: u256,
         fixed_code: str,
         claim_minutes: u256,
+        open_minutes: u256,
     ) -> u256:
-        """Post a task. The poster supplies the photograph of how it looks now.
-
-        The before frame belongs to whoever is paying, not to whoever is being
-        paid. A worker who supplies both frames can stage the before - shove the
-        bags into shot, photograph it, move them back out, photograph it again - and collect for work nobody did. Taking that frame at posting time
-        removes the whole class of fraud, and it also gives the worker something
-        honest: they can see the state they are being measured against before
-        they walk anywhere.
-
-        The cost is that the challenge code cannot appear in the before frame.
-        It does not exist yet - it is issued at claim time, to one worker. So
-        the code is required in the after frame only, and what ties the two
-        together is the same-place judgement instead.
-
-        `fixed_code` is normally "". Setting it publishes the code with the task
-        so it can be known before anyone claims, which makes the product
-        testable by one person and weakens the anti-fraud property. See
-        _clean_fixed_code.
-
-        `claim_minutes` is how long a worker gets once they claim. Zero means
-        the default. The poster picks it because they are the only one who knows
-        whether the job is a five minute look at a noticeboard or an afternoon
-        with a van.
-        """
+        """Post a task. The poster supplies the photograph of how it looks now."""
         if title.strip() == "":
             raise gl.vm.UserError(ERROR_EXPECTED + " a task needs a title")
         if len(acceptance_test.strip()) < 20:
@@ -359,6 +360,11 @@ class Contract(gl.Contract):
         # typo costs nothing.
         chosen_code = self._clean_fixed_code(fixed_code)
         window = self._clean_claim_minutes(claim_minutes)
+        # Bounds first, arithmetic second. _plus_minutes raises OverflowError on
+        # a large enough number, and an OverflowError here would land after the
+        # paid non-deterministic block below rather than before it.
+        open_for = self._clean_open_minutes(open_minutes, window)
+        open_until = "" if int(open_for) == 0 else self._plus_minutes(self._now(), int(open_for))
 
         fee = u256(int(reward) * int(self.fee_bps) // BPS)
         owed = int(reward) + int(fee)
@@ -480,6 +486,7 @@ class Contract(gl.Contract):
                 phash="",
                 fixed_code=chosen_code,
                 claim_minutes=window,
+                open_until=open_until,
                 code_visible=False,
                 same_place=False,
                 test_passed=False,
@@ -504,6 +511,14 @@ class Contract(gl.Contract):
         t = self._require_task(task_id)
         now = self._now()
 
+        # Before the abandonment handling, so a refusal writes no state at all
+        # and a task that is already closed is never pointlessly recycled.
+        if self._past_deadline(t, now):
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this task closed to new claims on "
+                + t.open_until + ", anyone can now send the reward back to the "
+                "poster")
+
         if self._abandoned(t, now):
             self._return_to_pool(t)
         if t.status != "open":
@@ -513,6 +528,15 @@ class Contract(gl.Contract):
         if self.reputation.get(sender, u256(0)) < t.min_reputation:
             raise gl.vm.UserError(ERROR_EXPECTED + " reputation too low for this task")
 
+        # A claim must be finishable inside the task's own deadline, or the
+        # worker walks somewhere to do work that can no longer be paid for.
+        # MIN_CLAIM_MINUTES is the same floor _clean_claim_minutes uses, for the
+        # same reason: under ten minutes is not a window, it is a trap.
+        if t.open_until != "" and self._plus_minutes(now, MIN_CLAIM_MINUTES) > t.open_until:
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this task closes at " + t.open_until
+                + " and there is no longer time to reach the place and finish")
+
         # A code the poster published stands; otherwise one is derived, which is
         # deterministic and recomputable by anyone auditing the record later.
         if t.fixed_code != "":
@@ -520,7 +544,15 @@ class Contract(gl.Contract):
         else:
             t.challenge_code = self._code_from(str(task_id) + str(sender) + now)
         t.claimed_by = sender
-        t.claim_expires = self._plus_minutes(now, int(t.claim_minutes))
+        # Clamped to the task's own deadline, so a live claim can never outlive
+        # it. This is what lets every other method keep reading one clock: submit
+        # tests claim_expires and nothing else, and expire_task never has to
+        # decide whether to cut a worker off mid-job, because a claim that is
+        # still live is by construction still inside the deadline.
+        expires = self._plus_minutes(now, int(t.claim_minutes))
+        if t.open_until != "" and expires > t.open_until:
+            expires = t.open_until
+        t.claim_expires = expires
         t.status = "claimed"
         t.reason = ""
         TaskClaimed(task_id, sender, expires=t.claim_expires).emit()
@@ -751,17 +783,52 @@ class Contract(gl.Contract):
         return t.status
 
     @gl.public.write
-    def cancel_task(self, task_id: u256) -> str:
-        """Withdraw an unpaid task and take the money back.
+    def expire_task(self, task_id: u256) -> str:
+        """Close a task whose deadline has passed and send the money back."""
+        t = self._require_task(task_id)
+        now = self._now()
 
-        A `rejected` task is only cancellable once its claim window has run out.
-        A rejection deliberately leaves the claim with the worker so they can
-        retake - most failures are lighting and framing, not fraud - and letting
-        the poster cancel during that window would mean a worker who has already
-        made the trip is told to retake and then finds the task gone. Waiting
-        for the window costs the poster minutes and is the difference between a
-        promise and a suggestion.
-        """
+        # Same opening as claim, and for the same reason: a dead claim belongs
+        # back in the pool before the task's own state is judged.
+        if self._abandoned(t, now):
+            self._return_to_pool(t)
+
+        # A positive allow-list, never a list of statuses to exclude. This is
+        # the guard that makes a second call harmless, and a denylist would have
+        # to be revisited every time a status is added. It runs before any clock
+        # check so that paid, cancelled and expired can never reach the payment.
+        if t.status != "open":
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " only a task that is open and unclaimed can "
+                "be closed this way")
+        if t.open_until == "":
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this task was posted with no deadline, so "
+                "only the poster can withdraw it")
+        if not self._past_deadline(t, now):
+            raise gl.vm.UserError(
+                ERROR_EXPECTED + " this task is open until " + t.open_until)
+
+        # Status first, payment second, exactly as cancel_task does. A repeat
+        # call then meets a status that is no longer open and is refused above,
+        # before it can pay anything a second time.
+        t.status = "expired"
+        # One transfer of the whole amount, not one for the reward and another
+        # for the fee. The fee floors to zero on a contract deployed at
+        # fee_bps 0, which is the deployed configuration, and _pay refuses a
+        # zero transfer - a second call would refuse the whole transaction and
+        # lock the reward it had just decided to release.
+        #
+        # fees_accrued is deliberately untouched. The fee is only ever banked on
+        # a payout or on an overpayment, so nothing was ever accrued for this
+        # task, and banking it here would leave the owner owed money the
+        # contract does not hold.
+        self._pay(t.poster, u256(int(t.reward) + int(t.fee)))
+        return t.status
+
+    @gl.public.write
+    def cancel_task(self, task_id: u256) -> str:
+        """Withdraw an unpaid task and take the money back."""
         t = self._require_task(task_id)
         if gl.message.sender_address != t.poster:
             raise gl.vm.UserError(ERROR_EXPECTED + " only the poster can cancel this task")
@@ -801,12 +868,7 @@ class Contract(gl.Contract):
 
     @gl.public.view
     def task_json(self, task_id: u256) -> str:
-        """A whole task in one call.
-
-        The per field views below are convenient for a CLI, but a list of
-        twenty tasks through them is twenty times a dozen round trips. The site
-        reads this instead.
-        """
+        """A whole task in one call."""
         t = self._require_task(task_id)
         return json.dumps(
             {
@@ -833,6 +895,7 @@ class Contract(gl.Contract):
                 "phash": t.phash,
                 "fixed_code": t.fixed_code,
                 "claim_minutes": int(t.claim_minutes),
+                "open_until": t.open_until,
                 "code_visible": t.code_visible,
                 "same_place": t.same_place,
                 "test_passed": t.test_passed,
@@ -922,6 +985,11 @@ class Contract(gl.Contract):
         return self._require_task(task_id).claim_minutes
 
     @gl.public.view
+    def open_until_of(self, task_id: u256) -> str:
+        """When this task closes to new claims, or "" if it never does."""
+        return self._require_task(task_id).open_until
+
+    @gl.public.view
     def fixed_code_of(self, task_id: u256) -> str:
         """The published code, or "" when the code is issued at claim time."""
         return self._require_task(task_id).fixed_code
@@ -969,12 +1037,7 @@ def _msg_of(res) -> str:
 
 
 def _handle_leader_error(leader_res, leader_fn) -> bool:
-    """Decide whether to agree with a leader that failed.
-
-    Agreeing on a broken run would lock the failure into state, and blanket
-    disagreement would punish an honest node for a flaky gateway. So the
-    validator does the work itself and compares the *class* of failure.
-    """
+    """Decide whether to agree with a leader that failed."""
     leader_msg = _msg_of(leader_res)
     try:
         leader_fn()
@@ -991,12 +1054,7 @@ def _handle_leader_error(leader_res, leader_fn) -> bool:
 
 
 def _looks_like_image(head: bytes) -> bool:
-    """Do these first bytes begin one of the formats a grader can read?
-
-    JPEG, PNG, GIF, WebP, BMP. Deliberately by magic number rather than by the
-    content type header, because a gateway serving an error page is perfectly
-    capable of labelling it image/jpeg.
-    """
+    """Do these first bytes begin one of the formats a grader can read?"""
     return (
         head[:2] == b"\xff\xd8"
         or head[:8] == b"\x89PNG\r\n\x1a\n"
@@ -1007,13 +1065,7 @@ def _looks_like_image(head: bytes) -> bool:
 
 
 def _fetch_photo(url: str, which: str) -> bytes:
-    """Fetch one photograph, classifying failures for the validator.
-
-    A gateway that answers 403, 404 or 504 still returns a body, and it is a
-    text error page. Passing that on as a photograph fails deep inside the
-    model as INVALID_IMAGE with no usable reason, so every failure is caught
-    here and named.
-    """
+    """Fetch one photograph, classifying failures for the validator."""
     res = gl.nondet.web.request(url, method="GET")
 
     # 404 and 429 are NOT permanent, and calling them permanent was a real bug.
@@ -1082,21 +1134,7 @@ def _flag(out, *names) -> bool:
 
 
 def _grade(prompt: str, images: list):
-    """Run the vision call, or return None if the node would not read an image.
-
-    `exec_prompt` raises `NondetException: {'causes': ['INVALID_IMAGE']}` when
-    the node's decoder refuses a file. Unhandled, that aborts the whole
-    transaction: the verdict is never written, the task stays `claimed`, and the
-    worker is told nothing at all. Returning None instead lets the caller turn
-    it into a normal rejection with advice.
-
-    Only INVALID_IMAGE is converted. Every other failure is re-raised, because a
-    transient model error must stay transient - swallowing one would turn a
-    retryable blip into a permanent rejection of good work.
-
-    Both leader and validator hit the same bytes and so reach the same answer,
-    which is what keeps this deterministic enough for consensus.
-    """
+    """Run the vision call, or return None if the node would not read an image."""
     try:
         return gl.nondet.exec_prompt(prompt, images=images, response_format="json")
     except Exception as e:
@@ -1106,31 +1144,7 @@ def _grade(prompt: str, images: list):
 
 
 def _preflight(data: bytes, which: str) -> str:
-    """Refusal reason for a photograph nobody could grade, or "" if it is fine.
-
-    Runs inside the consensus block and its result is compared by every
-    validator, so it is a pure function of the bytes. It exists to spend a
-    fraction of a cent instead of a whole vision call on a photograph that is
-    obviously unusable, and to tell the worker what to change while they are
-    still standing there.
-
-    **The runner's Pillow has no JPEG decoder.** Measured on Studio against
-    py-genlayer:1jb45aa8..., which ships Pillow 11.3.0.dev0 built with
-    zip/jpeg2k/gif/raw and `check_codec("jpg") is False`. A JPEG therefore
-    *opens* - the header parse is pure Python, so `.format` and `.size` are
-    real - and then raises `OSError: decoder jpeg not available` the moment
-    anything touches a pixel.
-
-    That distinction is the whole design of this function. The dimension check
-    needs only the header and runs on everything. The brightness check needs
-    pixels, so on a JPEG it is **skipped rather than failed**: refusing a
-    perfectly good photograph because this node cannot decode its format would
-    reject every JPEG ever submitted, which is exactly the bug this replaced.
-    A missing decoder is our limitation and must never be charged to the worker.
-
-    PNG and JPEG 2000 decode fully here, so a client that uploads PNG gets the
-    brightness check as well. See contracts/README.md.
-    """
+    """Refusal reason for a photograph nobody could grade, or "" if it is fine."""
     try:
         import PIL.Image
 
@@ -1188,20 +1202,7 @@ def _preflight(data: bytes, which: str) -> str:
 
 
 def _dhash(data: bytes) -> str:
-    """A 64 bit difference hash, computed with integers only.
-
-    Recorded on the task so a person reading a receipt can compare it with
-    another. It decides nothing: see the note at the top of this file for the
-    measurements showing it cannot separate honest repeat work from reuse.
-
-    Undecodable bytes return an empty string rather than raising, because
-    raising inside a run_nondet_unsafe block surfaces as a bare consensus
-    disagreement instead of a clean verdict.
-
-    In practice this returns "" for every JPEG, because the runner's Pillow has
-    no JPEG decoder - see the note in _preflight. It is deterministic either
-    way, which is all consensus needs, and it decides nothing.
-    """
+    """A 64 bit difference hash, computed with integers only."""
     try:
         import PIL.Image
 
@@ -1221,11 +1222,7 @@ def _dhash(data: bytes) -> str:
 
 
 class _BytesFile:
-    """The minimum file-like surface PIL needs to open a buffer.
-
-    PIL wants read/seek/tell. The obvious way to supply that is io.BytesIO, but
-    `io` is on the linter's forbidden import list, so this stands in for it.
-    """
+    """The minimum file-like surface PIL needs to open a buffer."""
 
     def __init__(self, data: bytes):
         self._d = data

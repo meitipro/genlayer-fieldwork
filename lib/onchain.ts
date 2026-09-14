@@ -8,7 +8,7 @@
 import { createClient } from "genlayer-js";
 import { chain } from "./chain";
 import type { Task, TaskStatus } from "./types";
-import { TASKS as SEED } from "./tasks";
+import { isClaimable, TASKS as SEED } from "./tasks";
 
 const CONTRACT = (process.env.NEXT_PUBLIC_FIELDWORK_CONTRACT ||
   "") as `0x${string}`;
@@ -43,6 +43,12 @@ type RawTask = {
   phash: string;
   fixed_code: string;
   claim_minutes: number;
+  /**
+   * Optional on purpose. The contract cannot be upgraded in place, so the site
+   * and the contract are deployed separately and there is always a window where
+   * this site is reading one that predates deadlines and sends no such key.
+   */
+  open_until?: string;
   code_visible: boolean;
   same_place: boolean;
   test_passed: boolean;
@@ -65,6 +71,14 @@ function toTask(raw: RawTask): Task {
   const parsed = raw.claim_expires ? Date.parse(raw.claim_expires + "Z") : 0;
   const expires = Number.isFinite(parsed) ? parsed : 0;
 
+  // Parsed exactly like claim_expires above, and for a sharper reason. An older
+  // contract sends no open_until at all, and `Date.parse(undefined + "Z")` is
+  // NaN - which loses every comparison it appears in, so `now > openUntil` would
+  // be false forever and a closed task would read as open on every screen. Zero
+  // is the one value that means "no deadline" and behaves like it.
+  const rawOpen = raw.open_until ? Date.parse(raw.open_until + "Z") : 0;
+  const openUntil = Number.isFinite(rawOpen) ? rawOpen : 0;
+
   return {
     id: raw.id,
     title: raw.title,
@@ -76,6 +90,7 @@ function toTask(raw: RawTask): Task {
     claimMinutes: Number(raw.claim_minutes) || 90,
     status: (raw.status as TaskStatus) || "open",
     expiresAt: expires,
+    openUntil,
     // Full, like claimedBy: the task page has to know whether the visitor is
     // the poster before it can offer them a cancel.
     poster: raw.poster && raw.poster !== ZERO ? raw.poster : "",
@@ -140,7 +155,7 @@ export type LiveStats = {
   committedGen: number;
 };
 
-export function statsFrom(tasks: Task[]): LiveStats {
+export function statsFrom(tasks: Task[], now: number): LiveStats {
   const paid = tasks.filter((t) => t.status === "paid").length;
   const rejected = tasks.filter((t) => t.status === "rejected").length;
   const settled = paid + rejected;
@@ -149,7 +164,13 @@ export function statsFrom(tasks: Task[]): LiveStats {
     paid,
     rejected,
     paidShare: settled > 0 ? Math.round((paid / settled) * 100) : null,
-    openNow: tasks.filter((t) => t.status === "open").length,
+    // Counted through the same predicate the listings filter on. Counting the
+    // status alone put tasks in the headline figure that no visitor could find
+    // in the grid underneath it, because the grid had already excluded them.
+    openNow: tasks.filter((t) => isClaimable(t, now)).length,
+    // Deliberately still the raw statuses. This is money the contract is
+    // actually holding, and it holds the reward for a task that is past its
+    // deadline exactly as tightly until someone closes it.
     committedGen: tasks
       .filter((t) => t.status === "open" || t.status === "claimed")
       .reduce((sum, t) => sum + t.reward, 0),

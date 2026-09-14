@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaptureFlow } from "@/components/CaptureFlow";
 import { fetchTask, lookupTask } from "@/lib/onchain";
-import { formatWindowLength } from "@/lib/tasks";
+import { formatWindowLength, isPastDeadline } from "@/lib/tasks";
 import { Unavailable } from "@/components/Unavailable";
 import type { Task } from "@/lib/types";
 
@@ -107,6 +107,19 @@ export default async function SubmitPage({ params }: { params: { id: string } })
     );
   }
 
+  if (task.status === "expired") {
+    return (
+      <Blocked
+        task={task}
+        title="This task closed before it was settled"
+        action={{ href: "/map", label: "Find work that is open" }}
+      >
+        Its deadline passed with nobody holding it, so the reward and the fee
+        went back to the poster. Nothing submitted here can be paid.
+      </Blocked>
+    );
+  }
+
   // Nobody has claimed it, so there is no code to hold in the frame and the
   // contract has no idea who the photograph would be from.
   if (task.status === "open" || !task.challengeCode) {
@@ -129,15 +142,27 @@ export default async function SubmitPage({ params }: { params: { id: string } })
   const expired = task.expiresAt > 0 && now > task.expiresAt;
 
   if (expired) {
+    // A claim is clamped to the task's own deadline, so a claim that ran out
+    // on a task with a deadline means the task itself has closed. Telling that
+    // worker to claim it again would walk them into a refusal.
+    const taskClosed = isPastDeadline(task, now);
     return (
       <Blocked
         task={task}
-        title={`Your ${formatWindowLength(task.claimMinutes)} are up`}
-        action={{ href: `/task/${task.id}`, label: "Claim it again if it is open" }}
+        title={
+          taskClosed
+            ? "This task has closed"
+            : `Your ${formatWindowLength(task.claimMinutes)} are up`
+        }
+        action={
+          taskClosed
+            ? { href: "/map", label: "Find work that is open" }
+            : { href: `/task/${task.id}`, label: "Claim it again if it is open" }
+        }
       >
-        The claim has run out, so the task goes back to the pool and anyone can
-        take it. Nothing is lost: claim it again and you get a fresh code and a
-        fresh window.
+        {taskClosed
+          ? "Its deadline has passed, so it is not going back to the pool and nobody can claim it now. Anyone can send the reward back to the poster from the task page."
+          : "The claim has run out, so the task goes back to the pool and anyone can take it. Nothing is lost: claim it again and you get a fresh code and a fresh window."}
       </Blocked>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isPastDeadline } from "@/lib/tasks";
 import Link from "next/link";
 import { formatRemaining, formatWindowLength } from "@/lib/tasks";
 
@@ -64,6 +65,7 @@ export function ClaimState({
   claimedBy,
   challengeCode,
   expiresAt,
+  openUntil = 0,
   claimMinutes = 90,
   rejected = false,
   reason,
@@ -72,6 +74,8 @@ export function ClaimState({
   claimedBy?: string;
   challengeCode?: string;
   expiresAt: number;
+  /** The task's own deadline, or 0 if it has none. See the expired branch. */
+  openUntil?: number;
   /** The window the poster chose, for the copy on a task nobody here holds. */
   claimMinutes?: number;
   /** A rejection keeps the claim, so the holder can retake inside the window. */
@@ -92,6 +96,10 @@ export function ClaimState({
   // claim with forty seconds left rounds to "0 minutes" and is still live.
   const timeLeft = now && expiresAt > 0 ? formatRemaining(expiresAt, now) : null;
   const expired = now !== null && expiresAt > 0 && now >= expiresAt;
+  // Not `openUntil > 0`. A short claim on a task with a distant deadline runs
+  // out while the task is still perfectly open, and telling that worker it has
+  // closed would send them away from a job they could simply take again.
+  const taskClosed = now !== null && isPastDeadline({ openUntil }, now);
   const windowLabel = formatWindowLength(claimMinutes);
 
   if (owned === "theirs") {
@@ -120,8 +128,9 @@ export function ClaimState({
       <div className="panel panel-2">
         <div className="eyebrow">Your claim has run out</div>
         <p style={{ margin: "10px 0 0", color: "var(--dim)", lineHeight: 1.6 }}>
-          Your {windowLabel} are up, so this task has gone back to the pool and
-          anyone can take it. Claim it again if it is still open.
+          {taskClosed
+            ? `Your ${windowLabel} are up, and this task's own deadline has passed too, so it is not going back to the pool. Anyone can now send the reward back to whoever posted it.`
+            : `Your ${windowLabel} are up, so this task has gone back to the pool and anyone can take it. Claim it again if it is still open.`}
         </p>
       </div>
     );
