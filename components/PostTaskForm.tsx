@@ -7,6 +7,7 @@ import {
   connectWallet,
   isOutOfGas,
   postTask,
+  contractHasDeadlines,
   txUrl,
   humanError,
   type Stage,
@@ -89,6 +90,20 @@ export function PostTaskForm() {
     };
   }, [before]);
 
+  // Whether the configured contract can carry a deadline. Optimistic until the
+  // schema answers, which is the shape of the contract in this repository, so
+  // the control never flickers away on the deployment it was written for.
+  const [deadlines, setDeadlines] = useState(true);
+  useEffect(() => {
+    let live = true;
+    contractHasDeadlines().then((ok) => {
+      if (live) setDeadlines(ok);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
@@ -137,7 +152,8 @@ export function PostTaskForm() {
     // ceiling, and has to be long enough to fit the window this task offers -
     // a task that closes before its own claim window could never be finished.
     (form.openMinutes === 0 ||
-      (form.openMinutes >= 60 &&
+      (deadlines &&
+        form.openMinutes >= 60 &&
         form.openMinutes <= 525600 &&
         form.openMinutes >= form.claimMinutes));
 
@@ -407,6 +423,7 @@ export function PostTaskForm() {
           ) : null}
         </div>
 
+        {deadlines ? (
         <div style={{ gridColumn: "1 / -1" }}>
           <Hint htmlFor="openFor" label="Stays open for">
             Minutes. Anyone can return the reward after this
@@ -454,6 +471,7 @@ export function PostTaskForm() {
             </p>
           ) : null}
         </div>
+        ) : null}
 
         <div style={{ gridColumn: "1 / -1" }}>
           <Hint htmlFor="fixedCode" label="Set the code yourself">

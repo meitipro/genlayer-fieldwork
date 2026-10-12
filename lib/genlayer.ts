@@ -618,6 +618,45 @@ export type PostTaskInput = {
   openMinutes?: number;
 };
 
+/** post_task's parameter count once deadlines exist: the twelve it always had,
+ *  plus open_minutes at the end. */
+const POST_TASK_PARAMS_WITH_DEADLINES = 13;
+
+let deadlineSupport: Promise<boolean> | null = null;
+
+/**
+ * Does the configured contract take a deadline?
+ *
+ * A contract cannot be upgraded in place, so the site and the contract are
+ * deployed separately and there is a window where the site is ahead. In that
+ * window the site used to send thirteen arguments to a method that takes
+ * twelve, and every post failed on the argument count. The contract's own
+ * schema is the authority on its shape, so the answer is read from it, once,
+ * and is shared by the form (which hides the control) and by postTask (which
+ * builds the argument list to match).
+ *
+ * When the schema cannot be read the answer is yes: that is the shape of the
+ * contract in this repository, and a wrong guess fails loudly on the argument
+ * count rather than silently posting something the poster did not ask for.
+ */
+export function contractHasDeadlines(): Promise<boolean> {
+  if (!deadlineSupport) {
+    deadlineSupport = (async () => {
+      try {
+        const schema: any = await (readClient() as any).getContractSchema(
+          FIELDWORK_CONTRACT
+        );
+        const params = schema?.methods?.post_task?.params;
+        if (!Array.isArray(params)) return true;
+        return params.length >= POST_TASK_PARAMS_WITH_DEADLINES;
+      } catch {
+        return true;
+      }
+    })();
+  }
+  return deadlineSupport;
+}
+
 /**
  * Fund and post a task.
  *
@@ -648,6 +687,18 @@ export async function postTask(
     .then((raw: any) => Number(raw))
     // Fall back to the deployed default rather than blocking the post.
     .catch(() => 600);
+
+  // Settled before anything is uploaded or signed, so a deployment that cannot
+  // carry a deadline refuses a deadline here and not as an argument count error
+  // after the poster has waited for the photograph to be pinned.
+  const hasDeadlines = await contractHasDeadlines();
+  const openMinutes = Math.max(0, Math.round(input.openMinutes ?? 0));
+  if (!hasDeadlines && openMinutes > 0) {
+    throw new Error(
+      "this deployment of the contract predates deadlines, so a task here " +
+        "cannot carry one - post it with no deadline"
+    );
+  }
 
   const beforeUrl = await putToCAS(beforeReady.blob, onStage);
   const feeRaw = await feePromise;
@@ -685,8 +736,9 @@ export async function postTask(
         // are both plain numbers, so a caller left on the old order would send
         // a valid transaction with the two swapped - a task that closes in
         // ninety minutes and offers a one day window. Appending makes a stale
-        // caller fail loudly on the argument count instead.
-        Math.max(0, Math.round(input.openMinutes ?? 0)),
+        // caller fail loudly on the argument count instead. A contract that
+        // predates deadlines takes the twelve it always did.
+        ...(hasDeadlines ? [openMinutes] : []),
       ],
       value,
     });

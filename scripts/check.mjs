@@ -361,6 +361,32 @@ console.log("\ncolour");
   }
 }
 
+// ------------------------------------------------- site and contract agree
+// The contract cannot be upgraded in place, so the site and the contract ship
+// separately. This pins the one place they have to agree by construction: the
+// parameter count post_task is called with once deadlines exist.
+console.log("\nsite and contract");
+{
+  const py = readFileSync(join(ROOT, "contracts", "fieldwork.py"), "utf8");
+  const sig = /def post_task\(([\s\S]*?)\)\s*->/.exec(py);
+  const params = sig
+    ? sig[1].split(",").map((p) => p.trim()).filter((p) => p && p !== "self")
+    : [];
+  const ts = readFileSync(join(ROOT, "lib", "genlayer.ts"), "utf8");
+  const declared = /POST_TASK_PARAMS_WITH_DEADLINES\s*=\s*(\d+)/.exec(ts);
+  note(
+    params.length > 0 &&
+      declared !== null &&
+      Number(declared[1]) === params.length,
+    "the site's post_task parameter count matches the contract's",
+    `contract ${params.length}, site ${declared ? declared[1] : "missing"}`
+  );
+  note(
+    (params[params.length - 1] || "").startsWith("open_minutes"),
+    "open_minutes is the last parameter, where the site appends it"
+  );
+}
+
 // ----------------------------------------------------------------- deployment
 console.log("\ndeployment");
 {

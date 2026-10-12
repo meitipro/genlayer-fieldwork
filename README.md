@@ -110,6 +110,26 @@ because on-chain bytes are a cost.
   or too small for a six character code to be legible, costs a retake and
   nothing else.
 
+### A changed contract is a new address
+
+A deployed contract cannot be upgraded in place, so shipping a change means
+deploying a new one and pointing the site at it. The order that never leaves the
+site ahead of the chain: deploy the contract, run
+`npm run verify-source -- <address>` until it prints `MATCH`, set
+`NEXT_PUBLIC_FIELDWORK_CONTRACT`, then deploy the site.
+
+The site tolerates the other order for the one change that has needed it. It
+reads the contract's own schema, and against a contract that predates deadlines
+it posts the twelve arguments that contract takes and hides the deadline
+control, rather than sending a thirteenth argument to a method that has twelve.
+`npm run check` pins the parameter count the site sends to the contract's
+signature, so the two cannot drift apart unnoticed.
+
+`FIELDWORK=0x... node scripts/e2e-deadline.mjs` exercises deadlines on chain:
+refused deadlines, an early close refused, a claim clamped to the deadline, and
+both closes after it. The floor for a deadline is an hour, so the run takes a
+little over one.
+
 ---
 
 ## The site
