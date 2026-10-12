@@ -71,6 +71,33 @@ bytes back from the chain with `gen_getContractCode`.
 Off chain: `python contracts/test_contract_logic.py` (97 checks) and
 `npm run check` pass; `genvm-lint check` passes its lint stage.
 
+### Deadline run on `0x25886d12efC9cce0CB141cb18D6a56ed9a2e41fA`
+
+`scripts/e2e-deadline.mjs`, 2026-10-12, 14:11 to 15:19 UTC, fee 0. Every
+refusal below carries the contract's own sentence (read with
+`scripts/explain-tx.mjs`).
+
+| Step | Transaction | Outcome |
+| --- | --- | --- |
+| Post with no deadline | `0x1698aa701b06ecdb258ec73e90b0217e60b7f6a38bc9b7950f1c50ddfeee3d21` | accepted, `open_until` empty |
+| A stranger closes it | `0xe1eb7c59d305e4d469ab74c71d1456d43190ea0f3779d4f320615b1e6b336a2d` | refused: posted with no deadline, so only the poster can withdraw it |
+| Deadline under an hour | `0x736634a01b3b50e2c66592d91c75d9938d0396fed8176d027db15e75ad9835ac` | refused: a task that closes in under an hour leaves nobody time to see it |
+| Deadline shorter than the claim window | `0xff1a3411c32b176c6f23c3e1e010dfb8f15468135efe80b10f35924e5f76bab7` | refused: give it at least 120 minutes |
+| Deadline over a year | `0xc0c26822cf9ff7561728edcfec808612e8b417188adc5d6a87eda5cecce2a646` | refused: at most a year |
+| Post A, 60 minutes | `0xbde2584d6dd2718a7b9f4ddd21881f40a8022b1685cd4bb45d92ff55a995caa3` | accepted, `open_until` 15:15:08 |
+| Post B, 60 minutes | `0x76913f4a22bf5d73bc5ea5d207a2ecb8cac7e49c53a1483e5ee21320ccdef0c9` | accepted, `open_until` 15:16:05 |
+| A stranger closes A early | `0x78eead1009eae6b9111f648853c7cce7eb19b9091c3ebc1b7ed539d9c8867ae2` | refused: this task is open until 2026-10-12T15:15:08 |
+| Claim B, 30 minute window, 20 minutes before its deadline | `0xb8ca66143fc9c0a3e50b7c1cf7fed10d7aca865a9b1ab45913d090ab3a9e7c8c` | accepted, `claim_expires` 15:16:05, equal to `open_until` (unclamped it would have run to 15:30) |
+| A stranger closes B over a live claim | `0xf2cc5dd568583852b76a09dcf7fe31d11ea628360c5bd0aa58cc3b982d74797d` | refused: only a task that is open and unclaimed can be closed this way |
+| A stranger closes A after the deadline | `0x4860996e1ce00ee0ee246d907b57c86df17cb886c3ce8cdf46d76bf3a4f70eba` | accepted, status `expired` |
+| A stranger closes B after its claim ran out with the deadline | `0x611e58a042f9a3b617c13e0468da97ce398aea2c396cf056bf2f1bdd2320896f` | accepted, status `expired` |
+| A stranger closes A again | `0x5bda256e9dd8793c915cd60edc2627f2391ebab1b175fd845bc703f335090aae` | refused: only a task that is open and unclaimed can be closed this way |
+
+The three refused deadlines were sent again after the run to capture their
+hashes and sentences, because the run did not print them; same instance, same
+arguments. The first attempt of the run itself (an earlier instance) stopped on
+a proxy error page and was repeated with retries on dropped replies.
+
 ## The state of the live deployment
 
 The site at `field-works.xyz` is the milestone head, but the contract it points
