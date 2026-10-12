@@ -100,15 +100,24 @@ a proxy error page and was repeated with retries on dropped replies.
 
 ## The state of the live deployment
 
-The site at `field-works.xyz` is the milestone head, but the contract it points
-at, `0xcb598d7cc755890A74cdc5392f0e68A404546C41` on Studio, runs the reviewed
-baseline: its bytes are the `4291b58` digest above, and it has no
-`expire_task`. Deadlines are therefore not live there yet. Making them live is
-a new deployment from the owner's wallet at `/deploy`, then
-`npm run verify-source -- <address>` until it prints `MATCH`, then setting
-`NEXT_PUBLIC_FIELDWORK_CONTRACT` and deploying the site.
+Since 2026-10-12 the site at `field-works.xyz` points at a contract that runs the
+milestone bytes.
 
-Until then the site stays usable against the old contract: it reads the
-contract's schema, posts the twelve arguments that contract takes and hides the
+| | |
+| --- | --- |
+| Contract | `0x17A34D52A9187A64E9dCa2196D45563160587476` on Studio, fee 0 bps |
+| Deploy transaction | `0xc71cc9dae5eb640b793be7430bc1d7e5a0850dc847b3b5dcdb041ba35c1d9976` |
+| Bytes | 51,686, sha256 `36714c24737f25b45f32fe89aa2b11db5e34fe4562e7b2e8bd6a734468ebb408`; `npm run verify-source` prints `MATCH` |
+| Owner | `0x34D0Bbf474cF8D1CB01230F7eB1E0f512DeA32f1`, deployed with `DEPLOYER_KEY_FILE` so the key is kept outside the repository |
+| Seed | five tasks posted through the acceptance-test gate with `scripts/seed.mjs`, `total_tasks` 5 |
+
+The previous deployment, `0xcb598d7cc755890A74cdc5392f0e68A404546C41` (the
+reviewed baseline bytes, digest `8b3c36d5...`), is untouched on chain. It holds
+three tasks, among them one paid and one rejected receipt from 15 and 18 August,
+which the site no longer lists. Pointing `NEXT_PUBLIC_FIELDWORK_CONTRACT` back at
+it restores that view, and deployments are independent, so nothing was lost.
+
+The site also stays usable against a contract that predates deadlines: it reads
+the contract's schema, posts the arguments that contract takes and hides the
 deadline control (`lib/genlayer.ts`, `contractHasDeadlines`). Before that change
-every post from the site failed on the argument count.
+every post from the site against the old contract failed on the argument count.
