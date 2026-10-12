@@ -4,11 +4,17 @@
  *   node scripts/deploy.mjs            # ephemeral account (Studio, disposable)
  *   FEE_BPS=600 node scripts/deploy.mjs
  *
+ *   DEPLOYER_KEY_FILE=/path/outside/the/repo/deployer.json node scripts/deploy.mjs
+ *
  * The deployer becomes the contract owner, which is the only account that can
  * withdraw fees or transfer ownership. An ephemeral account is fine for a
- * throwaway test deploy and wrong for anything you intend to keep - for that,
- * use `genlayer deploy --contract contracts/fieldwork.py --args 600` with a
- * named CLI account instead.
+ * throwaway test deploy and wrong for anything you intend to keep.
+ *
+ * For a deploy you intend to keep, DEPLOYER_KEY_FILE names a file that holds the
+ * deployer's key. It is created on the first run and reused after, so the same
+ * account owns every deployment made with it. Keep it outside the repository:
+ * only the address is ever printed. The same key can be imported into a wallet
+ * to use the owner functions from the site.
  */
 
 import dns from "node:dns";
@@ -19,11 +25,11 @@ import dns from "node:dns";
 // client is created, in every entry point that talks to the RPC.
 dns.setDefaultResultOrder("ipv4first");
 
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-import { createAccount, createClient } from "genlayer-js";
+import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
 import { studionet, testnetBradbury } from "genlayer-js/chains";
 import { TransactionStatus } from "genlayer-js/types";
 
@@ -83,14 +89,39 @@ function explain(receipt) {
   };
 }
 
+/** The deployer: a kept account when DEPLOYER_KEY_FILE is set, else disposable. */
+function deployer() {
+  const file = process.env.DEPLOYER_KEY_FILE;
+  if (!file) return { account: createAccount(), kept: false };
+  if (existsSync(file)) {
+    const saved = JSON.parse(readFileSync(file, "utf8"));
+    return { account: createAccount(saved.private_key), kept: true, file };
+  }
+  const key = generatePrivateKey();
+  const account = createAccount(key);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(
+    file,
+    JSON.stringify({ address: account.address, private_key: key }, null, 2),
+    { mode: 0o600 }
+  );
+  return { account, kept: true, file, created: true };
+}
+
 async function main() {
   log(`network  ${chain.name} (${chain.id})`);
   log(`fee      ${FEE_BPS} bps (${FEE_BPS / 100}%)\n`);
 
-  const account = createAccount();
-  log(`[ok] ephemeral deployer ${account.address}`);
-  log("     this account becomes the contract owner - use the CLI with a named");
-  log("     account for a deploy you intend to keep.\n");
+  const { account, kept, file, created } = deployer();
+  if (kept) {
+    log(`[ok] deployer ${account.address} (${created ? "created in" : "read from"} ${file})`);
+    log("     this account becomes the contract owner, and the key file is the only");
+    log("     copy - back it up outside the repository.\n");
+  } else {
+    log(`[ok] ephemeral deployer ${account.address}`);
+    log("     this account becomes the contract owner - set DEPLOYER_KEY_FILE for a");
+    log("     deploy you intend to keep.\n");
+  }
 
   const client = createClient({ chain, account });
   // LF on every platform, the same normalisation /api/contract-source applies.
