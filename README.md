@@ -130,6 +130,17 @@ refused deadlines, an early close refused, a claim clamped to the deadline, and
 both closes after it. The floor for a deadline is an hour, so the run takes a
 little over one.
 
+### The money: a USDC escrow on Base Sepolia
+
+GenLayer grades the photographs but cannot move USDC on Base, so
+[`contracts/evm/src/FieldworkEscrow.sol`](contracts/evm/src/FieldworkEscrow.sol) holds it. The
+poster locks reward plus fee for a task id, and an attestor signs what GenLayer decided
+(EIP-712): pay the worker, or give the poster the money back. After a deadline and a day of
+grace with no verdict, anyone returns it. For every reward and fee rate the money out equals
+the money in. The attestor is one key, and the escrow says exactly what that key can and
+cannot do. `scripts/attest.mjs` is the attestor. The design, the checks and what is still
+to deploy are in [docs/milestone-02.md](docs/milestone-02.md).
+
 ---
 
 ## The site

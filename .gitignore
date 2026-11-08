@@ -33,3 +33,6 @@ docs/build_pdf.py
 # Working files
 skeleton.txt
 artifacts/
+
+contracts/evm/cache
+contracts/evm/broadcast
