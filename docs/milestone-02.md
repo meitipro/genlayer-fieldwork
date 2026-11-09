@@ -50,19 +50,20 @@ so it never exceeds the rate, and a funded task keeps the fee it was funded with
 Source digest: `FieldworkEscrow.sol` sha256
 `c31741fee4d1fe47fc951c1419a2b5b06ca1982fe774ec1946d97c4c3854b957`.
 
-## Not on the live network yet
+## Live on Base Sepolia
 
-The deployment itself needs Base Sepolia ETH for gas, and the deployer key kept for
-Fieldwork (`0x34D0Bbf474cF8D1CB01230F7eB1E0f512DeA32f1`) holds none. The end to end run
-above is on a fork, which is a rehearsal and not a deployment, and its transactions do not
-exist on Base Sepolia. To deploy, fund that address from
-https://faucets.chain.link/base-sepolia and run, from `contracts/evm`:
+| | |
+| --- | --- |
+| Contract | [`0x35fd00ec5BDdda631509282Cdcb1FD731891C079`](https://sepolia.basescan.org/address/0x35fd00ec5BDdda631509282Cdcb1FD731891C079) |
+| Deploy transaction | [`0x76307f1bcc4fbc4f0b29e93e37a879126a3929e95ef0134049afa42c0022d520`](https://sepolia.basescan.org/tx/0x76307f1bcc4fbc4f0b29e93e37a879126a3929e95ef0134049afa42c0022d520), block 56,303,035, status success |
+| Settings read back from the chain | token `0x036CbD53842c5426634e7929541eC2318f3dCF7e` (Circle USDC), attestor `0x8af42979334844B0Dce47D48F7C232A10be373d1`, fee 500 bps, owner and treasury `0x34D0Bbf474cF8D1CB01230F7eB1E0f512DeA32f1`, 4,729 bytes of code |
 
-```
-export DEPLOYER_PRIVATE_KEY=0x...   # the key in the DEPLOYER_KEY_FILE
-export ATTESTOR_ADDRESS=0x8af42979334844B0Dce47D48F7C232A10be373d1
-forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --broadcast
-```
+Deployed with `forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --broadcast`
+from the deployer key kept outside the repository. The address is the same as in the fork
+rehearsal above because both were the deployer's first transaction.
 
-A poster then needs test USDC from https://faucet.circle.com. The site does not yet draw a
-funding button for the escrow; funding and settling are scripted.
+Two things are not done. The source is not verified on an explorer: the Blockscout
+submission answered "Unable to verify" twice, so the bytecode is on chain but its source is
+not yet published there. And no task has been funded or settled on the live chain, because
+that needs test USDC and the deployer holds none; Circle's faucet (https://faucet.circle.com)
+sits behind a login. The funded and settled flows are proven on the fork above, not here.
